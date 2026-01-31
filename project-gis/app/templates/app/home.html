@@ -1,0 +1,580 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iPhone Store</title>
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+
+    <!-- CSS của bạn -->
+    <link rel="stylesheet" href="{% static 'app/css/style.css' %}" />
+  </head>
+  <body data-page="home">
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark navbar-expand-lg sticky-top border-bottom border-slate-800">
+      <div class="container py-2">
+        <a class="navbar-brand fw-semibold" href="{% url 'home' %}">BA TÔ CƠM</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link active" href="{% url 'home' %}">Trang chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="#all-products">Sản phẩm</a></li>
+            <li class="nav-item"><a class="nav-link" href="#about-store">Về chúng tôi</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'cart' %}">Giỏ hàng</a></li>
+          </ul>
+          <a class="btn btn-sm btn-light ms-lg-3 rounded-pill" href="{% url 'cart' %}">Giỏ hàng</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero-section">
+      <div class="container">
+        <div class="row align-items-center g-4">
+          <div class="col-lg-6">
+            <div class="hero-badge mb-2">
+              <span class="dot"></span>
+              <span>iPhone 16 Pro • Hàng chính hãng VN/A</span>
+            </div>
+            <h1 class="hero-title">Nâng cấp lên iPhone mới nhất, trả góp cực dễ.</h1>
+            <p class="hero-subtitle">
+              Mua iPhone chính hãng với giá tốt, bảo hành 12 tháng, hỗ trợ trả góp 0%, giao hàng nhanh.
+            </p>
+
+            <div class="hero-price-tag">
+              <div class="price">Từ 24.990.000₫</div>
+              <div class="from">*Tuỳ phiên bản dung lượng</div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button
+                type="button"
+                class="btn btn-buy js-add-to-cart"
+                data-name="iPhone 16 Pro Max"
+                data-price="24990000"
+              >
+                Đặt mua ngay
+                <span class="small">›</span>
+              </button>
+              <a class="btn btn-outline-light btn-outline" href="#all-products">
+                Xem tất cả sản phẩm
+              </a>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3 mt-4 small text-secondary">
+              <div>✔ Giao nhanh trong ngày</div>
+              <div>✔ Hỗ trợ lên đời dễ dàng</div>
+              <div>✔ Trả góp qua thẻ / công ty tài chính</div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="iphone-card mt-3 mt-lg-0">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge-new">New</span>
+                <div class="chip-badge">
+                  <span class="chip-color" style="background: linear-gradient(135deg, #0f172a, #64748b)"></span>
+                  <span>Natural Titanium</span>
+                </div>
+              </div>
+              <div class="text-center my-2">
+                <img
+                  src="{% static 'app/image/ip16promax.jpg' %}"
+                  alt="iPhone 16 Pro Max"
+                  class="img-fluid"
+                />
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-1 small text-secondary">
+                <span>128GB • 256GB • 512GB • 1TB</span>
+                <span>Hỗ trợ 5G • USB‑C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DANH SÁCH SẢN PHẨM -->
+    <section class="py-5" style="background:#020617;">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-3">
+          <div>
+            <h2 class="section-title mb-1">iPhone bán chạy</h2>
+            <p class="section-subtitle mb-0">Những mẫu iPhone được khách hàng chọn nhiều nhất.</p>
+          </div>
+          <a href="#" class="small text-primary text-decoration-none">Xem tất cả ›</a>
+        </div>
+
+        <div class="row g-3">
+          <!-- iPhone 16 Pro -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="product-card">
+              <img src="{% static 'app/image/ip16pro.jpg' %}" alt="iPhone 16 Pro" class="img-fluid mb-2 rounded" />
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <div class="product-name">iPhone 16 Pro</div>
+                    <div class="product-meta">6.3" • 128GB</div>
+                  </div>
+                  <span class="badge-new">Hot</span>
+                </div>
+                <div class="product-price">Từ 28.990.000₫</div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary rounded-pill mt-3 js-add-to-cart"
+                data-name="iPhone 16 Pro"
+                data-price="28990000"
+              >
+                Mua ngay
+              </button>
+            </div>
+          </div>
+
+          <!-- iPhone 16 -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="product-card">
+              <img src="{% static 'app/image/ip16.jpg' %}" alt="iPhone 16" class="img-fluid mb-2 rounded" />
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <div class="product-name">iPhone 16</div>
+                    <div class="product-meta">6.1" • 128GB</div>
+                  </div>
+                </div>
+                <div class="product-price">Từ 22.990.000₫</div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-light rounded-pill mt-3 js-add-to-cart"
+                data-name="iPhone 16"
+                data-price="22990000"
+              >
+                Thêm vào giỏ
+              </button>
+            </div>
+          </div>
+
+          <!-- iPhone 15 Pro -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="product-card">
+              <img src="{% static 'app/image/ip15pro.jpg' %}" alt="iPhone 15 Pro" class="img-fluid mb-2 rounded" />
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <div class="product-name">iPhone 15 Pro</div>
+                    <div class="product-meta">6.1" • 128GB</div>
+                  </div>
+                </div>
+                <div class="product-price">Từ 21.490.000₫</div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-light rounded-pill mt-3 js-add-to-cart"
+                data-name="iPhone 15 Pro"
+                data-price="21490000"
+              >
+                Thêm vào giỏ
+              </button>
+            </div>
+          </div>
+
+          <!-- iPhone 13 -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="product-card">
+              <img src="{% static 'app/image/ip13.jpg' %}" alt="iPhone 13" class="img-fluid mb-2 rounded" />
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <div class="product-name">iPhone 13</div>
+                    <div class="product-meta">6.1" • 128GB</div>
+                  </div>
+                </div>
+                <div class="product-price">Từ 13.990.000₫</div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-light rounded-pill mt-3 js-add-to-cart"
+                data-name="iPhone 13"
+                data-price="13990000"
+              >
+                Thêm vào giỏ
+              </button>
+            </div>
+          </div>
+
+          <!-- iPhone 17 Pro Max -->
+          <div class="col-12 col-sm-6 col-lg-3">
+            <div class="product-card">
+              <img src="{% static 'app/image/ip17promax.jpg' %}" alt="iPhone 17 Pro Max" class="img-fluid mb-2 rounded" />
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <div>
+                    <div class="product-name">iPhone 17 Pro Max</div>
+                    <div class="product-meta">6.9" • 256GB</div>
+                  </div>
+                  <span class="badge-new">New</span>
+                </div>
+                <div class="product-price">Từ 33.990.000₫</div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary rounded-pill mt-3 js-add-to-cart"
+                data-name="iPhone 17 Pro Max"
+                data-price="33990000"
+              >
+                Mua ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOÀN BỘ IPHONE VỚI SẮP XẾP -->
+    <section id="all-products" class="py-5 border-top" style="background:#020617;">
+      <div class="container">
+        <div class="catalog-header">
+          <div>
+            <h2 class="section-title mb-1">Tất cả iPhone</h2>
+            <p class="section-subtitle mb-0">Danh sách đầy đủ iPhone đang bán tại cửa hàng.</p>
+          </div>
+          <div class="sort-tabs" aria-label="Sắp xếp theo">
+            <button class="sort-tab js-sort-btn active" data-sort="default">Phổ biến</button>
+            <button class="sort-tab js-sort-btn" data-sort="price-asc">Giá thấp - cao</button>
+            <button class="sort-tab js-sort-btn" data-sort="price-desc">Giá cao - thấp</button>
+          </div>
+        </div>
+
+        <div id="catalog-grid" class="row g-3">
+          <!-- iPhone 13 series -->
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="9990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip13.jpg' %}" alt="iPhone 13" />
+              <h3 class="catalog-name">iPhone 13</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">9.990.000₫</div>
+                <div class="catalog-price-old">11.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="8990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip13mini.jpg' %}" alt="iPhone 13 mini" />
+              <h3 class="catalog-name">iPhone 13 mini</h3>
+              <div class="catalog-meta">5.4" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">8.990.000₫</div>
+                <div class="catalog-price-old">10.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="12990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip13pro.jpg' %}" alt="iPhone 13 Pro" />
+              <h3 class="catalog-name">iPhone 13 Pro</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">12.990.000₫</div>
+                <div class="catalog-price-old">15.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="13990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip13promax.jpg' %}" alt="iPhone 13 Pro Max" />
+              <h3 class="catalog-name">iPhone 13 Pro Max</h3>
+              <div class="catalog-meta">6.7" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">13.990.000₫</div>
+                <div class="catalog-price-old">16.490.000₫</div>
+              </div>
+            </article>
+          </div>
+
+          <!-- iPhone 14 series -->
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="14990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip14.jpg' %}" alt="iPhone 14" />
+              <h3 class="catalog-name">iPhone 14</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">14.990.000₫</div>
+                <div class="catalog-price-old">18.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="15990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip14plus.jpg' %}" alt="iPhone 14 Plus" />
+              <h3 class="catalog-name">iPhone 14 Plus</h3>
+              <div class="catalog-meta">6.7" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">15.990.000₫</div>
+                <div class="catalog-price-old">19.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="18990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip14pro.jpg' %}" alt="iPhone 14 Pro" />
+              <h3 class="catalog-name">iPhone 14 Pro</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">18.990.000₫</div>
+                <div class="catalog-price-old">22.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="20990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip14promax.jpg' %}" alt="iPhone 14 Pro Max" />
+              <h3 class="catalog-name">iPhone 14 Pro Max</h3>
+              <div class="catalog-meta">6.7" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">20.990.000₫</div>
+                <div class="catalog-price-old">24.990.000₫</div>
+              </div>
+            </article>
+          </div>
+
+          <!-- iPhone 15 series -->
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="17990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip15.jpg' %}" alt="iPhone 15" />
+              <h3 class="catalog-name">iPhone 15</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">17.990.000₫</div>
+                <div class="catalog-price-old">20.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="18990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip15plus.jpg' %}" alt="iPhone 15 Plus" />
+              <h3 class="catalog-name">iPhone 15 Plus</h3>
+              <div class="catalog-meta">6.7" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">18.990.000₫</div>
+                <div class="catalog-price-old">22.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="21490000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip15pro.jpg' %}" alt="iPhone 15 Pro" />
+              <h3 class="catalog-name">iPhone 15 Pro</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">21.490.000₫</div>
+                <div class="catalog-price-old">24.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="23990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip15promax.jpg' %}" alt="iPhone 15 Pro Max" />
+              <h3 class="catalog-name">iPhone 15 Pro Max</h3>
+              <div class="catalog-meta">6.7" • 256GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">23.990.000₫</div>
+                <div class="catalog-price-old">27.990.000₫</div>
+              </div>
+            </article>
+          </div>
+
+          <!-- iPhone 16 series -->
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="22990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip16.jpg' %}" alt="iPhone 16" />
+              <h3 class="catalog-name">iPhone 16</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">22.990.000₫</div>
+                <div class="catalog-price-old">25.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="23990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip16plus.jpg' %}" alt="iPhone 16 Plus" />
+              <h3 class="catalog-name">iPhone 16 Plus</h3>
+              <div class="catalog-meta">6.7" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">23.990.000₫</div>
+                <div class="catalog-price-old">27.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="28990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip16pro.jpg' %}" alt="iPhone 16 Pro" />
+              <h3 class="catalog-name">iPhone 16 Pro</h3>
+              <div class="catalog-meta">6.3" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">28.990.000₫</div>
+                <div class="catalog-price-old">31.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="30990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip16promax.jpg' %}" alt="iPhone 16 Pro Max" />
+              <h3 class="catalog-name">iPhone 16 Pro Max</h3>
+              <div class="catalog-meta">6.9" • 256GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">30.990.000₫</div>
+                <div class="catalog-price-old">34.990.000₫</div>
+              </div>
+            </article>
+          </div>
+
+          <!-- iPhone 17 series -->
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="25990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip17.jpg' %}" alt="iPhone 17" />
+              <h3 class="catalog-name">iPhone 17</h3>
+              <div class="catalog-meta">6.1" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">25.990.000₫</div>
+                <div class="catalog-price-old">28.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="26990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip17plus.jpg' %}" alt="iPhone 17 Plus" />
+              <h3 class="catalog-name">iPhone 17 Plus</h3>
+              <div class="catalog-meta">6.7" • 128GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">26.990.000₫</div>
+                <div class="catalog-price-old">29.990.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="29990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip17pro.jpg' %}" alt="iPhone 17 Pro" />
+              <h3 class="catalog-name">iPhone 17 Pro</h3>
+              <div class="catalog-meta">6.3" • 256GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">29.990.000₫</div>
+                <div class="catalog-price-old">33.490.000₫</div>
+              </div>
+            </article>
+          </div>
+          <div class="col-6 col-md-3 col-lg-2 catalog-item" data-price="33990000">
+            <article class="catalog-card">
+              <img src="{% static 'app/image/ip17promax.jpg' %}" alt="iPhone 17 Pro Max" />
+              <h3 class="catalog-name">iPhone 17 Pro Max</h3>
+              <div class="catalog-meta">6.9" • 256GB</div>
+              <div class="catalog-price-row">
+                <div class="catalog-price">33.990.000₫</div>
+                <div class="catalog-price-old">37.990.000₫</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT / VỀ CHÚNG TÔI -->
+    <section id="about-store" class="py-5 border-top" style="background:#020617;">
+      <div class="container">
+        <div class="row g-4 align-items-start">
+          <div class="col-lg-7">
+            <h2 class="section-title mb-3">Về iPhone Store</h2>
+            <p class="section-subtitle">
+              iPhone Store là cửa hàng chuyên iPhone chính hãng VN/A, cam kết mang đến trải nghiệm mua sắm hiện đại,
+              minh bạch và nhanh chóng.
+            </p>
+            <p class="text-secondary small mb-3">
+              Chúng tôi xây dựng hệ thống bán hàng online với mục tiêu giúp khách hàng dễ dàng chọn lựa, so sánh và đặt
+              mua iPhone ở bất cứ đâu. Sản phẩm đều có hóa đơn đầy đủ, bảo hành chính hãng, hỗ trợ đổi trả theo quy
+              định.
+            </p>
+
+            <div class="row g-3 mt-2">
+              <div class="col-sm-4">
+                <div class="card bg-dark border-secondary h-100">
+                  <div class="card-body small">
+                    <div class="fw-semibold mb-1">Sản phẩm</div>
+                    <div class="text-secondary">100% iPhone chính hãng, nguồn gốc rõ ràng.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="card bg-dark border-secondary h-100">
+                  <div class="card-body small">
+                    <div class="fw-semibold mb-1">Dịch vụ</div>
+                    <div class="text-secondary">Giao nhanh, hỗ trợ kỹ thuật tận tình.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="card bg-dark border-secondary h-100">
+                  <div class="card-body small">
+                    <div class="fw-semibold mb-1">Thanh toán</div>
+                    <div class="text-secondary">Hỗ trợ trả góp 0%, nhiều phương thức tiện lợi.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="card bg-dark border-secondary">
+              <div class="card-body small">
+                <h3 class="h6 mb-3">Thông tin liên hệ</h3>
+                <ul class="list-unstyled mb-3 text-secondary">
+                  <li><strong>Địa chỉ:</strong> 123 Đường Apple, Quận 1, TP.HCM</li>
+                  <li><strong>Hotline:</strong> 1900 0000</li>
+                  <li><strong>Email:</strong> support@iphonestore.vn</li>
+                </ul>
+                <h4 class="h6 mb-2">Giờ làm việc</h4>
+                <p class="text-secondary mb-0">
+                  Thứ 2 – Chủ nhật: 8h00 – 21h30 (kể cả ngày lễ).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-3">
+      <div class="container d-flex flex-column flex-sm-row justify-content-between gap-2">
+        <span>© 2026 iPhone Store. Bản demo giao diện bán hàng.</span>
+        <span>Hotline: 1900 0000 • Hỗ trợ 24/7</span>
+      </div>
+    </footer>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+    <script src="{% static 'app/js/myscript.js' %}"></script>
+  </body>
+</html>
