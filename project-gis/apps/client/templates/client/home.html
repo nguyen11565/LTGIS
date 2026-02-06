@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dienthoaihay - Điện thoại chính hãng giá rẻ</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- GLOBAL STYLE --- */
+        body {
+            background-color: #f1f1f1; /* Nền xám nhạt giống dienthoaihay */
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        
+        a { text-decoration: none; }
+
+        /* --- HEADER --- */
+        .main-header {
+            background-color: #d70018; /* Màu đỏ thương hiệu */
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-search-input {
+            border-radius: 5px 0 0 5px;
+            border: none;
+        }
+        .header-search-btn {
+            background-color: #333;
+            color: white;
+            border-radius: 0 5px 5px 0;
+            border: none;
+        }
+        
+        .nav-link-custom {
+            color: white;
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 10px;
+        }
+        .nav-link-custom:hover { color: #ffdada; }
+        .nav-link-custom i { font-size: 20px; margin-bottom: 2px; }
+
+        /* --- BANNER --- */
+        .banner-section {
+            background: white;
+            padding-bottom: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* --- PRODUCT CARD (Giống Dienthoaihay) --- */
+        .product-section-title {
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+            border: 1px solid #eee;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .product-img-container {
+            padding: 15px;
+            text-align: center;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-img {
+            max-height: 100%;
+            max-width: 100%;
+            transition: transform 0.3s;
+        }
+        
+        .product-card:hover .product-img {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 10px 15px 15px;
+        }
+
+        .product-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 40px; /* Cố định chiều cao tên */
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            color: #d70018;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .badge-installment {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #f1f1f1;
+            color: #333;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+
+        .btn-add-cart {
+            background-color: #d70018;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            opacity: 0; /* Ẩn nút mua, hiện khi hover */
+            transition: opacity 0.2s;
+        }
+        
+        .product-card:hover .btn-add-cart {
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="main-header sticky-top">
+        <div class="container">
+            <div class="d-flex align-items-center justify-content-between py-2">
+                
+                <a href="{% url 'client:home' %}" class="fw-bold text-white fs-4 me-4 text-uppercase">
+                    <i class="fas fa-mobile-alt me-2"></i>Phone Store
+                </a>
+
+                <div class="flex-grow-1 mx-4 d-none d-md-block">
+                    <div class="input-group">
+                        <input type="text" class="form-control header-search-input" placeholder="Bạn tìm gì hôm nay?">
+                        <button class="btn header-search-btn" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center">
+                    <a href="{% url 'client:store_locator' %}" class="nav-link-custom">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Cửa hàng</span>
+                    </a>
+                    
+                    <a href="{% url 'client:cart' %}" class="nav-link-custom position-relative">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Giỏ hàng</span>
+                        </a>
+                    
+                    <button class="btn text-white d-md-none ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu">
+                        <i class="fas fa-bars fs-3"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="pb-2 d-md-none collapse" id="mobileMenu">
+                <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm...">
+            </div>
+        </div>
+    </header>
+
+    <section class="banner-section pt-3">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3 d-none d-lg-block">
+                    <div class="list-group shadow-sm">
+                        <a href="#" class="list-group-item list-group-item-action fw-bold active bg-danger border-danger">
+                            <i class="fas fa-bars me-2"></i> Danh mục sản phẩm
+                        </a>
+                        {% for cat in categories %}
+                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            {{ cat.name }} <i class="fas fa-chevron-right text-muted small"></i>
+                        </a>
+                        {% endfor %}
+                       
+                    </div>
+                </div>
+
+                <div class="col-lg-9">
+                    <div id="mainCarousel" class="carousel slide shadow-sm rounded overflow-hidden" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <img src="https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=1920&auto=format&fit=crop" class="d-block w-100" style="height: 380px; object-fit: cover;" alt="Banner 1">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=1920&auto=format&fit=crop" class="d-block w-100" style="height: 380px; object-fit: cover;" alt="Banner 2">
+                            </div>
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#mainCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#mainCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-4"><img src="https://via.placeholder.com/300x100/333/fff?text=Banner+1" class="img-fluid rounded shadow-sm"></div>
+                        <div class="col-4"><img src="https://via.placeholder.com/300x100/d70018/fff?text=Banner+2" class="img-fluid rounded shadow-sm"></div>
+                        <div class="col-4"><img src="https://via.placeholder.com/300x100/0046b5/fff?text=Banner+3" class="img-fluid rounded shadow-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-end mb-3 border-bottom border-danger pb-2">
+            <h4 class="product-section-title text-danger mb-0">Sản phẩm nổi bật</h4>
+            <a href="#" class="text-decoration-none text-muted small">Xem tất cả <i class="fas fa-chevron-right"></i></a>
+        </div>
+        
+        <div class="row g-2 g-md-3">
+            {% for product in products %}
+            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                <div class="product-card position-relative">
+                    <span class="badge-installment">Trả góp 0%</span>
+
+                    <a href="{% url 'client:product_detail' product.id %}" class="product-img-container">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="product-img" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x300?text=No+Image" class="product-img" alt="No Image">
+                        {% endif %}
+                    </a>
+
+                    <div class="product-info">
+                        <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none">
+                            <h3 class="product-name">{{ product.name }}</h3>
+                        </a>
+                        
+                        <div class="product-price">
+                            {{ product.price|floatformat:0 }}₫
+                            <span class="text-muted text-decoration-line-through fw-normal ms-2 small" style="font-size: 13px; color: #999;"></span>
+                        </div>
+                        
+                        <div class="mt-2 mb-1">
+                            <i class="fas fa-star text-warning small"></i>
+                            <i class="fas fa-star text-warning small"></i>
+                            <i class="fas fa-star text-warning small"></i>
+                            <i class="fas fa-star text-warning small"></i>
+                            <i class="fas fa-star text-warning small"></i>
+                            <span class="text-muted small">(12)</span>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'client:cart_add' product.id %}" class="btn-add-cart shadow" title="Thêm vào giỏ">
+                        <i class="fas fa-cart-plus"></i>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted">Chưa có sản phẩm nào.</p>
+                <a href="/admin" class="btn btn-danger">Thêm sản phẩm ngay</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <footer class="bg-white pt-5 pb-3 border-top mt-5">

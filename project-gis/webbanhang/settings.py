@@ -31,13 +31,16 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'apps.client',
+    'apps.admin_panel',
+    'apps.core',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',
 ]
 
 MIDDLEWARE = [
@@ -75,11 +78,14 @@ WSGI_APPLICATION = 'webbanhang.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql', # Quan trọng: Phải là postgis
+        'NAME': 'bandienthoai_db2',
+        'USER': 'postgres',
+        'PASSWORD': '123456',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -116,3 +122,26 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+import os
+
+import os
+
+# Đường dẫn gốc của OSGeo4W
+OSGEO4W_ROOT = r'C:\OSGeo4W'
+
+# Thêm đường dẫn bin vào PATH của hệ thống để nhận diện các file .dll phụ thuộc
+os.environ['PATH'] = os.path.join(OSGEO4W_ROOT, 'bin') + os.path.pathsep + os.environ['PATH']
+os.environ['PROJ_LIB'] = os.path.join(OSGEO4W_ROOT, 'share', 'proj')
+
+# Chỉ định đường dẫn thư viện GDAL - HÃY KIỂM TRA TÊN FILE TRONG THƯ MỤC BIN
+# Ví dụ nếu bạn thấy file gdal310.dll thì sửa thành 'gdal310.dll'
+GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, 'bin', 'gdal310.dll')
+
+import os
+
+# Đường dẫn URL để truy cập ảnh trên trình duyệt
+MEDIA_URL = '/media/'
+
+# Đường dẫn thư mục lưu ảnh thực tế trên máy tính
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
