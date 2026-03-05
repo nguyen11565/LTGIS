@@ -33,7 +33,7 @@ class Store(models.Model):
     name = models.CharField(max_length=100, verbose_name="Tên cửa hàng")
     address = models.CharField(max_length=255, verbose_name="Địa chỉ")
     phone = models.CharField(max_length=20, verbose_name="Hotline")
-    
+    image = models.ImageField(upload_to='stores/', null=True, blank=True, verbose_name="Hình ảnh cửa hàng")
     # Lưu tọa độ bằng số thực (Float) để dùng công thức Haversine
     # Ví dụ: Hà Nội (Lat: 21.0285, Lon: 105.8542)
     latitude = models.FloatField(verbose_name="Vĩ độ (Lat)")
@@ -62,3 +62,16 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.name} (x{self.quantity})"
+    
+
+class Stores(models.Model):
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=500)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    # Thêm 2 dòng này:
+    opening_time = models.TimeField(default="08:00:00")
+    closing_time = models.TimeField(default="21:00:00")
+
+    def __str__(self):
+        return self.name

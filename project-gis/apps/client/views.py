@@ -6,6 +6,7 @@ from apps.core.models import Product, Category, Store, Order, OrderItem
 # Import các file hỗ trợ bên cạnh
 from .cart import Cart 
 from .utils import haversine_distance # <-- Import hàm tính toán khoảng cách
+from django.utils import timezone # Thêm để xử lý giờ mở cửa
 
 # =========================================
 # 1. CÁC VIEW CŨ (TRANG CHỦ & GIỎ HÀNG)
@@ -44,37 +45,61 @@ def cart_remove(request, product_id):
 # =========================================
 
 def store_locator(request):
-    # 1. Giả lập vị trí người dùng (Ví dụ: Đang ở Chợ Bến Thành, Q1, TP.HCM)
-    # Sau này bạn có thể dùng JavaScript để lấy vị trí thật của trình duyệt gửi lên
-    user_lat = 10.8627
-    user_lon = 106.61901
+    # 1. Lấy tọa độ từ trình duyệt gửi lên
+    user_lat = float(request.GET.get('lat', 10.7725))
+    user_lon = float(request.GET.get('lon', 106.6980))
+
+    # Lấy giờ hiện tại của hệ thống (Asia/Ho_Chi_Minh)
+    now = timezone.localtime().time()
 
     stores = Store.objects.all()
     store_list = []
+    districts = set() # Dùng tập hợp để lấy danh sách Quận duy nhất
 
-    # 2. Tính khoảng cách từ người dùng đến từng cửa hàng
+    # 2. Tính toán dữ liệu cho từng cửa hàng
     for store in stores:
-        # Gọi hàm tính toán từ file utils.py
         dist = haversine_distance(user_lat, user_lon, store.latitude, store.longitude)
         
+        # Thêm quận vào danh sách lọc (nếu có trường district trong Model)
+        if hasattr(store, 'district') and store.district:
+            districts.add(store.district)
+        
+        # Kiểm tra trạng thái đóng/mở cửa
+        is_open = True
+        if hasattr(store, 'opening_time') and hasattr(store, 'closing_time'):
+            is_open = store.opening_time <= now <= store.closing_time
+        
+        # Kiểm tra nếu cửa hàng có trường image và đã được upload ảnh
+        if hasattr(store, 'image') and store.image:
+            image_url = store.image.url
+        else:
+            # Đường dẫn ảnh mặc định nếu không có ảnh (có thể dùng ảnh trong static hoặc link online)
+            image_url = "https://via.placeholder.com/400x200?text=Phone+Store"
+
         store_list.append({
             'name': store.name,
             'lat': store.latitude,
             'lon': store.longitude,
             'address': store.address,
-            'distance': round(dist, 2) # Làm tròn 2 số thập phân
+            'phone': store.phone,
+            'image_url': image_url,
+            'district': getattr(store, 'district', ''), # Lấy quận nếu có
+            'distance': round(dist, 2),
+            'is_open': is_open,
+            'open_hours': f"{store.opening_time.strftime('%H:%M')} - {store.closing_time.strftime('%H:%M')}" if hasattr(store, 'opening_time') else "08:00 - 21:00"
         })
 
-    # 3. Sắp xếp danh sách: Cửa hàng gần nhất lên đầu
+    # 3. Sắp xếp theo khoảng cách gần nhất
     store_list.sort(key=lambda x: x['distance'])
 
-    # 4. Chuyển dữ liệu thành JSON để bản đồ Leaflet đọc được
+    # 4. Chuyển JSON
     stores_json = json.dumps(store_list, cls=DjangoJSONEncoder)
 
     return render(request, 'client/store_locator.html', {
         'stores_json': stores_json,
         'user_lat': user_lat,
-        'user_lon': user_lon
+        'user_lon': user_lon,
+        'districts': sorted(list(districts)) # Gửi danh sách quận đã sắp xếp sang HTML
     })
     # --- VIEW CHI TIẾT SẢN PHẨM ---
 def product_detail(request, product_id):

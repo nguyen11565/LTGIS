@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'webbanhang.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql', # Quan trọng: Phải là postgis
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'bandienthoai_db2',
         'USER': 'postgres',
         'PASSWORD': '123456',
