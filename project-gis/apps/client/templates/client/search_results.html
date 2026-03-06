@@ -1,0 +1,49 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Kết quả tìm kiếm cho "{{ query }}" - Phone Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'client:home' %}" class="text-decoration-none">Trang chủ</a></li>
+                <li class="breadcrumb-item active">Tìm kiếm</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold">Kết quả tìm kiếm cho: <span class="text-danger">"{{ query }}"</span></h2>
+        <p class="text-muted">Tìm thấy {{ results|length }} sản phẩm phù hợp.</p>
+    </div>
+
+    {% if results %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            {% for product in results %}
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm product-card" style="border-radius: 15px;">
+                        <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none">
+                            <div class="p-3 text-center">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="img-fluid" style="height: 180px; object-fit: contain;" alt="{{ product.name }}">
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title text-dark fw-bold mb-2">{{ product.name }}</h6>
+                                <p class="text-danger fw-bold mb-0">{{ product.price|floatformat:0 }}₫</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-search-minus fa-5x text-light-emphasis"></i>
+            </div>
+            <h4>Rất tiếc, chúng tôi không tìm thấy sản phẩm nào!</h4>
+            <p class="text-muted">Hãy thử lại với từ khóa khác như "iPhone", "Samsung" hoặc "Xiaomi".</p>
+            <a href="{% url 'client:home' %}" class="btn btn-danger rounded-pill px-4 mt-3">QUAY LẠI TRANG CHỦ</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

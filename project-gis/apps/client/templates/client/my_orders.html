@@ -1,0 +1,93 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Đơn hàng của tôi - Phone Store{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-11">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h3 class="fw-bold mb-0 text-dark">
+                    <i class="fas fa-box-open me-2 text-danger"></i>Đơn hàng của tôi
+                </h3>
+                <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">
+                    Tổng cộng: {{ orders|length }} đơn hàng
+                </span>
+            </div>
+            
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr class="text-secondary small text-uppercase">
+                                    <th class="ps-4 py-3">Mã đơn</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-primary">#{{ order.id }}</td>
+                                    <td class="small text-muted">{{ order.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <div class="text-truncate" style="max-width: 250px;">
+                                            <small class="fw-medium text-dark">
+                                                {% for item in order.items.all %}
+                                                    {{ item.product.name }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold text-danger">{{ order.total_price|floatformat:0 }}₫</td>
+                                    <td>
+                                        {% if order.status == 'completed' %}
+                                            <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3">Hoàn thành</span>
+                                        {% elif order.status == 'shipped' %}
+                                            <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary px-3">Đang giao</span>
+                                        {% elif order.status == 'processing' %}
+                                            <span class="badge rounded-pill bg-info-subtle text-info border border-info px-3">Đang đóng gói</span>
+                                        {% elif order.status == 'pending' %}
+                                            <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning px-3">Chờ xác nhận</span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary px-3">Đã hủy</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1 small">
+                                            Chi tiết
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="mb-3">
+                                            <i class="fas fa-file-invoice fa-4x text-light-emphasis"></i>
+                                        </div>
+                                        <h5 class="text-dark fw-bold">Bạn chưa đặt đơn hàng nào</h5>
+                                        <p class="text-muted mb-4 small">Lịch sử đơn hàng của bạn sẽ xuất hiện tại đây.</p>
+                                        <a href="{% url 'client:home' %}" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                                            MUA SẮM NGAY
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-light rounded-3 border d-flex align-items-center">
+                <i class="fas fa-info-circle text-primary me-3 fs-5"></i>
+                <span class="small text-muted">Nếu bạn cần hỗ trợ về đơn hàng, vui lòng liên hệ tổng đài <strong>1800.xxxx</strong> để được giải đáp nhanh nhất.</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

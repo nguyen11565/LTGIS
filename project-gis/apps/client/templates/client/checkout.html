@@ -1,58 +1,121 @@
+{% extends 'client/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Thanh toán</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container py-5">
-        <h2 class="text-center mb-4">Xác nhận đơn hàng</h2>
-        <div class="row">
-            <div class="col-md-7">
-                <div class="card shadow-sm p-4">
-                    <h4>Thông tin giao hàng</h4>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label class="form-label">Họ và tên</label>
-                            <input type="text" name="fullname" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Số điện thoại</label>
-                            <input type="text" name="phone" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Địa chỉ nhận hàng</label>
-                            <textarea name="address" class="form-control" rows="3" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success w-100 py-2">ĐẶT HÀNG NGAY</button>
-                    </form>
-                </div>
-            </div>
 
-            <div class="col-md-5">
-                <div class="card shadow-sm p-3">
-                    <h4>Đơn hàng của bạn</h4>
-                    <ul class="list-group list-group-flush">
-                        {% for item in cart %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>{{ item.product.name }}</strong>
-                                <br><small class="text-muted">x{{ item.quantity }}</small>
+{% block title %}Thanh toán đơn hàng - Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-container { max-width: 1000px; }
+    .form-control:focus { border-color: #d70018; box-shadow: 0 0 0 0.25rem rgba(215, 0, 24, 0.1); }
+    .order-summary-card { border-radius: 15px; position: sticky; top: 100px; }
+    .product-checkout-img { width: 50px; height: 50px; object-fit: contain; background: #fff; border-radius: 8px; }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; color: #333; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 checkout-container">
+    <div class="row g-5">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-4 rounded-4">
+                <h4 class="section-title border-bottom pb-3">
+                    <i class="fas fa-truck me-2 text-danger"></i>Thông tin nhận hàng
+                </h4>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold">Họ và tên người nhận</label>
+                            <input type="text" name="fullname" class="form-control py-2" 
+                                   value="{% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% endif %}" 
+                                   placeholder="Nhập tên người nhận..." required>
+                        </div>
+                        
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold">Số điện thoại liên hệ</label>
+                            <input type="text" name="phone" class="form-control py-2" 
+                                   placeholder="Ví dụ: 0912345xxx" required>
+                        </div>
+
+                        <div class="col-md-12 mb-4">
+                            <label class="form-label small fw-bold">Địa chỉ giao hàng chi tiết</label>
+                            <textarea name="address" class="form-control" rows="3" 
+                                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện..." required></textarea>
+                            <div class="form-text mt-2 small text-muted">
+                                <i class="fas fa-info-circle me-1"></i> Chúng tôi sẽ liên hệ xác nhận trước khi giao.
                             </div>
-                            <span>{{ item.total_price|floatformat:0 }}₫</span>
-                        </li>
-                        {% endfor %}
-                        <li class="list-group-item d-flex justify-content-between fw-bold bg-light">
-                            <span>Tổng cộng:</span>
-                            <span class="text-danger">{{ cart.get_total_price|floatformat:0 }}₫</span>
-                        </li>
-                    </ul>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label small fw-bold">Ghi chú (Tùy chọn)</label>
+                            <input type="text" name="note" class="form-control py-2" placeholder="Ví dụ: Giao giờ hành chính...">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 py-3 fw-bold rounded-pill mt-3 shadow">
+                        XÁC NHẬN ĐẶT HÀNG
+                    </button>
+                    
+                    <p class="text-center mt-3 small text-muted">
+                        Bằng cách đặt hàng, bạn đồng ý với <a href="#" class="text-danger">điều khoản sử dụng</a> của chúng tôi.
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm order-summary-card p-4">
+                <h4 class="section-title border-bottom pb-3">Đơn hàng của bạn</h4>
+                
+                <div class="order-items mb-4 overflow-auto" style="max-height: 400px;">
+                    {% for item in cart %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="position-relative">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" class="product-checkout-img border">
+                            {% else %}
+                                <img src="https://via.placeholder.com/50" class="product-checkout-img border">
+                            {% endif %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary" style="font-size: 0.6rem;">
+                                {{ item.quantity }}
+                            </span>
+                        </div>
+                        <div class="ms-3 flex-grow-1">
+                            <div class="small fw-bold text-dark">{{ item.product.name }}</div>
+                            <div class="text-muted small">Mã: SP-00{{ item.product.id }}</div>
+                        </div>
+                        <div class="text-end small fw-bold">
+                            {{ item.total_price|floatformat:0 }}₫
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Tạm tính</span>
+                        <span>{{ cart.get_total_price|floatformat:0 }}₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Vận chuyển</span>
+                        <span class="text-success fw-bold">Miễn phí</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <span class="fw-bold fs-5">Tổng cộng</span>
+                        <span class="text-danger fw-bold fs-4">{{ cart.get_total_price|floatformat:0 }}₫</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-light rounded-3">
+                    <div class="small fw-bold mb-2 text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">Phương thức thanh toán</div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-money-bill-wave text-success me-3 fs-4"></i>
+                        <span class="small fw-bold text-dark">Thanh toán khi nhận hàng (COD)</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

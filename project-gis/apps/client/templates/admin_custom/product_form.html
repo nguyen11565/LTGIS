@@ -1,0 +1,44 @@
+{% extends 'admin_custom/base_admin.html' %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow border-0 p-4">
+            <h4 class="fw-bold text-danger mb-4">THÔNG TIN SẢN PHẨM</h4>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên điện thoại</label>
+                    <input type="text" name="name" class="form-control" value="{{ product.name }}" required>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Danh mục</label>
+                        <select name="category" class="form-select">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if product.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Giá bán (₫)</label>
+                        <input type="number" name="price" class="form-control" value="{{ product.price }}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Mô tả ngắn</label>
+                    <textarea name="description" class="form-control" rows="4">{{ product.description }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Hình ảnh</label>
+                    <input type="file" name="image" class="form-control">
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger px-5">LƯU SẢN PHẨM</button>
+                    <a href="{% url 'client:admin_product_list' %}" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

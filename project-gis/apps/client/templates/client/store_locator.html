@@ -1,144 +1,146 @@
+{% extends 'client/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Tìm cửa hàng gần nhất</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-    
-    <style>
-        #map { height: 500px; width: 100%; border-radius: 10px; }
-        .store-item { cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; }
-        .store-item:hover { background-color: #f8f9fa; border-left: 4px solid #0d6efd; }
-        .user-location-info { font-size: 0.8rem; color: #198754; font-weight: bold; }
-        /* Tùy chỉnh bảng chỉ dẫn để không che khuất bản đồ quá nhiều */
-        .leaflet-routing-container {
-            max-height: 300px;
-            overflow-y: auto;
-            background-color: white;
-            padding: 10px;
-            font-size: 12px;
-        }
-                .map-controls button {
-            border: 1px solid rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-        }
 
-        .map-controls button:hover {
-            background-color: #f1f1f1 !important;
-            transform: scale(1.05);
-        }
-    </style>
-</head>
-<body>
-    <div class="container py-4">
-        <h2 class="text-center mb-4 text-uppercase fw-bold">Hệ thống cửa hàng</h2>
-        
-        <div id="location-status" class="text-center mb-3 small text-muted">
-            <i class="fas fa-satellite"></i> Đang xác định vị trí của bạn...
-        </div>
+{% block title %}Hệ thống cửa hàng - Phone Store{% endblock %}
 
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-list"></i> Cửa hàng gần bạn</h5>
-                        <button onclick="getUserLocation()" class="btn btn-sm btn-light" title="Cập nhật vị trí">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                     </div>
-                    
-                   <div class="p-3 border-bottom bg-white">
-    <div class="row g-2 mb-2">
-        <div class="col-12">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0 text-muted">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" id="store-search" class="form-control border-start-0" 
-                       placeholder="Tìm tên cửa hàng, đường, Quận..." onkeyup="filterStores()">
-            </div>
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+<style>
+    #map { height: 600px; width: 100%; border-radius: 15px; z-index: 1; }
+    .store-item { cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; border-radius: 8px; margin-bottom: 5px; }
+    .store-item:hover { background-color: #fff1f2; border-left: 4px solid #d70018; }
+    .store-item.active { background-color: #fff1f2; border-left: 4px solid #d70018; }
+    
+    /* Trạng thái mở cửa */
+    .status-badge { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+    .status-open { background: #e6fcf5; color: #099268; }
+    .status-closed { background: #fff5f5; color: #fa5252; }
+
+    /* Tùy chỉnh Routing Panel */
+    .leaflet-routing-container {
+        max-height: 250px; overflow-y: auto; background: white;
+        padding: 15px; font-size: 13px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .map-controls button { width: 45px; height: 45px; border-radius: 10px !important; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+    .map-controls button:hover { transform: scale(1.1); background: #f8f9fa !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-dark text-uppercase">Tìm cửa hàng gần bạn</h2>
+        <div id="location-status" class="small text-muted mt-2">
+            <i class="fas fa-spinner fa-spin me-1"></i> Đang xác định vị trí của bạn...
         </div>
     </div>
-    
-    <div class="row g-2">
-        <div class="col-6">
-            <select id="district-filter" class="form-select" onchange="filterStores()">
-                <option value="">Tp.HCM</option>
-                {% for district in districts %}
-                    <option value="{{ district }}">{{ district }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-6">
-            <select id="radius-filter" class="form-select" onchange="filterStores()">
-                <option value="all">Bán kính</option>
-                <option value="3">Dưới 3km</option>
-                <option value="5">Dưới 5km</option>
-                <option value="10">Dưới 10km</option>
-                <option value="above">Trên 10km</option>
-            </select>
-        </div>
-    </div>
-</div>
 
-                    <div class="list-group list-group-flush overflow-auto" style="max-height: 600px;" id="store-list-container">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-store me-2"></i>Cửa hàng hiện có</h6>
+                    <button onclick="getUserLocation()" class="btn btn-sm btn-outline-light border-0 rounded-circle">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+
+                <div class="p-3 bg-light border-bottom">
+                    <div class="input-group mb-3 shadow-sm rounded-3 overflow-hidden">
+                        <span class="input-group-text bg-white border-0 text-muted ps-3"><i class="fas fa-search"></i></span>
+                        <input type="text" id="store-search" class="form-control border-0 py-2 small" 
+                               placeholder="Tên đường, Quận..." onkeyup="filterStores()">
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <select id="district-filter" class="form-select form-select-sm border-0 shadow-sm" onchange="filterStores()">
+                                <option value="">Tất cả Quận</option>
+                                {% for district in districts %}
+                                    <option value="{{ district }}">{{ district }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <select id="radius-filter" class="form-select form-select-sm border-0 shadow-sm" onchange="filterStores()">
+                                <option value="all">Bán kính</option>
+                                <option value="3">Dưới 3km</option>
+                                <option value="5">Dưới 5km</option>
+                                <option value="10">Dưới 10km</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
+
+                <div class="list-group list-group-flush p-2 overflow-auto" style="max-height: 500px;" id="store-list-container">
+                    </div>
             </div>
+        </div>
 
-            <div class="col-md-8 position-relative">
-    <div id="map" class="shadow border border-2" style="height: 600px;"></div>
-    
-    <div class="map-controls position-absolute" style="top: 10px; right: 10px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
-        
-        <button onclick="recenterToUser()" class="btn btn-light shadow-sm" 
-                style="width: 40px; height: 40px; padding: 0; border-radius: 4px; display: flex; align-items: center; justify-content: center;" 
-                title="Vị trí của bạn">
-            <i class="fas fa-crosshairs text-primary" style="font-size: 1.2rem;"></i>
-        </button>
+        <div class="col-lg-8 position-relative">
+            <div id="map" class="shadow-sm border"></div>
+            
+            <div class="map-controls position-absolute" style="top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="recenterToUser()" class="btn btn-white shadow border-0 text-primary" title="Vị trí của bạn">
+                    <i class="fas fa-location-arrow fs-5"></i>
+                </button>
+                <button id="btn-clear-filter" onclick="clearCustomLocation()" class="btn btn-white shadow border-0 text-danger" style="display: none;" title="Xóa tìm kiếm">
+                    <i class="fas fa-times fs-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-        <button id="btn-clear-filter" onclick="clearCustomLocation()" class="btn btn-white shadow-sm" 
-                style="width: 40px; height: 40px; padding: 0; border-radius: 4px; display: none; align-items: center; justify-content: center; background-color: white;" 
-                title="Xóa tìm kiếm">
-            <i class="fas fa-times text-danger" style="font-size: 1.2rem;"></i>
+    <div class="text-center mt-5 d-flex justify-content-center gap-3">
+        <button id="btn-nearest-store" class="btn btn-danger btn-lg px-4 rounded-pill fw-bold shadow">
+            <i class="fas fa-directions me-2"></i>ĐẾN CỬA HÀNG GẦN NHẤT
         </button>
     </div>
 </div>
 
-        
-        <div class="text-center mt-4 d-flex justify-content-center gap-3">
-            <a href="{% url 'client:home' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại trang chủ
-            </a>
-            
-            <button id="btn-nearest-store" class="btn btn-success">
-                <i class="fas fa-directions"></i> Chỉ đường đến cửa hàng gần nhất
-            </button>
+<div class="modal fade" id="storeDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <img id="modalStoreImage" src="" class="img-fluid rounded-4 mb-3 shadow-sm w-100" style="height: 220px; object-fit: cover; display: none;">
+                <h4 class="fw-bold text-danger mb-1" id="modalStoreName"></h4>
+                <div id="modalStoreStatus" class="mb-3"></div>
+                
+                <div class="text-start bg-light p-3 rounded-3 mb-4">
+                    <p class="mb-2 small text-dark"><i class="fas fa-map-marker-alt text-danger me-2"></i><span id="modalStoreAddress"></span></p>
+                    <p class="mb-0 small text-dark"><i class="fas fa-phone-alt text-success me-2"></i>Hotline: <span id="modalStorePhone"></span></p>
+                </div>
+                
+                <button type="button" id="modalDirectBtn" class="btn btn-danger w-100 py-3 rounded-pill fw-bold">
+                    <i class="fas fa-route me-2"></i>CHỈ ĐƯỜNG NGAY
+                </button>
+            </div>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
-    <script>
-        const stores = {{ stores_json|safe }};
-        let userLat = {{ user_lat }};
-        let userLon = {{ user_lon }};
-        var routingControl = null; // Biến quản lý đường đi
-        var clickCircle = null; // Quản lý vòng tròn bán kính
-        var clickMarker = null; // Quản lý điểm người dùng click
+<script>
+    // GIỮ NGUYÊN TOÀN BỘ LOGIC JAVASCRIPT CỦA BẠN Ở ĐÂY
+    const stores = {{ stores_json|safe }};
+    let userLat = {{ user_lat }};
+    let userLon = {{ user_lon }};
+    var routingControl = null;
+    var clickCircle = null;
+    var clickMarker = null;
 
-        // I. Khởi tạo bản đồ
-        var map = L.map('map').setView([userLat, userLon], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+    var map = L.map('map').setView([userLat, userLon], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
 
         // Thiết lập sự kiện Click trên bản đồ
         map.on('click', function(e) {
@@ -566,3 +568,4 @@ function clearCustomLocation() {
 </div>
 </body>
 </html>
+{% endblock %}

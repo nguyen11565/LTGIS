@@ -1,0 +1,62 @@
+{% extends 'admin_custom/base_admin.html' %}
+
+{% block admin_content %}
+<div class="container">
+    <form method="POST" enctype="multipart/form-data"> {% csrf_token %}
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card p-3 shadow-sm">
+                    <h5 class="fw-bold mb-3">{% if store %}Sửa{% else %}Thêm{% endif %} chi nhánh</h5>
+                    <div class="mb-3">
+                        <label>Tên cửa hàng</label>
+                        <input type="text" name="name" class="form-control" value="{{ store.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Địa chỉ</label>
+                        <input type="text" name="address" class="form-control" value="{{ store.address }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label>Vĩ độ (Lat)</label>
+                            <input type="text" name="latitude" id="id_latitude" class="form-control" value="{{ store.latitude }}" readonly required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label>Kinh độ (Lon)</label>
+                            <input type="text" name="longitude" id="id_longitude" class="form-control" value="{{ store.longitude }}" readonly required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label>Ảnh cửa hàng</label>
+                        <input type="file" name="image" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2">LƯU DỮ LIỆU</button>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div id="admin-map" style="height: 500px;" class="rounded shadow-sm"></div>
+                <p class="small text-muted text-center mt-2">Click vào bản đồ để lấy tọa độ tự động</p>
+            </div>
+        </div>
+    </form>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var lat = {{ store.latitude|default:10.7725 }};
+    var lon = {{ store.longitude|default:106.6980 }};
+    
+    var map = L.map('admin-map').setView([lat, lon], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    var marker = L.marker([lat, lon]).addTo(map);
+
+    map.on('click', function(e) {
+        var newLat = e.latlng.lat.toFixed(6);
+        var newLon = e.latlng.lng.toFixed(6);
+        document.getElementById('id_latitude').value = newLat;
+        document.getElementById('id_longitude').value = newLon;
+        marker.setLatLng(e.latlng);
+    });
+</script>
+{% endblock %}

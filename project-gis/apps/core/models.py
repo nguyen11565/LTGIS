@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 # ==========================================
 # 1. PHẦN CŨ (GIỮ NGUYÊN)
 # ==========================================
@@ -45,6 +45,17 @@ class Store(models.Model):
     # ... (Giữ nguyên code Store, Product, Category cũ)
 
 class Order(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Chờ xử lý'),
+        ('processing', 'Đang đóng gói'),
+        ('shipped', 'Đang giao hàng'),
+        ('completed', 'Hoàn thành'),
+        ('cancelled', 'Đã hủy'),
+    )
+    # ... các trường khác ...
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+
     full_name = models.CharField(max_length=100, verbose_name="Họ và tên")
     address = models.CharField(max_length=255, verbose_name="Địa chỉ giao hàng")
     phone = models.CharField(max_length=20, verbose_name="Số điện thoại")
