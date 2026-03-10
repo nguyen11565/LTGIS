@@ -8,9 +8,9 @@
                 <i class="fas fa-list me-2"></i>Danh mục
             </div>
             <div class="card-body">
-                <form method="POST" class="mb-3">
+                <form method="POST" action="{% url 'client:admin_product_list' %}" class="mb-3">
                     {% csrf_token %}
-                    <div class="input-group">
+                    <div class="input-group shadow-sm">
                         <input type="text" name="cat_name" class="form-control form-control-sm" placeholder="Tên danh mục..." required>
                         <button type="submit" name="add_category" class="btn btn-success btn-sm">
                             <i class="fas fa-plus"></i>
@@ -20,9 +20,9 @@
 
                 <div class="list-group list-group-flush small">
                     {% for cat in categories %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-bottom">
                         <div class="d-flex align-items-center gap-2">
-                            <span>{{ cat.name }}</span>
+                            <span class="fw-bold text-dark">{{ cat.name }}</span>
                             <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.7rem;">
                                 {{ cat.product_set.count }}
                             </span>
@@ -31,13 +31,15 @@
                         <div class="btn-group">
                             <button class="btn btn-link btn-sm text-info p-0 me-2" 
                                     data-bs-toggle="modal" 
-                                    data-bs-target="#editCat{{ cat.id }}">
+                                    data-bs-target="#editCat{{ cat.id }}"
+                                    title="Sửa tên">
                                 <i class="fas fa-edit"></i>
                             </button>
                             
                             <a href="{% url 'client:admin_category_delete' cat.id %}" 
                                class="btn btn-link btn-sm text-danger p-0"
-                               onclick="return confirm('Bạn có chắc muốn xóa danh mục này? Nếu có sản phẩm bên trong sẽ không xóa được.')">
+                               onclick="return confirm('Bạn có chắc muốn xóa danh mục này? Lưu ý: Không thể xóa nếu còn sản phẩm bên trong.')"
+                               title="Xóa danh mục">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
                         </div>
@@ -53,6 +55,7 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.6rem;"></button>
                                     </div>
                                     <div class="modal-body py-3">
+                                        <label class="form-label small text-muted">Tên danh mục mới:</label>
                                         <input type="text" name="cat_name" class="form-control form-control-sm" value="{{ cat.name }}" required>
                                     </div>
                                     <div class="modal-footer py-1 border-0">
@@ -62,6 +65,8 @@
                             </div>
                         </div>
                     </div>
+                    {% empty %}
+                    <div class="text-center py-3 text-muted small">Chưa có danh mục nào.</div>
                     {% endfor %}
                 </div>
             </div>
@@ -72,7 +77,7 @@
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold"><i class="fas fa-mobile-alt me-2"></i>Danh sách sản phẩm</h5>
-                <a href="{% url 'client:admin_product_add' %}" class="btn btn-danger btn-sm">
+                <a href="{% url 'client:admin_product_add' %}" class="btn btn-danger btn-sm shadow-sm">
                     <i class="fas fa-plus me-1"></i> Đăng sản phẩm mới
                 </a>
             </div>
@@ -95,22 +100,35 @@
                                     {% if product.image %}
                                         <img src="{{ product.image.url }}" width="45" height="45" class="rounded shadow-sm" style="object-fit: cover;">
                                     {% else %}
-                                        <img src="https://via.placeholder.com/45" class="rounded">
+                                        <img src="https://via.placeholder.com/45" class="rounded shadow-sm">
                                     {% endif %}
                                 </td>
-                                <td><div class="fw-bold">{{ product.name }}</div></td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ product.name }}</div>
+                                    <small class="text-muted">ID: #{{ product.id }}</small>
+                                </td>
                                 <td><span class="badge bg-light text-dark border">{{ product.category.name }}</span></td>
                                 <td class="text-danger fw-bold">{{ product.price|floatformat:0 }}₫</td>
                                 <td class="text-center">
                                     <div class="btn-group">
-                                        <a href="{% url 'client:admin_product_edit' product.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i></a>
-                                        <a href="{% url 'client:admin_product_delete' product.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Xác nhận xóa sản phẩm này?')"><i class="fas fa-trash"></i></a>
+                                        <a href="{% url 'client:admin_product_edit' product.id %}" class="btn btn-outline-primary btn-sm" title="Sửa sản phẩm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'client:admin_product_delete' product.id %}" 
+                                           class="btn btn-outline-danger btn-sm" 
+                                           onclick="return confirm('Xác nhận xóa sản phẩm này?')"
+                                           title="Xóa sản phẩm">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">Chưa có sản phẩm nào.</td>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
+                                    Chưa có sản phẩm nào trong kho.
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
