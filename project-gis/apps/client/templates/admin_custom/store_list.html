@@ -1,5 +1,5 @@
 {% extends 'admin_custom/base_admin.html' %}
-
+{% load humanize %} 
 {% block title %}Quản lý cửa hàng{% endblock %}
 
 {% block admin_content %}
@@ -15,8 +15,9 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="ps-3">Hình ảnh</th>
-                        <th>Tên chi nhánh</th>
+                        <th class="ps-3">Tên chi nhánh</th>
+                        <th>Liên hệ</th>
+                        <th>Hình ảnh</th>
                         <th>Địa chỉ</th>
                         <th>Tọa độ</th>
                         <th class="text-center">Thao tác</th>
@@ -25,24 +26,37 @@
                 <tbody>
                     {% for store in stores %}
                     <tr>
-                        <td class="ps-3">
+                        <td class="ps-3 fw-bold text-dark">{{ store.name }}</td>
+                        
+                        <td>
+                            <span class="text-success small fw-bold">
+                                <i class="fas fa-phone-alt me-1"></i>{{ store.phone|default:"Chưa có" }}
+                            </span>
+                        </td>
+                        
+                        <td>
                             {% if store.image %}
-                                <img src="{{ store.image.url }}" width="50" height="50" class="rounded shadow-sm" style="object-fit: cover;">
+                                <img src="{{ store.image.url }}" width="50" height="40" class="rounded shadow-sm" style="object-fit: cover;">
                             {% else %}
-                                <img src="https://via.placeholder.com/50x50?text=No+Img" width="50" height="50" class="rounded shadow-sm">
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 40px;">
+                                    <i class="fas fa-image text-muted small"></i>
+                                </div>
                             {% endif %}
                         </td>
-                        <td class="fw-bold text-dark">{{ store.name }}</td>
+
                         <td>
-                            <small class="text-muted d-inline-block text-truncate" style="max-width: 300px;">
+                            <small class="text-muted d-inline-block text-truncate" style="max-width: 250px;" title="{{ store.address }}">
                                 {{ store.address }}
                             </small>
                         </td>
+
                         <td>
-                            <span class="badge bg-light text-dark border fw-normal">
-                                {{ store.latitude|floatformat:4 }}, {{ store.longitude|floatformat:4 }}
+                            {% load l10n %}
+                            <span class="badge bg-light text-dark border fw-normal" style="font-size: 0.8rem;">
+                                {{ store.latitude|unlocalize }}, {{ store.longitude|unlocalize }}
                             </span>
                         </td>
+
                         <td class="text-center">
                             <div class="btn-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
                                 <a href="{% url 'client:admin_store_edit' store.id %}" class="btn btn-outline-primary btn-sm border-end-0">
@@ -58,7 +72,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="fas fa-store-slash fa-2x mb-3 d-block"></i>
                             Chưa có cửa hàng nào trong hệ thống.
                         </td>

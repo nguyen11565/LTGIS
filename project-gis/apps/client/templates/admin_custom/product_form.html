@@ -32,6 +32,9 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">Hình ảnh</label>
                     <input type="file" name="image" class="form-control">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="img-thumbnail mt-2" style="height: 120px;">
+                    {% endif %}
                 </div>
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-danger px-5">LƯU SẢN PHẨM</button>

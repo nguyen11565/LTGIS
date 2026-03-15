@@ -6,9 +6,9 @@
         <div class="row">
             <div class="col-md-5">
                 <div class="card p-3 shadow-sm border-0">
-<h5 class="fw-bold mb-3 text-uppercase" style="letter-spacing: 1px;">
-    {% if store %}<i class="fas fa-edit me-2"></i>Sửa{% else %}<i class="fas fa-plus-circle me-2"></i>Thêm{% endif %} chi nhánh
-</h5>
+                    <h5 class="fw-bold mb-3 text-uppercase" style="letter-spacing: 1px;">
+                        {% if store %}<i class="fas fa-edit me-2"></i>Sửa{% else %}<i class="fas fa-plus-circle me-2"></i>Thêm{% endif %} chi nhánh
+                    </h5>
                     
                     <div class="mb-3">
                         <label class="small fw-bold text-secondary">Tên cửa hàng</label>
@@ -17,7 +17,21 @@
 
                     <div class="mb-3">
                         <label class="small fw-bold text-secondary">Địa chỉ</label>
-                        <input type="text" name="address" id="id_address" class="form-control" value="{{ store.address }}" required placeholder="Click bản đồ để lấy địa chỉ tự động">
+                        <div class="input-group shadow-sm">
+                            <input type="text" name="address" id="id_address" class="form-control" value="{{ store.address }}" placeholder="Nhập địa chỉ hoặc click bản đồ..." required>
+                            <button class="btn btn-dark" type="button" id="btn_search_address" title="Tìm tọa độ từ địa chỉ">
+                                <i class="fas fa-search-location"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.7rem;">Nhập địa chỉ rồi nhấn nút tìm hoặc click trực tiếp lên bản đồ.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="small fw-bold text-secondary">Hotline chi nhánh</label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-light"><i class="fas fa-phone-alt"></i></span>
+                            <input type="text" name="phone" class="form-control" value="{{ store.hotline }}" placeholder="Ví dụ: 0901 234 567">
+                        </div>
                     </div>
 
                     <div class="row">
@@ -33,13 +47,13 @@
 
                     <div class="mb-3">
                         <label class="small fw-bold text-secondary">Ảnh cửa hàng</label>
-                        <input type="file" name="image" class="form-control">
+                        <input type="file" name="image" class="form-control shadow-sm">
                         {% if store.image %}
                             <img src="{{ store.image.url }}" class="img-thumbnail mt-2" style="height: 100px;">
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 mt-2 py-2 fw-bold">
+                    <button type="submit" class="btn btn-primary w-100 mt-2 py-2 fw-bold shadow">
                         <i class="fas fa-save me-2"></i>LƯU DỮ LIỆU
                     </button>
                     <a href="{% url 'client:admin_store_list' %}" class="btn btn-link w-100 btn-sm text-decoration-none text-muted mt-2">Hủy bỏ</a>
@@ -47,7 +61,7 @@
             </div>
 
             <div class="col-md-7">
-                <div id="admin-map" style="height: 550px;" class="rounded-4 shadow-sm border"></div>
+                <div id="admin-map" style="height: 570px;" class="rounded-4 shadow-sm border"></div>
                 <div class="text-center mt-2">
                     <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 rounded-pill small">
                         <i class="fas fa-mouse-pointer me-1"></i> Click vào bản đồ để lấy tọa độ và địa chỉ tự động
@@ -61,10 +75,8 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-
-
 <script>
-    // 1. Khởi tạo tọa độ mặc định (Hồ Chí Minh)
+    // 1. Khởi tạo bản đồ
     var defaultLat = {{ store.latitude|default:10.7725 }};
     var defaultLon = {{ store.longitude|default:106.6980 }};
     
@@ -76,34 +88,84 @@
 
     var marker = L.marker([defaultLat, defaultLon]).addTo(map);
 
-    // 2. Xử lý sự kiện Click
+    // 2. LOGIC 1: CLICK BẢN ĐỒ -> RA ĐỊA CHỈ
     map.on('click', function(e) {
         var lat = e.latlng.lat;
         var lon = e.latlng.lng;
 
-        // Cập nhật Marker và Input tọa độ
         marker.setLatLng(e.latlng);
         document.getElementById('id_latitude').value = lat.toFixed(6);
         document.getElementById('id_longitude').value = lon.toFixed(6);
 
-        // 3. Gọi API Nominatim để lấy địa chỉ (Reverse Geocoding)
         var addressInput = document.getElementById('id_address');
-        addressInput.value = "Đang lấy địa chỉ...";
+        addressInput.value = "Đang xác định địa chỉ...";
 
-        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=vi`)
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=vi&zoom=18`)
             .then(response => response.json())
             .then(data => {
-                if (data.display_name) {
-                    // Cập nhật ô địa chỉ
-                    addressInput.value = data.display_name;
-                } else {
-                    addressInput.value = "Không tìm thấy địa chỉ tại vị trí này.";
+                if (data.address) {
+                    var addr = data.address;
+                    var house_number = addr.house_number || "";
+                    var road = addr.road || "";
+                    var suburb = addr.suburb || addr.quarter || addr.neighbourhood || "";
+                    var district = addr.district || addr.city_district || addr.county || "";
+                    var city = addr.city || addr.province || addr.state || "";
+
+                    if (district === city) district = "";
+
+                    var cleanAddress = [house_number, road, suburb, district, city]
+                        .filter(part => part !== "" && part !== undefined)
+                        .join(", ");
+
+                    addressInput.value = cleanAddress;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 addressInput.value = "Lỗi kết nối máy chủ địa chỉ.";
             });
+    });
+
+    // 3. LOGIC 2: NHẬP ĐỊA CHỈ TAY -> TÌM VỊ TRÍ TRÊN BẢN ĐỒ (Forward Geocoding)
+    document.getElementById('btn_search_address').addEventListener('click', function() {
+        var address = document.getElementById('id_address').value;
+        if (address.length < 5) {
+            alert("Vui lòng nhập địa chỉ chi tiết hơn.");
+            return;
+        }
+
+        // Gọi API tìm kiếm tọa độ
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&accept-language=vi`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    var lat = parseFloat(data[0].lat);
+                    var lon = parseFloat(data[0].lon);
+
+                    // Cập nhật Input
+                    document.getElementById('id_latitude').value = lat.toFixed(6);
+                    document.getElementById('id_longitude').value = lon.toFixed(6);
+
+                    // Di chuyển bản đồ và marker
+                    var newLatLng = new L.LatLng(lat, lon);
+                    marker.setLatLng(newLatLng);
+                    map.flyTo(newLatLng, 17); // Bay mượt đến vị trí mới
+                } else {
+                    alert("Không tìm thấy tọa độ cho địa chỉ này. Hãy thử click thủ công trên bản đồ.");
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Lỗi khi tìm kiếm vị trí.");
+            });
+    });
+
+    // Hỗ trợ nhấn Enter trong ô địa chỉ để tìm kiếm luôn
+    document.getElementById('id_address').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn_search_address').click();
+        }
     });
 </script>
 {% endblock %}

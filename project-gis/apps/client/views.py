@@ -17,12 +17,13 @@ from django.db.models import Sum
 # =========================================
 
 def home(request):
-    # 1. Lấy ID danh mục từ URL (ví dụ: ?category=1)
+    # 1. Lấy dữ liệu cơ bản
     category_id = request.GET.get('category')
     categories = Category.objects.all().order_by('name')
     
+    # 2. Logic lọc sản phẩm (Đã sửa lỗi ghi đè)
     if category_id:
-        # Lọc sản phẩm theo danh mục nếu có yêu cầu
+        # Lọc sản phẩm theo danh mục
         products = Product.objects.filter(category_id=category_id).order_by('-id')
         current_category = get_object_or_404(Category, id=category_id)
     else:
@@ -30,11 +31,9 @@ def home(request):
         products = Product.objects.all().order_by('-id')
         current_category = None
     
-    # Logic lấy Sản phẩm mới/nổi bật
-    products = Product.objects.all().order_by('-id')
-    
-    # LOGIC MỚI: Lấy Top 5 sản phẩm bán chạy nhất
-    # Ta tính tổng quantity trong OrderItem cho mỗi sản phẩm của đơn hàng đã 'completed'
+    # --- XÓA DÒNG products = Product.objects.all() Ở ĐÂY VÌ NÓ LÀM MẤT LOGIC LỌC PHÍA TRÊN ---
+
+    # 3. LOGIC Lấy Top 5 sản phẩm bán chạy nhất
     best_selling_products = Product.objects.filter(
         orderitem__order__status='completed'
     ).annotate(
@@ -44,8 +43,8 @@ def home(request):
     context = {
         'products': products,
         'categories': categories,
-        'best_selling_products': best_selling_products, # Chuyền thêm dữ liệu này
-        'current_category': None,
+        'best_selling_products': best_selling_products,
+        'current_category': current_category, # Cập nhật biến này để template nhận diện
     }
     return render(request, 'client/home.html', context)
 

@@ -37,6 +37,8 @@ urlpatterns = [
     path('my-admin/stores/add/', views_admin.store_add, name='admin_store_add'),
     path('my-admin/stores/edit/<int:pk>/', views_admin.store_edit, name='admin_store_edit'),
     path('my-admin/stores/delete/<int:pk>/', views_admin.store_delete, name='admin_store_delete'),
+    path('my-admin/stock/', views_admin.stock_management, name='admin_stock_management'),
+    path('my-admin/stock/print/<int:transaction_id>/', views_admin.print_stock_transaction, name='print_stock'),
 
     # QUẢN LÝ SẢN PHẨM
     path('my-admin/products/', views_admin.product_list, name='admin_product_list'),

@@ -19,12 +19,20 @@
                 </form>
 
                 <div class="list-group list-group-flush small">
+                    <a href="{% url 'client:admin_product_list' %}" 
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0 py-2 border-bottom {% if not selected_category %}fw-bold text-danger{% endif %}">
+                        <span><i class="fas fa-border-all me-2"></i>Tất cả sản phẩm</span>
+                    </a>
+
                     {% for cat in categories %}
                     <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-bottom">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="fw-bold text-dark">{{ cat.name }}</span>
+                            <a href="?category={{ cat.slug }}" 
+                               class="text-decoration-none {% if selected_category == cat.slug %}fw-bold text-danger{% else %}text-dark{% endif %}">
+                                {{ cat.name }}
+                            </a>
                             <span class="badge bg-light text-muted border rounded-pill" style="font-size: 0.7rem;">
-                                {{ cat.product_set.count }}
+                                {{ cat.products.count }}
                             </span>
                         </div>
                         
@@ -76,7 +84,14 @@
     <div class="col-md-9">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-mobile-alt me-2"></i>Danh sách sản phẩm</h5>
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-mobile-alt me-2"></i>
+                    {% if selected_category %}
+                        Sản phẩm: {{ selected_category|title }}
+                    {% else %}
+                        Danh sách sản phẩm
+                    {% endif %}
+                </h5>
                 <a href="{% url 'client:admin_product_add' %}" class="btn btn-danger btn-sm shadow-sm">
                     <i class="fas fa-plus me-1"></i> Đăng sản phẩm mới
                 </a>
@@ -127,7 +142,7 @@
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted">
                                     <i class="fas fa-box-open fa-2x mb-2 d-block"></i>
-                                    Chưa có sản phẩm nào trong kho.
+                                    Không tìm thấy sản phẩm nào trong danh mục này.
                                 </td>
                             </tr>
                             {% endfor %}

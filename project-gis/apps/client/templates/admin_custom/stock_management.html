@@ -1,0 +1,318 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+
+{% block admin_content %}
+
+<div class="card shadow border-0">
+
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">
+            <i class="fas fa-warehouse me-2"></i>
+            Quản lý Nhập / Xuất kho
+        </h5>
+
+        <span class="badge bg-light text-dark border">
+            Tổng số: {{ products|length }} sản phẩm
+        </span>
+    </div>
+
+
+    <div class="card-body p-0">
+
+        <table class="table table-hover align-middle mb-0">
+
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Sản phẩm</th>
+                    <th class="text-center">Tồn kho</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for p in products %}
+
+            <tr>
+
+                <td class="ps-3">
+                    <div class="fw-bold">{{ p.name }}</div>
+                    <small class="text-muted">
+                        {{ p.category.name|default:"Chưa phân loại" }}
+                    </small>
+                </td>
+
+
+                <td class="text-center">
+
+                    <span class="badge 
+                        {% if p.stock > 10 %}
+                            bg-success
+                        {% elif p.stock > 0 %}
+                            bg-warning text-dark
+                        {% else %}
+                            bg-danger
+                        {% endif %}
+                        fs-6 px-3">
+
+                        {{ p.stock|default:0|intcomma }}
+
+                    </span>
+
+                </td>
+
+
+                <td class="text-center">
+
+                    <button class="btn btn-outline-success btn-sm px-3"
+                        onclick="openStockModal(
+                            '{{p.id}}',
+                            '{{p.name}}',
+                            '{{p.stock}}',
+                            'in'
+                        )">
+
+                        <i class="fas fa-plus me-1"></i>
+                        Nhập
+
+                    </button>
+
+
+                    <button class="btn btn-outline-danger btn-sm px-3"
+                        onclick="openStockModal(
+                            '{{p.id}}',
+                            '{{p.name}}',
+                            '{{p.stock}}',
+                            'out'
+                        )">
+
+                        <i class="fas fa-minus me-1"></i>
+                        Xuất
+
+                    </button>
+
+                </td>
+
+            </tr>
+
+            {% empty %}
+
+            <tr>
+                <td colspan="3" class="text-center py-4 text-muted">
+                    Chưa có sản phẩm nào trong hệ thống
+                </td>
+            </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- MODAL NHẬP XUẤT KHO -->
+
+<div class="modal fade" id="stockModal" tabindex="-1">
+
+<div class="modal-dialog modal-dialog-centered">
+
+<div class="modal-content border-0 shadow">
+
+<form method="POST" action="{% url 'client:admin_stock_management' %}">
+
+{% csrf_token %}
+
+<div class="modal-header bg-light border-0">
+
+<h5 class="modal-title fw-bold" id="modalTitle"></h5>
+
+<button type="button"
+        class="btn-close"
+        data-bs-dismiss="modal">
+</button>
+
+</div>
+
+
+
+<div class="modal-body p-4">
+
+
+<input type="hidden" name="product_id" id="productId">
+
+<input type="hidden" name="transaction_type" id="transactionType">
+
+
+<div class="text-center mb-4">
+
+    <small class="text-muted text-uppercase">
+        Tồn kho hiện tại
+    </small>
+
+    <h3 class="fw-bold text-primary" id="currentStock"></h3>
+
+</div>
+
+
+
+<div class="mb-3">
+
+<label class="form-label small fw-bold text-secondary">
+Số lượng
+</label>
+
+<input type="number"
+       name="quantity"
+       id="quantityInput"
+       class="form-control form-control-lg text-center"
+       min="1"
+       value="1"
+       required>
+
+</div>
+
+
+<div class="mb-3">
+
+<label class="form-label small fw-bold text-secondary">
+Ghi chú
+</label>
+
+<textarea name="note"
+          class="form-control"
+          rows="2"
+          placeholder="Ví dụ: nhập hàng mới, khách trả hàng...">
+</textarea>
+
+</div>
+
+</div>
+
+
+
+<div class="modal-footer border-0 p-4 pt-0">
+
+<button type="button"
+        class="btn btn-light px-4"
+        data-bs-dismiss="modal">
+
+Hủy
+
+</button>
+
+
+<button type="submit"
+        class="btn btn-primary px-4 fw-bold">
+
+XÁC NHẬN
+
+</button>
+
+</div>
+
+
+</form>
+
+</div>
+</div>
+</div>
+
+
+
+<script>
+
+function openStockModal(id, name, stock, type) {
+
+    document.getElementById("productId").value = id
+    document.getElementById("transactionType").value = type
+
+    document.getElementById("currentStock").innerText = stock
+
+    document.getElementById("quantityInput").value = 1
+
+    let title = ""
+
+    if (type === "in") {
+
+        title =
+        '<i class="fas fa-plus-circle text-success me-2"></i>NHẬP KHO: ' + name
+
+    }
+
+    else {
+
+        title =
+        '<i class="fas fa-minus-circle text-danger me-2"></i>XUẤT KHO: ' + name
+
+    }
+
+    document.getElementById("modalTitle").innerHTML = title
+
+
+    var modal = new bootstrap.Modal(
+        document.getElementById('stockModal')
+    )
+
+    modal.show()
+
+}
+
+</script>
+<div class="card shadow border-0 mt-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2"></i>Nhật ký giao dịch gần đây</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Thời gian</th>
+                        <th>Sản phẩm</th>
+                        <th>Loại</th>
+                        <th class="text-center">Số lượng</th>
+                        <th>Người thực hiện</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td class="ps-3 small">{{ t.created_at|date:"d/m/Y H:i" }}</td>
+                        <td class="fw-bold">{{ t.product.name }}</td>
+                        <td>
+                            {% if t.transaction_type == 'in' %}
+                                <span class="badge bg-success-soft text-success">Nhập kho</span>
+                            {% else %}
+                                <span class="badge bg-danger-soft text-danger">Xuất kho</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center fw-bold">{{ t.quantity }}</td>
+                        <td class="small">{{ t.user.username|default:"Admin" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'client:print_stock' t.id %}" target="_blank" class="btn btn-sm btn-light border">
+                                <i class="fas fa-print me-1"></i> In
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Chưa có lịch sử giao dịch.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-success-soft { background-color: #e8f5e9; color: #2e7d32; }
+    .bg-danger-soft { background-color: #ffebee; color: #c62828; }
+</style>
+
+{% endblock %}

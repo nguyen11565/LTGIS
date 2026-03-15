@@ -47,6 +47,9 @@
             <a href="{% url 'client:admin_product_list' %}" class="nav-link {% if 'products' in request.path %}active{% endif %}">
                 <i class="fas fa-box"></i> Quản lý sản phẩm
             </a>
+            <a href="{% url 'client:admin_stock_management' %}" class="nav-link {% if 'stock' in request.path %}active{% endif %}">
+            <i class="fas fa-warehouse"></i> Quản lý kho hàng
+        </a>
             <a href="{% url 'client:admin_order_list' %}" class="nav-link {% if 'orders' in request.path %}active{% endif %}">
                 <i class="fas fa-shopping-cart"></i> Đơn hàng
             </a>

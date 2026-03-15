@@ -86,3 +86,47 @@ class Stores(models.Model):
 
     def __str__(self):
         return self.name
+    
+from django.contrib.auth.models import User # Đảm bảo có dòng này ở đầu file models.py
+
+class StockTransaction(models.Model):
+    TRANSACTION_TYPES = (
+        ('in', 'Nhập kho'),
+        ('out', 'Xuất kho'),
+    )
+
+    # Kết nối với sản phẩm
+    product = models.ForeignKey(
+        'Product', 
+        on_delete=models.CASCADE, 
+        related_name='stock_history',
+        verbose_name="Sản phẩm"
+    )
+    
+    # Số lượng và loại giao dịch
+    quantity = models.IntegerField(verbose_name="Số lượng thay đổi")
+    transaction_type = models.CharField(
+        max_length=3, 
+        choices=TRANSACTION_TYPES, 
+        verbose_name="Loại giao dịch"
+    )
+    
+    # Thông tin bổ sung
+    note = models.TextField(blank=True, null=True, verbose_name="Ghi chú/Lý do")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian thực hiện")
+    
+    # Người thực hiện (Lấy từ User đang đăng nhập)
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        verbose_name="Người thực hiện"
+    )
+
+    class Meta:
+        verbose_name = "Giao dịch kho"
+        verbose_name_plural = "Lịch sử giao dịch kho"
+        ordering = ['-created_at'] # Luôn hiện giao dịch mới nhất lên đầu
+
+    def __str__(self):
+        return f"{self.get_transaction_type_display()} - {self.product.name} ({self.quantity})"

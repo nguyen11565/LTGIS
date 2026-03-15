@@ -51,16 +51,18 @@
                     <div class="bg-dark text-white p-3 fw-bold small"><i class="fas fa-bars me-2"></i>DANH MỤC SẢN PHẨM</div>
                     <div class="list-group list-group-flush">
                         <a href="{% url 'client:home' %}" 
-                           class="list-group-item list-group-item-action cat-item {% if not current_category %}active{% endif %}">
+                    <div class="list-group">
+                        <a href="{% url 'client:home' %}" 
+                        class="list-group-item list-group-item-action {% if not current_category %}active fw-bold{% endif %}">
                             Tất cả sản phẩm
                         </a>
 
                         {% for cat in categories %}
-                            <a href="{% url 'client:home' %}?category={{ cat.id }}" 
-                               class="list-group-item list-group-item-action cat-item d-flex justify-content-between align-items-center {% if current_category.id == cat.id %}active{% endif %}">
-                                {{ cat.name }} 
-                                <i class="fas fa-chevron-right text-muted small" style="font-size: 10px;"></i>
-                            </a>
+                        <a href="?category={{ cat.id }}" 
+                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if current_category.id == cat.id %}active fw-bold{% endif %}">
+                            {{ cat.name }}
+                            <i class="fas fa-chevron-right small"></i>
+                        </a>
                         {% endfor %}
                     </div>
                 </div>

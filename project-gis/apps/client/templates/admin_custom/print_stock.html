@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Phiếu {{ t.get_transaction_type_display }} - {{ t.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: white; font-family: "Times New Roman", Times, serif; }
+        .invoice-box { padding: 30px; border: 1px solid #eee; max-width: 800px; margin: auto; }
+        .header-title { text-transform: uppercase; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        @media print {
+            .no-print { display: none; }
+            .invoice-box { border: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="container mt-4 no-print text-end">
+        <button onclick="window.print()" class="btn btn-primary">In phiếu</button>
+        <button onclick="window.history.back()" class="btn btn-secondary">Quay lại</button>
+    </div>
+
+    <div class="invoice-box mt-3">
+        <div class="row">
+            <div class="col-6">
+                <h5 class="fw-bold">PHONESTORE GIS</h5>
+                <p class="small mb-0">Địa chỉ: 19 Tô Hiến Thành, Quận 10, TP. HCM</p>
+                <p class="small">Hotline: 0905 678 901</p>
+            </div>
+            <div class="col-6 text-end">
+                <p class="mb-0">Mã phiếu: <strong>#{{ t.id }}</strong></p>
+                <p>Ngày lập: {{ t.created_at|date:"d/m/Y H:i" }}</p>
+            </div>
+        </div>
+
+        <h3 class="header-title">PHIẾU {{ t.get_transaction_type_display }} KHO</h3>
+
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Số lượng</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ t.product.name }}</div>
+                        <small>{{ t.product.category.name }}</small>
+                    </td>
+                    <td class="text-center fs-5 fw-bold">{{ t.quantity }}</td>
+                    <td>{{ t.note|default:"-" }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="row mt-5 text-center">
+            <div class="col-6">
+                <p class="mb-5">Người lập phiếu</p>
+                <p class="fw-bold">{{ t.user.username|default:"Admin" }}</p>
+            </div>
+            <div class="col-6">
+                <p class="mb-5">Người nhận/giao hàng</p>
+                <p class="text-muted">(Ký và ghi rõ họ tên)</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

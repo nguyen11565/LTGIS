@@ -5,6 +5,10 @@ from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.utils.text import slugify  # Quan trọng: Dùng để tạo slug tự động
 from datetime import datetime, timedelta
+from django.contrib import messages
+from django.db import transaction
+from apps.core.models import Product, StockTransaction
+
 
 # Import models
 from apps.core.models import Store, Product, Order, Category, OrderItem
@@ -63,6 +67,7 @@ def store_add(request):
         name = request.POST.get('name')
         address = request.POST.get('address')
         latitude = request.POST.get('latitude')
+        phone = request.POST.get('phone')
         longitude = request.POST.get('longitude')
         image = request.FILES.get('image')
 
@@ -84,6 +89,7 @@ def store_edit(request, pk):
     if request.method == 'POST':
         store.name = request.POST.get('name')
         store.address = request.POST.get('address')
+        store.phone = request.POST.get('phone')
         store.latitude = request.POST.get('latitude')
         store.longitude = request.POST.get('longitude')
         
@@ -112,16 +118,24 @@ def store_delete(request, pk):
 @staff_member_required(login_url='client:login')
 def product_list(request):
     categories = Category.objects.all().order_by('name')
-    products = Product.objects.all().order_by('-id')
+    
+    # Lấy slug danh mục từ tham số GET trên URL (ví dụ: ?category=iphone)
+    category_slug = request.GET.get('category')
+    
+    if category_slug:
+        # Lọc sản phẩm thuộc danh mục có slug tương ứng
+        # Lưu ý: Dùng 'category__slug' vì Product liên kết với Category
+        products = Product.objects.filter(category__slug=category_slug).order_by('-id')
+    else:
+        # Nếu không có tham số, hiển thị tất cả sản phẩm như cũ
+        products = Product.objects.all().order_by('-id')
 
-    # XỬ LÝ THÊM DANH MỤC NHANH (Cập nhật tạo Slug để tránh lỗi Unique)
+    # --- Phần xử lý POST (thêm danh mục) giữ nguyên như cũ ---
     if request.method == 'POST' and 'add_category' in request.POST:
         cat_name = request.POST.get('cat_name')
         if cat_name:
             new_slug = slugify(cat_name)
-            if Category.objects.filter(slug=new_slug).exists():
-                messages.error(request, f"Danh mục '{cat_name}' đã tồn tại!")
-            else:
+            if not Category.objects.filter(slug=new_slug).exists():
                 Category.objects.create(name=cat_name, slug=new_slug)
                 messages.success(request, f"Đã thêm danh mục: {cat_name}")
                 return redirect('client:admin_product_list')
@@ -129,6 +143,7 @@ def product_list(request):
     context = {
         'categories': categories,
         'products': products,
+        'selected_category': category_slug, # Gửi slug đang chọn về template
     }
     return render(request, 'admin_custom/product_management.html', context)
 
@@ -240,3 +255,59 @@ def order_detail(request, pk):
         'status_choices': Order.STATUS_CHOICES
     }
     return render(request, 'admin_custom/order_detail.html', context)
+
+#nhập xuất kho
+def stock_management(request):
+    # 1. Lấy dữ liệu hiển thị (Dùng đúng tên model mới StockTransaction)
+    products = Product.objects.all().order_by("name")
+    transactions = StockTransaction.objects.all().order_by('-created_at')[:10]
+
+    if request.method == "POST":
+        product_id = request.POST.get("product_id")
+        quantity_str = request.POST.get("quantity")
+        t_type = request.POST.get("transaction_type")
+        note = request.POST.get("note", "") # Lấy thêm ghi chú từ form
+
+        if not product_id or not quantity_str:
+            messages.error(request, "Dữ liệu không hợp lệ")
+            return redirect("client:admin_stock_management")
+
+        quantity = int(quantity_str)
+        product = get_object_or_404(Product, id=product_id)
+
+        # 2. Cập nhật tồn kho của Sản phẩm
+        if t_type == "in":
+            product.stock = product.stock + quantity
+        elif t_type == "out":
+            if product.stock < quantity:
+                messages.error(request, f"Không đủ hàng (Hiện còn: {product.stock})")
+                return redirect("client:admin_stock_management")
+            product.stock = product.stock - quantity
+        
+        product.save()
+
+        # 3. QUAN TRỌNG: Tạo bản ghi lịch sử giao dịch (Chỗ này bạn đang thiếu)
+        StockTransaction.objects.create(
+            product=product,
+            quantity=quantity,
+            transaction_type=t_type,
+            note=note,
+            user=request.user # Lưu người thực hiện
+        )
+
+        messages.success(request, f"Đã { 'nhập' if t_type == 'in' else 'xuất' } {quantity} {product.name} thành công")
+        return redirect("client:admin_stock_management")
+
+    return render(
+        request,
+        "admin_custom/stock_management.html",
+        {
+            "products": products,
+            "transactions": transactions
+        }
+    )
+# In hóa đơn nhập xuất kho
+@staff_member_required
+def print_stock_transaction(request, transaction_id):
+    transaction = get_object_or_404(StockTransaction, id=transaction_id)
+    return render(request, 'admin_custom/print_stock.html', {'t': transaction})

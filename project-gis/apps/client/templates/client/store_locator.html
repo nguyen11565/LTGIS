@@ -47,6 +47,7 @@
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
+                
 
                 <div class="p-3 bg-light border-bottom">
                     <div class="input-group mb-3 shadow-sm rounded-3 overflow-hidden">
@@ -99,6 +100,8 @@
         </button>
     </div>
 </div>
+
+
 
 <div class="modal fade" id="storeDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -293,6 +296,26 @@ function filterStores() {
         fitSelectedRoutes: true,
         createMarker: function() { return null; }
     }).addTo(map);
+
+    // CHÈN NÚT THOÁT VÀO BẢNG CHỈ DẪN
+    routingControl.on('routesfound', function() {
+        // Tìm container của bảng chỉ dẫn
+        var container = document.querySelector('.leaflet-routing-container');
+        
+        // Kiểm tra xem nút đã tồn tại chưa để tránh bị lặp lại nhiều nút
+        if (container && !document.querySelector('.routing-close-btn')) {
+            var closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '<i class="fas fa-times-circle me-1"></i> Thoát chỉ đường';
+            closeBtn.className = 'routing-close-btn';
+            
+            // Gán sự kiện cho nút
+            closeBtn.onclick = function() {
+                closeRouting();
+            };
+            
+            container.appendChild(closeBtn);
+        }
+    });
 
     // Cuộn tới bản đồ
     document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
@@ -543,6 +566,80 @@ function clearCustomLocation() {
     // Hiển thị Modal
     var myModal = new bootstrap.Modal(document.getElementById('storeDetailModal'));
     myModal.show();
+}
+
+// Biến toàn cục để quản lý bộ điều khiển chỉ đường
+var routingControl = null; 
+
+// Hàm xóa chỉ đường và quay lại trạng thái ban đầu
+function closeRouting() {
+    // 1. Xóa các đường vẽ chỉ đường trên bản đồ
+    if (routingControl) {
+        map.removeControl(routingControl);
+        routingControl = null;
+    }
+
+    // 2. Ẩn bảng thông tin chỉ đường
+    document.getElementById('routeInfo').classList.add('d-none');
+
+    // 3. Hiển thị lại danh sách các chi nhánh (nếu bạn có ẩn đi trước đó)
+    // document.getElementById('store-list').classList.remove('d-none');
+
+    // 4. Đưa bản đồ về vị trí trung tâm ban đầu hoặc bao quát các store
+    if (userLat && userLon) {
+        // Zoom vào vị trí của người dùng (ví dụ zoom level 15 để thấy rõ hơn)
+        map.setView([userLat, userLon], 15); 
+    } else {
+        // Trường hợp chưa có vị trí GPS thì mới đưa về mặc định
+        map.setView([10.7725, 106.6980], 13);
+    }
+    
+    // 5. Đóng mọi Popup đang mở
+    map.closePopup();
+}
+
+// CẬP NHẬT HÀM GETDIRECTIONS CŨ CỦA BẠN:
+function getDirections(storeLat, storeLon) {
+    // Nếu đang có một lộ trình cũ, hãy xóa nó trước khi tạo lộ trình mới
+    if (routingControl) {
+        map.removeControl(routingControl);
+    }
+
+    if (!userLat || !userLon) {
+        alert("Vui lòng cho phép truy cập vị trí để sử dụng tính năng này.");
+        return;
+    }
+
+    // Hiển thị khung thông tin
+    document.getElementById('routeInfo').classList.remove('d-none');
+    
+
+    // Khởi tạo routing control mới
+    routingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(userLat, userLon),
+            L.latLng(storeLat, storeLon)
+        ],
+        lineOptions: {
+            styles: [{ color: '#3388ff', weight: 6, opacity: 0.8 }]
+        },
+        createMarker: function() { return null; }, // Không tạo thêm marker mặc định của routing
+        addWaypoints: false,
+        routeWhileDragging: false,
+        show: false // Ẩn bảng hướng dẫn chi tiết của Leaflet Routing Machine nếu muốn
+    }).on('routesfound', function(e) {
+        var routes = e.routes;
+        var summary = routes[0].summary;
+        // Hiển thị thông tin vào routeDetails
+        document.getElementById('routeDetails').innerHTML = `
+            <p class="mb-1 small">Khoảng cách: <strong>${(summary.totalDistance / 1000).toFixed(1)} km</strong></p>
+            <p class="mb-0 small">Thời gian đi: <strong>${Math.round(summary.totalTime / 60)} phút</strong></p>
+        `;
+    }).addTo(map);
+
+    // Đóng Modal chi tiết store (nếu bạn đang dùng modal)
+    var storeModal = bootstrap.Modal.getInstance(document.getElementById('storeModal'));
+    if (storeModal) storeModal.hide();
 }
     </script>
     <div class="modal fade" id="storeDetailModal" tabindex="-1" aria-hidden="true">
