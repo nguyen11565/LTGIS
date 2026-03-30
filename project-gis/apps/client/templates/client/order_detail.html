@@ -1,0 +1,125 @@
+{% extends 'client/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'client:my_orders' %}" class="text-decoration-none">Đơn hàng của tôi</a></li>
+            <li class="breadcrumb-item active">Chi tiết đơn hàng #{{ order.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-danger">
+                <i class="fas fa-file-invoice me-2"></i>CHI TIẾT ĐƠN HÀNG #{{ order.id }}
+            </h5>
+            
+            {% if order.status == 'pending' %}
+            <form action="{% url 'client:cancel_order' order.id %}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-times-circle me-1"></i> Hủy đơn hàng
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row mb-4 pb-3 border-bottom">
+                <div class="col-md-6">
+                    <p class="text-muted mb-1 small text-uppercase">Thông tin đơn hàng</p>
+                    <p class="mb-1">Ngày đặt: <strong>{{ order.created_at|date:"d/m/Y H:i" }}</strong></p>
+                    <p class="mb-0">Trạng thái: 
+                        <span class="badge 
+                            {% if order.status == 'pending' %}bg-warning text-dark
+                            {% elif order.status == 'cancelled' %}bg-secondary
+                            {% else %}bg-primary{% endif %} rounded-pill px-3">
+                            {{ order.get_status_display }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-1 small text-uppercase">Địa chỉ nhận hàng</p>
+                    <p class="mb-1">Người nhận: <strong>{{ order.full_name }}</strong></p>
+                    <p class="mb-0 text-muted">{{ order.address }}</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 100px;">Sản phẩm</th>
+                            <th>Tên sản phẩm</th>
+                            <th class="text-center">Số lượng</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                {% if item.product.image %}
+                                    <img src="{{ item.product.image.url }}" 
+                                         alt="{{ item.product.name }}" 
+                                         class="img-fluid rounded-3 shadow-sm" 
+                                         style="width: 70px; height: 70px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ item.product.name }}</div>
+                                <small class="text-muted">Mã SP: #{{ item.product.id }}</small>
+                            </td>
+                            <td class="text-center">x{{ item.quantity }}</td>
+                            <td class="text-end">{{ item.price|floatformat:0|intcomma }}đ</td>
+                            <td class="text-end fw-bold text-danger">
+                                {{ item.get_total_item_price|floatformat:0|intcomma }}đ
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="border-top-0">
+                        <tr>
+                            <td colspan="4" class="text-end fw-bold fs-5 border-0 pt-4">TỔNG CỘNG:</td>
+                            <td class="text-end fw-bold fs-5 text-danger border-0 pt-4">
+                                {{ order.total_price|floatformat:0|intcomma }}đ
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-light border-0 py-3 px-4">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i> 
+                Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ hotline <strong>1800.xxxx</strong> để được hỗ trợ nhanh nhất.
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Làm mờ các đơn hàng đã bị hủy */
+    {% if order.status == 'cancelled' %}
+    .table tbody tr {
+        opacity: 0.6;
+    }
+    {% endif %}
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "\f105";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}

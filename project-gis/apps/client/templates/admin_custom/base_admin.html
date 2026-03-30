@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-width: 260px; --primary-color: #d70018; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* Sidebar Style */
+        .sidebar { 
+            width: var(--sidebar-width); height: 100vh; position: fixed; 
+            background: #212529; color: white; transition: all 0.3s; z-index: 1000;
+        }
+        .sidebar-header { padding: 20px; text-align: center; background: rgba(0,0,0,0.2); }
+        .nav-link { color: #adb5bd; padding: 12px 20px; border-radius: 0; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { background: var(--primary-color); color: white; }
+        .nav-link i { width: 25px; }
+
+        /* Main Content Style */
+        .main-wrapper { margin-left: var(--sidebar-width); min-height: 100vh; transition: all 0.3s; }
+        .topbar { background: white; padding: 15px 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .content-body { padding: 30px; }
+        
+        /* Card Stats */
+        .card-stat { border: none; border-radius: 12px; transition: 0.3s; color: white; }
+        .card-stat:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 fw-bold"><i class="fas fa-mobile-alt me-2"></i>PHONE ADMIN</h4>
+        </div>
+        <div class="nav flex-column mt-3">
+            <a href="{% url 'client:admin_dashboard' %}" class="nav-link active">
+                <i class="fas fa-tachometer-alt"></i> Tổng quan
+            </a>
+            <a href="{% url 'client:admin_store_list' %}" class="nav-link">
+                <i class="fas fa-store"></i> Quản lý cửa hàng
+            </a>
+            <a href="{% url 'client:admin_product_list' %}" class="nav-link {% if 'products' in request.path %}active{% endif %}">
+                <i class="fas fa-box"></i> Quản lý sản phẩm
+            </a>
+            <a href="{% url 'client:admin_stock_management' %}" class="nav-link {% if 'stock' in request.path %}active{% endif %}">
+            <i class="fas fa-warehouse"></i> Quản lý kho hàng
+        </a>
+            <a href="{% url 'client:admin_order_list' %}" class="nav-link {% if 'orders' in request.path %}active{% endif %}">
+                <i class="fas fa-shopping-cart"></i> Đơn hàng
+            </a>
+            <hr class="mx-3 bg-secondary">
+            <a href="{% url 'client:home' %}" class="nav-link">
+                <i class="fas fa-external-link-alt"></i> Xem trang chủ
+            </a>
+            <a href="{% url 'client:logout' %}" class="nav-link text-danger">
+                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+            </a>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <div class="topbar d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-secondary">Hệ thống quản trị</h5>
+            <div class="user-info">
+                <span class="me-2 small text-muted">Xin chào, <strong>{{ user.username }}</strong></span>
+                <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=random" class="rounded-circle" width="35">
+            </div>
+        </div>
+
+        <div class="content-body">
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -14,10 +14,26 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# from django.contrib import admin
+# from django.urls import path, include
+
+# urlpatterns = [
+#     path('admin/', admin.site.urls), # Đảm bảo dòng này TRỎ ĐÚNG vào admin.site.urls
+#     path('', include('apps.client.urls')),
+#     path('admin_panel/', include('apps.admin_panel.urls')), # Nếu bạn có trang admin riêng thì đổi tên prefix này
+    
+# ]
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('app.urls')),
+    # Thêm namespace='client' vào đây để Django hiểu ngay lập tức
+path('', include(('apps.client.urls', 'client'), namespace='client')),
 ]
+
+# Thêm đoạn này để Django hiển thị ảnh khi đang chạy thử nghiệm (DEBUG=True)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

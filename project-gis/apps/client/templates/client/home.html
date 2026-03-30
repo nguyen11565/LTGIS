@@ -1,0 +1,358 @@
+{% extends 'client/base.html' %}
+{% load humanize %} 
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<style>
+    /* DANH MỤC */
+    .cat-item { border: none; padding: 12px 15px; font-size: 14px; font-weight: 500; transition: 0.2s; border-left: 4px solid transparent; }
+    .cat-item:hover { background-color: #fff1f2 !important; color: #d70018 !important; padding-left: 20px; }
+    
+    /* Hiệu ứng khi danh mục đang được chọn */
+    .cat-item.active { 
+        background-color: #fff1f2 !important; 
+        color: #d70018 !important; 
+        border-left: 4px solid #d70018; 
+        font-weight: bold;
+    }
+
+    /* -------------------------------------
+       CSS BỐ CỤC CHUNG & SIDEBAR (CẬP NHẬT THEO YÊU CẦU)
+       ------------------------------------- */
+    body { background-color: #f4f6f8; }
+    
+    .sidebar-menu .list-group-item {
+        border: none; padding: 12px 15px; font-weight: 500; font-size: 15px;
+        color: #444; border-left: 4px solid transparent; transition: 0.3s;
+    }
+    .sidebar-menu .list-group-item:hover,
+    .sidebar-menu .list-group-item.active {
+        background-color: #fff1f2 !important; color: #d70018 !important;
+        border-left: 4px solid #d70018; font-weight: bold;
+    }
+    
+    .filter-card { border-radius: 12px; margin-bottom: 20px; overflow: hidden; background: #fff; }
+    .filter-header { font-weight: bold; padding: 15px 20px; border-bottom: 1px solid #f0f0f0; font-size: 16px; color: #333; }
+    .filter-body { padding: 15px 20px; }
+    
+    /* RANGE SLIDER MỚI (KIỂU 2 NÚM KÉO MÀU XANH) */
+    .price-range-wrapper { position: relative; padding-top: 15px; margin-bottom: 20px; }
+    .range-track {
+        height: 6px; background-color: #e0e0e0; border-radius: 4px; position: absolute; width: 100%; top: 22px; z-index: 1;
+    }
+    .range-fill {
+        height: 6px; background-color: #009981; border-radius: 4px; position: absolute; top: 22px; z-index: 2;
+    }
+    input[type=range] {
+        -webkit-appearance: none; width: 100%; position: absolute; top: 15px; z-index: 3; background: transparent; pointer-events: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #009981; 
+        cursor: pointer; pointer-events: auto; position: relative; z-index: 4; box-shadow: 0 0 0 4px rgba(0,153,129,0.2);
+    }
+    
+    /* Box nhập giá giống hình */
+    .price-input-box { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; }
+    .price-input-box input {
+        width: 45%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; 
+        font-weight: bold; color: #000; text-align: center; font-size: 14px;
+    }
+
+    /* Radio button Custom cho các mức giá dựng sẵn */
+    .price-list .form-check-label { cursor: pointer; color: #555; transition: 0.2s; font-size: 14px;}
+    .price-list .form-check-input:checked + .form-check-label { color: #d70018; font-weight: bold; }
+
+
+    /* -------------------------------------
+       CSS CHO HERO BANNER (KIỂU HOÀNG HÀ)
+       ------------------------------------- */
+    .hero-section { margin-bottom: 30px; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .hero-main-slider { width: 100%; height: 350px; border-radius: 12px 12px 0 0; }
+    .hero-main-slider img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .hero-main-slider .swiper-button-next, .hero-main-slider .swiper-button-prev {
+        background-color: rgba(255, 255, 255, 0.9); color: #333; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .hero-main-slider .swiper-button-next::after, .hero-main-slider .swiper-button-prev::after { font-size: 16px; font-weight: bold; }
+
+    .hero-thumbs-slider { padding: 0 10px; background: #fff; border-top: 1px solid #eee; }
+    .custom-thumb-slide {
+        text-align: center; cursor: pointer; padding: 15px 5px; 
+        border-bottom: 3px solid transparent; transition: all 0.3s ease; opacity: 0.6; position: relative;
+    }
+    .custom-thumb-slide::after { content: ''; position: absolute; bottom: -3px; left: 10%; width: 80%; height: 3px; background-color: #e0e0e0; transition: 0.3s; }
+    .custom-thumb-slide:hover { opacity: 0.8; }
+    .hero-thumbs-slider .swiper-slide-thumb-active { opacity: 1; }
+    .hero-thumbs-slider .swiper-slide-thumb-active::after { background-color: #009981; } 
+    .hero-thumbs-slider .swiper-slide-thumb-active .thumb-title { color: #009981; }
+
+    .thumb-title { font-weight: bold; font-size: 14px; color: #333; margin-bottom: 3px; transition: 0.3s; }
+    .thumb-subtitle { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* -------------------------------------
+       CARD SẢN PHẨM 
+       ------------------------------------- */
+    .product-card {
+        background: white; border-radius: 12px; border: 1px solid #eee; transition: 0.3s;
+        height: 100%; position: relative; display: flex; flex-direction: column;
+    }
+    .product-card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.1); transform: translateY(-5px); border-color: #d70018;}
+    
+    .product-img-box { padding: 15px; height: 180px; display: flex; align-items: center; justify-content: center; }
+    .product-img { max-height: 100%; transition: 0.3s; }
+    .product-card:hover .product-img { transform: scale(1.08); }
+
+    .product-body { padding: 15px; flex-grow: 1; }
+    .product-name { font-size: 14px; font-weight: 600; color: #333; line-height: 1.4; height: 40px; overflow: hidden; }
+    .product-price { color: #d70018; font-size: 16px; font-weight: 800; }
+
+    .badge-promo { position: absolute; top: 10px; left: 10px; background: #d70018; color: white; font-size: 10px; padding: 3px 8px; border-radius: 5px; z-index: 1; font-weight:bold; }
+    .btn-cart-quick { background: #f8f9fa; color: #d70018; border: 1px solid #eee; border-radius: 8px; padding: 6px 12px; font-size: 13px; transition: 0.3s; }
+    .btn-cart-quick:hover { background: #d70018; color: white; border-color: #d70018; }
+
+    @media (max-width: 991px) { .hero-main-slider { height: 200px; } .thumb-title { font-size: 12px; } .thumb-subtitle { font-size: 10px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4">
+        
+        <div class="col-lg-3">
+            <form method="GET" action="{% url 'client:home' %}" id="filterForm">
+                
+                <div class="card filter-card shadow-sm">
+                    <div class="list-group list-group-flush sidebar-menu rounded">
+                        <a href="{% url 'client:home' %}" class="list-group-item list-group-item-action {% if not request.GET %}active{% endif %}">
+                            <i class="fas fa-home me-2 w-20px text-center"></i> Trang chủ
+                        </a>
+                        <a href="{% url 'client:home' %}?view=all" class="list-group-item list-group-item-action {% if request.GET.view == 'all' %}active{% endif %}">
+                            <i class="fas fa-th-large me-2 w-20px text-center"></i> Tất cả sản phẩm
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card filter-card shadow-sm">
+                    <div class="filter-header d-flex justify-content-between align-items-center">
+                        <span>Lựa chọn hãng</span>
+                        <i class="fas fa-chevron-down text-muted small"></i>
+                    </div>
+                    <div class="filter-body pt-2">
+                        {% for cat in categories %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="category" id="cat_{{ cat.id }}" value="{{ cat.id }}" {% if current_category.id == cat.id or request.GET.category == cat.id|stringformat:"s" %}checked{% endif %}>
+                            <label class="form-check-label fw-medium text-dark" for="cat_{{ cat.id }}">{{ cat.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card filter-card shadow-sm">
+                    <div class="filter-header d-flex justify-content-between align-items-center">
+                        <span>Mức giá</span>
+                        <i class="fas fa-plus text-muted small"></i>
+                    </div>
+                    <div class="filter-body pt-0">
+                        
+                        <div class="price-range-wrapper">
+                            <div class="range-track"></div>
+                            <div class="range-fill" id="rangeFill"></div>
+                            <input type="range" id="minRange" min="0" max="200000000" step="500000" value="{{ request.GET.min_price|default:'0' }}">
+                            <input type="range" id="maxRange" min="0" max="200000000" step="500000" value="{{ request.GET.max_price|default:'40800000' }}">
+                        </div>
+                        
+                        <div class="price-input-box">
+                            <input type="text" id="minPriceInput" name="min_price" value="{{ request.GET.min_price|default:'0'|intcomma }}" readonly>
+                            <span class="text-muted fw-bold">-</span>
+                            <input type="text" id="maxPriceInput" name="max_price" value="{{ request.GET.max_price|default:'40800000'|intcomma }}" readonly>
+                        </div>
+
+                        <hr class="text-muted mt-4">
+
+                        <div class="price-list">
+                            {% with p_range=request.GET.price_range %}
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="1-3" id="p1" {% if p_range == '1-3' %}checked{% endif %}><label class="form-check-label" for="p1">Từ 1 - 3 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="3-5" id="p2" {% if p_range == '3-5' %}checked{% endif %}><label class="form-check-label" for="p2">Từ 3 - 5 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="5-10" id="p3" {% if p_range == '5-10' %}checked{% endif %}><label class="form-check-label" for="p3">Từ 5 - 10 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="10-15" id="p4" {% if p_range == '10-15' %}checked{% endif %}><label class="form-check-label" for="p4">Từ 10 - 15 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="15-20" id="p5" {% if p_range == '15-20' %}checked{% endif %}><label class="form-check-label" for="p5">Từ 15 - 20 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="20-25" id="p6" {% if p_range == '20-25' %}checked{% endif %}><label class="form-check-label" for="p6">Từ 20 - 25 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="25-30" id="p7" {% if p_range == '25-30' %}checked{% endif %}><label class="form-check-label" for="p7">Từ 25 - 30 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="30-50" id="p8" {% if p_range == '30-50' %}checked{% endif %}><label class="form-check-label" for="p8">Từ 30 - 50 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="50-85" id="p9" {% if p_range == '50-85' %}checked{% endif %}><label class="form-check-label" for="p9">Từ 50 - 85 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="85+" id="p10" {% if p_range == '85+' %}checked{% endif %}><label class="form-check-label" for="p10">Trên 85 triệu</label></div>
+                            {% endwith %}
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger w-100 mt-3 fw-bold rounded shadow-sm">ÁP DỤNG LỌC</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+        <div class="col-lg-9">
+            
+            {% if not request.GET.view and not request.GET.category and not request.GET.price_range and not request.GET.max_price %}
+                
+                <div class="hero-section">
+                    <div class="swiper hero-main-slider">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide"><img src="https://cdn.hoanghamobile.vn/i/home/Uploads/2026/02/27/xiaomi-17-ultra-01.png" alt="Banner 1"></div>
+                            <div class="swiper-slide"><img src="https://cdn.hoanghamobile.vn/i/home/Uploads/2026/03/25/banner-s26-1200x375-2503c.png" alt="Banner 2"></div>
+                            <div class="swiper-slide"><img src="https://cdn.hoanghamobile.vn/i/home/Uploads/2026/03/27/oppo-find-n6-web_639101991274255973.png" alt="Banner 3"></div>
+                            <div class="swiper-slide"><img src="https://cdn.hoanghamobile.vn/i/home/Uploads/2026/03/06/honor-x8d-web.jpg" alt="Banner 4"></div>
+                        </div>
+                        <div class="swiper-button-next"></div><div class="swiper-button-prev"></div>
+                    </div>
+
+                    <div thumbsSlider="" class="swiper hero-thumbs-slider">
+                        <div class="swiper-wrapper">
+                            <div class="swiper-slide custom-thumb-slide"><div class="thumb-title">Xiaomi 17 Ultra</div><div class="thumb-subtitle">Tinh Hoa Nhiếp Ảnh Leica</div></div>
+                            <div class="swiper-slide custom-thumb-slide"><div class="thumb-title">Galaxy S26 Series</div><div class="thumb-subtitle">Giá chỉ từ 22.490.000₫</div></div>
+                            <div class="swiper-slide custom-thumb-slide"><div class="thumb-title">OPPO Find N6</div><div class="thumb-subtitle">Đặt trước rước ngay</div></div>
+                            <div class="swiper-slide custom-thumb-slide"><div class="thumb-title">HONOR X8d</div><div class="thumb-subtitle">Sắc Thanh Tao - Chuẩn 5 Sao</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end mb-3 mt-4">
+                    <h5 class="fw-bold mb-0 text-uppercase" style="letter-spacing: 0.5px;">Sản phẩm bán chạy</h5>
+                    <span class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill small">🔥 Đang cháy hàng</span>
+                </div>
+                
+                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-5">
+                    {% for product in best_selling_products %}
+                    <div class="col">
+                        <div class="product-card shadow-sm">
+                            <div class="position-absolute top-0 end-0 m-2" style="z-index: 2;">
+                                <span class="badge bg-danger rounded-circle p-2" title="Bán chạy"><i class="fas fa-fire"></i></span>
+                            </div>
+                            <a href="{% url 'client:product_detail' product.id %}" class="product-img-box text-decoration-none">
+                                <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" class="product-img" alt="{{ product.name }}">
+                            </a>
+                            <div class="product-body">
+                                <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none"><div class="product-name mb-1">{{ product.name }}</div></a>
+                                <div class="product-price mb-2">{{ product.price|floatformat:0|intcomma }}₫</div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Đã bán {{ product.total_sold }}</small>
+                                    <a href="{% url 'client:cart_add' product.id %}" class="btn-cart-quick"><i class="fas fa-cart-plus"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <h5 class="fw-bold mb-3 text-uppercase mt-5">Dành cho bạn</h5>
+            
+            {% else %}
+                <div class="d-flex justify-content-between align-items-end mb-4 bg-white p-3 rounded shadow-sm border">
+                    <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-filter me-2"></i> KẾT QUẢ TÌM KIẾM</h5>
+                    <span class="text-muted fw-bold">Tìm thấy {{ products|length }} sản phẩm</span>
+                </div>
+            {% endif %}
+
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-5">
+                {% for product in products %}
+                <div class="col">
+                    <div class="product-card shadow-sm">
+                        <span class="badge-promo">Trả góp 0%</span>
+                        <a href="{% url 'client:product_detail' product.id %}" class="product-img-box text-decoration-none">
+                            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" class="product-img" alt="{{ product.name }}">
+                        </a>
+                        <div class="product-body">
+                            <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none"><div class="product-name mb-1">{{ product.name }}</div></a>
+                            <div class="product-price mb-2">{{ product.price|floatformat:0|intcomma }}₫</div>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div class="text-warning small" style="font-size: 10px;"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                                <a href="{% url 'client:cart_add' product.id %}" class="btn-cart-quick" title="Thêm vào giỏ"><i class="fas fa-cart-plus"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5 bg-white rounded shadow-sm border">
+                    <img src="https://cdn-icons-png.flaticon.com/512/7486/7486747.png" width="100" class="mb-3 opacity-50">
+                    <h5 class="text-muted fw-bold">Không tìm thấy sản phẩm phù hợp</h5>
+                    <p class="text-muted small">Vui lòng thử điều chỉnh lại bộ lọc giá hoặc hãng.</p>
+                    <a href="{% url 'client:home' %}" class="btn btn-outline-danger mt-2">Xóa bộ lọc</a>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    // 1. Script cho Slider (Chỉ chạy nếu có Banner trên trang)
+    if(document.querySelector('.hero-thumbs-slider')){
+        var heroThumbs = new Swiper(".hero-thumbs-slider", {
+            spaceBetween: 0, slidesPerView: 4, freeMode: true, watchSlidesProgress: true,
+            breakpoints: { 320: { slidesPerView: 2 }, 768: { slidesPerView: 4 } }
+        });
+
+        var heroMain = new Swiper(".hero-main-slider", {
+            spaceBetween: 0, loop: true, effect: "fade",
+            autoplay: { delay: 4000, disableOnInteraction: false },
+            navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+            thumbs: { swiper: heroThumbs },
+        });
+    }
+
+    // 2. Logic cho Range Slider (Hai đầu Min/Max) màu Xanh
+    const minRange = document.getElementById('minRange');
+    const maxRange = document.getElementById('maxRange');
+    const minInput = document.getElementById('minPriceInput');
+    const maxInput = document.getElementById('maxPriceInput');
+    const rangeFill = document.getElementById('rangeFill');
+    const radios = document.querySelectorAll('input[name="price_range"]');
+
+    function formatVND(val) {
+        return new Intl.NumberFormat('vi-VN').format(val);
+    }
+
+    function removeCommas(val) {
+        return val.toString().replace(/,/g, '').replace(/\./g, '');
+    }
+
+    function updateRangeUI() {
+        let minVal = parseInt(minRange.value);
+        let maxVal = parseInt(maxRange.value);
+
+        // Chống kéo Min vượt Max
+        if (minVal > maxVal - 500000) { minVal = maxVal - 500000; minRange.value = minVal; }
+        if (maxVal < minVal + 500000) { maxVal = minVal + 500000; maxRange.value = maxVal; }
+
+        // Cập nhật giá trị ra ô nhập liệu (Đã loại bỏ số thực, dùng value thực cho submit)
+        minInput.value = formatVND(minVal);
+        maxInput.value = formatVND(maxVal);
+
+        // Tính % để đổ màu thanh Fill màu xanh
+        let maxLimit = parseInt(maxRange.max);
+        let percent1 = (minVal / maxLimit) * 100;
+        let percent2 = (maxVal / maxLimit) * 100;
+        rangeFill.style.left = percent1 + "%";
+        rangeFill.style.width = (percent2 - percent1) + "%";
+        
+        // Hủy chọn radio nếu người dùng tự kéo
+        radios.forEach(r => r.checked = false);
+    }
+
+    if(minRange && maxRange) {
+        minRange.addEventListener('input', updateRangeUI);
+        maxRange.addEventListener('input', updateRangeUI);
+        updateRangeUI(); // Chạy lần đầu khi load trang
+    }
+
+    // Khi nạp Form, xóa dấu phẩy trong input để BE nhận số nguyên
+    document.getElementById('filterForm').addEventListener('submit', function() {
+        minInput.value = removeCommas(minInput.value);
+        maxInput.value = removeCommas(maxInput.value);
+    });
+</script>
+{% endblock %}

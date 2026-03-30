@@ -1,0 +1,110 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Chi tiết chi nhánh - {{ store.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4">
+    <a href="{% url 'client:admin_store_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow border-0 rounded-4 overflow-hidden mb-4">
+            {% if store.image %}
+                <img src="{{ store.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+            {% else %}
+                <div class="bg-dark d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-store fa-4x text-white-50"></i>
+                </div>
+            {% endif %}
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <h5 class="fw-bold text-danger mb-0">{{ store.name }}</h5>
+                    {% if is_main_warehouse %}
+                        <span class="badge bg-primary ms-2">KHO TỔNG</span>
+                    {% endif %}
+                </div>
+                <hr>
+                <p class="mb-2 text-muted small uppercase fw-bold">Thông tin liên hệ</p>
+                <p class="mb-1"><i class="fas fa-phone-alt me-2 text-success"></i>{{ store.phone|default:"Chưa cập nhật" }}</p>
+                <p class="mb-1"><i class="fas fa-map-marker-alt me-2 text-danger"></i>{{ store.address }}</p>
+                <p class="mb-0"><i class="fas fa-location-arrow me-2 text-primary"></i>Tọa độ: {{ store.latitude }}, {{ store.longitude }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow border-0 rounded-4">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="fas fa-boxes me-2 text-warning"></i>
+                    {% if is_main_warehouse %}
+                        Tồn kho thực tế tại Kho Tổng
+                    {% else %}
+                        Sản phẩm đã điều chuyển đến chi nhánh
+                    {% endif %}
+                </h6>
+                <small class="text-muted">
+                    {% if is_main_warehouse %}
+                        Dữ liệu trực tiếp từ Quản lý kho hàng
+                    {% else %}
+                        Dựa trên dữ liệu điều chuyển từ kho tổng
+                    {% endif %}
+                </small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-secondary small text-uppercase">
+                            <tr>
+                                <th class="ps-4" style="width: 80px;">Ảnh</th>
+                                <th>Tên sản phẩm</th>
+                                <th class="text-center">Số lượng tồn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory %}
+                            <tr>
+                                <td class="ps-4">
+                                    {% if is_main_warehouse %}
+                                        {% if item.image %}
+                                            <img src="/media/{{ item.image }}" width="45" height="45" class="rounded shadow-sm" style="object-fit: cover;">
+                                        {% endif %}
+                                    {% else %}
+                                        {% if item.product__image %}
+                                            <img src="/media/{{ item.product__image }}" width="45" height="45" class="rounded shadow-sm" style="object-fit: cover;">
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark">
+                                        {% if is_main_warehouse %}{{ item.name }}{% else %}{{ item.product__name }}{% endif %}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Mã: #{% if is_main_warehouse %}{{ item.id }}{% else %}{{ item.product__id }}{% endif %}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge {% if is_main_warehouse %}bg-primary{% else %}bg-danger{% endif %} rounded-pill px-3 fs-6">
+                                        {{ item.total_quantity|default:0|intcomma }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-5 text-muted">
+                                    <i class="fas fa-box-open fa-3x mb-3 d-block opacity-25"></i>
+                                    Hiện chưa có hàng hóa nào tại đây.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

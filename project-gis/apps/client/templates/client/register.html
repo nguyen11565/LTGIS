@@ -1,0 +1,118 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Đăng ký tài khoản - Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-container {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+    }
+    .register-card {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .register-btn {
+        background-color: #d70018;
+        border: none;
+        transition: 0.3s;
+        border-radius: 10px;
+    }
+    .register-btn:hover {
+        background-color: #b50014;
+        transform: translateY(-2px);
+    }
+    .form-control {
+        border-radius: 10px;
+        padding: 10px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #eee;
+    }
+    .form-control:focus {
+        background-color: #fff;
+        border-color: #d70018;
+        box-shadow: 0 0 0 0.25rem rgba(215, 0, 24, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container register-container py-5">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6 col-lg-5 col-xl-4">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark">Tạo Tài Khoản</h2>
+                <p class="text-muted small">Đăng ký để nhận nhiều ưu đãi và quản lý đơn hàng tốt hơn</p>
+            </div>
+
+            <div class="card shadow-lg border-0 register-card">
+                <div class="card-body p-4 p-md-5">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0 small text-center rounded-3 py-2">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Tên đăng nhập</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 rounded-start-3 text-muted">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" name="username" class="form-control border-start-0 rounded-end-3" 
+                                       placeholder="Ví dụ: tranphuc123" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 rounded-start-3 text-muted">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" name="email" class="form-control border-start-0 rounded-end-3" 
+                                       placeholder="email@example.com" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-secondary">Mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0 rounded-start-3 text-muted">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" name="password" class="form-control border-start-0 rounded-end-3" 
+                                       placeholder="********" required>
+                            </div>
+                            <div class="form-text mt-2 small text-muted">
+                                Mật khẩu nên có ít nhất 8 ký tự.
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-danger w-100 py-3 fw-bold register-btn shadow">
+                            ĐĂNG KÝ NGAY
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <span class="text-muted small">Đã có tài khoản? </span>
+                        <a href="{% url 'client:login' %}" class="text-danger fw-bold text-decoration-none small">Đăng nhập</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'client:home' %}" class="text-muted small text-decoration-none">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

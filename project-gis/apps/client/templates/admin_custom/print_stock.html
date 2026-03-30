@@ -1,0 +1,119 @@
+
+{% load humanize %} <!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Phiếu {{ t.get_transaction_type_display }} - {{ t.id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: white; font-family: "Times New Roman", Times, serif; }
+        .invoice-box { padding: 40px; border: 1px solid #eee; max-width: 850px; margin: auto; position: relative; }
+        /* Sửa lại tiêu đề cho chuyên nghiệp */
+        .header-title { text-transform: uppercase; font-weight: bold; text-align: center; margin-bottom: 30px; margin-top: 20px; font-size: 24px; }
+        .info-label { width: 150px; display: inline-block; font-weight: bold; }
+        .footer-sign { margin-top: 50px; text-align: center; }
+        @media print {
+            .no-print { display: none; }
+            .invoice-box { border: none; padding: 20px; }
+            body { margin: 0; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="container mt-4 no-print text-end">
+        <button onclick="window.print()" class="btn btn-primary shadow-sm">In phiếu</button>
+        <button onclick="window.history.back()" class="btn btn-secondary shadow-sm">Quay lại</button>
+    </div>
+
+    <div class="invoice-box mt-3 shadow-sm">
+        <div class="row border-bottom pb-3">
+            <div class="col-7">
+                <h4 class="fw-bold text-danger mb-1">PHONESTORE GIS</h4>
+                <p class="small mb-0">Hệ thống bán lẻ điện thoại thông minh</p>
+                <p class="small mb-0">Địa chỉ: 19 Tô Hiến Thành, Quận 10, TP. HCM</p>
+                <p class="small mb-0">Hotline: 0905 678 901 - Website: phonestore-gis.vn</p>
+            </div>
+            <div class="col-5 text-end">
+                <h5 class="mb-1">Số phiếu: <strong>#{{ t.id }}</strong></h5>
+                <p class="mb-0">Ngày lập: {{ t.created_at|date:"d/m/Y" }}</p>
+                <p class="mb-0">Giờ lập: {{ t.created_at|date:"H:i" }}</p>
+            </div>
+        </div>
+
+        <h3 class="header-title">PHIẾU {{ t.get_transaction_type_display }}</h3>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <p class="mb-1"><span class="info-label">Người thực hiện:</span> {{ t.user.get_full_name|default:t.user.username }}</p>
+                
+                {% if t.transaction_type == 'out' and t.store_destination %}
+                <p class="mb-1"><span class="info-label">Cửa hàng nhận:</span> <strong>{{ t.store_destination.name }}</strong></p>
+                <p class="mb-1"><span class="info-label">Địa chỉ nhận:</span> {{ t.store_destination.address }}</p>
+                {% endif %}
+                
+                <p class="mb-1"><span class="info-label">Ghi chú:</span> {{ t.note|default:"Không có ghi chú" }}</p>
+            </div>
+        </div>
+
+        <table class="table table-bordered align-middle">
+            <thead class="table-light text-center">
+                <tr>
+                    <th style="width: 50px;">STT</th>
+                    <th>Tên sản phẩm / Linh kiện</th>
+                    <th>Đơn vị</th>
+                    <th>Số lượng</th>
+                    {% if t.transaction_type == 'in' %}
+                    <th>Đơn giá nhập</th>
+                    <th>Thành tiền</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">1</td>
+                    <td>
+                        <div class="fw-bold">{{ t.product.name }}</div>
+                        <small class="text-muted">Danh mục: {{ t.product.category.name }}</small>
+                    </td>
+                    <td class="text-center">Cái</td>
+                    <td class="text-center fw-bold fs-5">{{ t.quantity }}</td>
+                    
+                    {% if t.transaction_type == 'in' %}
+                    <td class="text-end">{% if t.price %}{{ t.price|floatformat:0|intcomma }}₫{% else %}-{% endif %}</td>
+                    <td class="text-end fw-bold text-danger">
+                        {% if t.price %}
+                            {{ t.get_total_value|floatformat:0|intcomma }}₫
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+            </tbody>
+            {% if t.transaction_type == 'in' and t.price %}
+            <tfoot>
+                <tr>
+                    <td colspan="5" class="text-end fw-bold">TỔNG CỘNG THANH TOÁN:</td>
+                    <td class="text-end fw-bold text-danger fs-5">{{ t.get_total_value|floatformat:0|intcomma }}₫</td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+
+        <div class="row mt-5 footer-sign">
+            <div class="col-4">
+                <p class="fw-bold mb-5">Thủ kho</p>
+                <p class="mt-4">(Ký, họ tên)</p>
+            </div>
+            <div class="col-4">
+                <p class="fw-bold mb-5">Người giao/nhận</p>
+                <p class="mt-4">(Ký, họ tên)</p>
+            </div>
+            <div class="col-4">
+                <p class="fw-bold mb-5">Người lập phiếu</p>
+                <p class="mt-4 fw-bold text-primary">{{ t.user.username|default:"Admin" }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

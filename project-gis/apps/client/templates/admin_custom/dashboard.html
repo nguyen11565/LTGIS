@@ -1,0 +1,141 @@
+{% extends 'admin_custom/base_admin.html' %}
+
+{% block title %}Tổng quan hệ thống{% endblock %}
+
+{% block admin_content %}
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card card-stat bg-primary p-4 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center text-white">
+                <div>
+                    <h6 class="text-white-50 small">TỔNG CỬA HÀNG</h6>
+                    <h2 class="fw-bold mb-0">{{ total_stores }}</h2>
+                </div>
+                <i class="fas fa-map-marked-alt fa-3x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-stat bg-success p-4 border-0 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center text-white">
+                <div>
+                    <h6 class="text-white-50 small">TỔNG SẢN PHẨM</h6>
+                    <h2 class="fw-bold mb-0">{{ total_products }}</h2>
+                </div>
+                <i class="fas fa-mobile-button fa-3x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card card-stat bg-warning p-4 border-0 shadow-sm text-dark">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-dark-50 small">ĐƠN HÀNG MỚI</h6>
+                    <h2 class="fw-bold mb-0">{{ total_orders }}</h2>
+                </div>
+                <i class="fas fa-shopping-bag fa-3x opacity-25"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-secondary mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Doanh thu 7 ngày gần nhất
+                </h5>
+                <span class="badge bg-light text-primary border px-3 py-2">Đơn vị: VNĐ</span>
+            </div>
+            <div style="height: 350px; position: relative;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-5">
+    <h5 class="fw-bold text-secondary mb-3">Thao tác nhanh</h5>
+    <div class="d-flex gap-3">
+        <a href="{% url 'client:admin_store_add' %}" class="btn btn-white shadow-sm p-3 border-0 bg-white">
+            <i class="fas fa-plus-circle text-danger me-2"></i> Thêm chi nhánh
+        </a>
+        <a href="{% url 'client:admin_product_add' %}" class="btn btn-white shadow-sm p-3 border-0 bg-white">
+            <i class="fas fa-plus-circle text-success me-2"></i> Đăng sản phẩm
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        
+        // Tạo gradient cho đường biểu đồ
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(215, 0, 24, 0.2)');
+        gradient.addColorStop(1, 'rgba(215, 0, 24, 0.01)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|safe }}, // Dữ liệu ngày từ views
+                datasets: [{
+                    label: 'Doanh thu thực tế',
+                    data: {{ chart_data|safe }}, // Dữ liệu tiền từ views
+                    borderColor: '#d70018',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4, // Tạo đường cong mềm mại
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#d70018',
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#212529',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 },
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [5, 5] },
+                        ticks: {
+                            callback: function(value) {
+                                return (value / 1000000).toFixed(1) + ' Tr';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

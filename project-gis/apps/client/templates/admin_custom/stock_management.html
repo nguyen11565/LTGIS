@@ -1,0 +1,344 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+
+{% block admin_content %}
+
+<div class="card shadow border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap">
+        <h5 class="mb-0 fw-bold">
+            <i class="fas fa-warehouse me-2"></i>
+            Quản lý Nhập / Xuất kho
+        </h5>
+        <span class="badge bg-light text-dark border">
+            Tổng số: {{ products|length }} sản phẩm
+        </span>
+    </div>
+
+    <div class="card-body bg-light border-bottom py-3">
+        <form method="GET" action="{% url 'client:admin_stock_management' %}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted mb-1">Danh mục sản phẩm</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">Tất cả danh mục</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted mb-1">Trạng thái Tồn kho</label>
+                <select name="stock_status" class="form-select form-select-sm">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="in_stock" {% if request.GET.stock_status == 'in_stock' %}selected{% endif %}>Còn hàng (Tồn > 0)</option>
+                    <option value="out_of_stock" {% if request.GET.stock_status == 'out_of_stock' %}selected{% endif %}>Hết hàng (Tồn = 0)</option>
+                    <option value="low_stock" {% if request.GET.stock_status == 'low_stock' %}selected{% endif %}>Sắp hết (Tồn < 10)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-danger btn-sm px-4 fw-bold shadow-sm me-2">
+                    <i class="fas fa-filter me-1"></i> Lọc
+                </button>
+                <a href="{% url 'client:admin_stock_management' %}" class="btn btn-outline-secondary btn-sm px-3 shadow-sm">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-3" style="width: 80px;">Ảnh</th>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Tồn kho</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in products %}
+            <tr>
+                <td class="ps-3">
+                    {% if p.image %}
+                        <img src="{{ p.image.url }}" class="rounded border shadow-sm" style="width: 50px; height: 50px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light rounded border d-flex align-items-center justify-content-center text-muted" style="width: 50px; height: 50px;">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="fw-bold">{{ p.name }}</div>
+                    <small class="text-muted">
+                        {{ p.category.name|default:"Chưa phân loại" }}
+                    </small>
+                </td>
+                <td class="text-center">
+                    <span class="badge 
+                        {% if p.stock > 10 %}
+                            bg-success
+                        {% elif p.stock > 0 %}
+                            bg-warning text-dark
+                        {% else %}
+                            bg-danger
+                        {% endif %}
+                        fs-6 px-3">
+                        {{ p.stock|default:0|intcomma }}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-outline-success btn-sm px-3"
+                        onclick="openStockModal('{{p.id}}','{{p.name}}','{{p.stock}}','in')">
+                        <i class="fas fa-plus me-1"></i> Nhập
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm px-3"
+                        onclick="openStockModal('{{p.id}}','{{p.name}}','{{p.stock}}','out')">
+                        <i class="fas fa-minus me-1"></i> Xuất
+                    </button>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-5 text-muted">
+                    <i class="fas fa-box-open fs-1 mb-3 opacity-25"></i>
+                    <br>Không tìm thấy sản phẩm nào phù hợp với bộ lọc.
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form method="POST" action="{% url 'client:admin_stock_management' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-light border-0">
+                    <h5 class="modal-title fw-bold" id="modalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="product_id" id="productId">
+                    <input type="hidden" name="transaction_type" id="transactionType">
+
+                    <div class="text-center mb-4">
+                        <small class="text-muted text-uppercase">Tồn kho hiện tại</small>
+                        <h3 class="fw-bold text-primary" id="currentStock"></h3>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Số lượng</label>
+                        <input type="number" name="quantity" id="quantityInput"
+                               class="form-control form-control-lg text-center"
+                               min="1" value="1" required oninput="calculateTotal()">
+                    </div>
+
+                    <div id="importFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Giá nhập đơn vị (₫)</label>
+                            <input type="number" name="price" id="priceInput" 
+                                   class="form-control" placeholder="0" oninput="calculateTotal()">
+                        </div>
+                        <div class="p-3 bg-light rounded-3 mb-3 text-center">
+                            <small class="text-muted d-block">Số tiền phải trả</small>
+                            <h4 class="fw-bold text-danger mb-0" id="totalAmount">0₫</h4>
+                        </div>
+                    </div>
+
+                    <div id="exportFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Xuất đến cửa hàng</label>
+                            <select name="store_id" class="form-select">
+                                <option value="" selected disabled>-- Chọn cửa hàng nhận --</option>
+                                {% for store in stores %}
+                                    <option value="{{ store.id }}">{{ store.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Ghi chú</label>
+                        <textarea name="note" class="form-control" rows="2" 
+                                  placeholder="Ví dụ: nhập hàng mới, điều chuyển kho..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">XÁC NHẬN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function calculateTotal() {
+    const qty = document.getElementById("quantityInput").value || 0;
+    const price = document.getElementById("priceInput").value || 0;
+    const total = qty * price;
+    document.getElementById("totalAmount").innerText = total.toLocaleString('vi-VN') + "₫";
+}
+
+function openStockModal(id, name, stock, type) {
+    document.getElementById("productId").value = id;
+    document.getElementById("transactionType").value = type;
+    document.getElementById("currentStock").innerText = stock;
+    document.getElementById("quantityInput").value = 1;
+    document.getElementById("priceInput").value = "";
+    document.getElementById("totalAmount").innerText = "0₫";
+
+    const importFields = document.getElementById("importFields");
+    const exportFields = document.getElementById("exportFields");
+    
+    if (type === "in") {
+        document.getElementById("modalTitle").innerHTML = '<i class="fas fa-plus-circle text-success me-2"></i>NHẬP KHO: ' + name;
+        importFields.style.display = "block";
+        exportFields.style.display = "none";
+    } else {
+        document.getElementById("modalTitle").innerHTML = '<i class="fas fa-minus-circle text-danger me-2"></i>XUẤT KHO: ' + name;
+        importFields.style.display = "none";
+        exportFields.style.display = "block";
+    }
+
+    var modal = new bootstrap.Modal(document.getElementById('stockModal'));
+    modal.show();
+}
+</script>
+
+<div class="card shadow border-0 mt-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2"></i>Nhật ký giao dịch gần đây</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Thời gian</th>
+                        <th style="width: 50px;">Ảnh</th>
+                        <th>Sản phẩm</th>
+                        <th>Loại</th>
+                        <th>Thông tin thêm</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td class="ps-3 small">{{ t.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if t.product.image %}
+                                <img src="{{ t.product.image.url }}" class="rounded shadow-sm" style="width: 35px; height: 35px; object-fit: cover;">
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ t.product.name }}</td>
+                        <td>
+                            {% if t.transaction_type == 'in' %}
+                                <span class="badge bg-success-soft text-success">Nhập kho</span>
+                            {% else %}
+                                <span class="badge bg-danger-soft text-danger">Xuất kho</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            {% if t.transaction_type == 'in' %}
+                                Giá: <span class="fw-bold">{{ t.price|floatformat:0|intcomma }}₫</span>
+                            {% elif t.store_destination %}
+                                Đến: <span class="fw-bold text-primary">{{ t.store_destination.name }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center fw-bold">{{ t.quantity|intcomma }}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-info border" data-bs-toggle="modal" data-bs-target="#transactionDetailModal{{ t.id }}" title="Xem chi tiết">
+                                <i class="fas fa-eye"></i> Chi tiết
+                            </button>
+                        </td>
+                    </tr>
+
+                    <div class="modal fade text-start" id="transactionDetailModal{{ t.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header bg-light border-0">
+                                    <h5 class="modal-title fw-bold">Chi tiết giao dịch #{{ t.id }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <div class="d-flex align-items-center mb-4">
+                                        {% if t.product.image %}
+                                            <img src="{{ t.product.image.url }}" class="rounded shadow-sm me-3 border" style="width: 60px; height: 60px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded border shadow-sm me-3 d-flex align-items-center justify-content-center text-muted" style="width: 60px; height: 60px;">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="fw-bold mb-1">{{ t.product.name }}</h6>
+                                            <span class="badge {% if t.transaction_type == 'in' %}bg-success-soft text-success{% else %}bg-danger-soft text-danger{% endif %}">
+                                                {% if t.transaction_type == 'in' %}Nhập kho{% else %}Xuất kho{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <ul class="list-group list-group-flush mb-3">
+                                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Thời gian thực hiện:</span>
+                                            <span class="fw-bold">{{ t.created_at|date:"d/m/Y H:i" }}</span>
+                                        </li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Số lượng:</span>
+                                            <span class="fw-bold fs-5">{{ t.quantity|intcomma }}</span>
+                                        </li>
+                                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                            <span class="text-muted">Người thực hiện:</span>
+                                            <span class="fw-bold">{{ t.user.username|default:"---" }}</span>
+                                        </li>
+                                        {% if t.transaction_type == 'in' %}
+                                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">Giá nhập / Đơn vị:</span>
+                                                <span class="fw-bold">{{ t.price|floatformat:0|intcomma }}₫</span>
+                                            </li>
+                                        {% elif t.store_destination %}
+                                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">Xuất đến cửa hàng:</span>
+                                                <span class="fw-bold text-primary">{{ t.store_destination.name }}</span>
+                                            </li>
+                                        {% endif %}
+                                        <li class="list-group-item px-0 border-bottom-0 mt-2">
+                                            <span class="text-muted d-block mb-2">Ghi chú:</span>
+                                            <div class="bg-light p-3 rounded text-dark small" style="min-height: 50px;">
+                                                {{ t.note|default:"Không có ghi chú" }}
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between">
+                                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Đóng</button>
+                                    
+                                    <a href="{% url 'client:print_stock' t.id %}" target="_blank" class="btn btn-primary px-4 fw-bold shadow-sm">
+                                        <i class="fas fa-print me-2"></i> In phiếu
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">Chưa có lịch sử giao dịch.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-success-soft { background-color: #e8f5e9; color: #2e7d32; }
+    .bg-danger-soft { background-color: #ffebee; color: #c62828; }
+</style>
+
+{% endblock %}
