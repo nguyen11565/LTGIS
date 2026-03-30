@@ -26,7 +26,11 @@
                 <tbody>
                     {% for store in stores %}
                     <tr>
-                        <td class="ps-3 fw-bold text-dark">{{ store.name }}</td>
+                        <td class="ps-3 fw-bold">
+                            <a href="{% url 'client:admin_store_detail' store.id %}" class="text-decoration-none text-danger hover-underline">
+                                {{ store.name }}
+                            </a>
+                        </td>
                         
                         <td>
                             <span class="text-success small fw-bold">
@@ -59,7 +63,10 @@
 
                         <td class="text-center">
                             <div class="btn-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                                <a href="{% url 'client:admin_store_edit' store.id %}" class="btn btn-outline-primary btn-sm border-end-0">
+                                <a href="{% url 'client:admin_store_detail' store.id %}" class="btn btn-outline-secondary btn-sm" title="Xem chi tiết tồn kho">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'client:admin_store_edit' store.id %}" class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <a href="{% url 'client:admin_store_delete' store.id %}" 
@@ -83,4 +90,12 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Hiệu ứng khi di chuột vào tên cửa hàng */
+    .hover-underline:hover {
+        text-decoration: underline !important;
+        color: #b30014 !important;
+    }
+</style>
 {% endblock %}

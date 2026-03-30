@@ -1,6 +1,5 @@
 {% extends 'client/base.html' %}
-
-{% block title %}Đơn hàng của tôi - Phone Store{% endblock %}
+{% load humanize %} {% block title %}Đơn hàng của tôi - Phone Store{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -43,7 +42,11 @@
                                             </small>
                                         </div>
                                     </td>
-                                    <td class="fw-bold text-danger">{{ order.total_price|floatformat:0 }}₫</td>
+                                    
+                                    <td class="fw-bold text-danger">
+                                        {{ order.total_price|floatformat:0|intcomma }}₫
+                                    </td>
+
                                     <td>
                                         {% if order.status == 'completed' %}
                                             <span class="badge rounded-pill bg-success-subtle text-success border border-success px-3">Hoàn thành</span>
@@ -53,14 +56,14 @@
                                             <span class="badge rounded-pill bg-info-subtle text-info border border-info px-3">Đang đóng gói</span>
                                         {% elif order.status == 'pending' %}
                                             <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning px-3">Chờ xác nhận</span>
-                                        {% else %}
+                                        {% elif order.status == 'cancelled' %}
                                             <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary px-3">Đã hủy</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-outline-dark btn-sm rounded-pill px-3 py-1 small">
+                                        <a href="{% url 'client:order_detail' order.id %}" class="btn btn-outline-dark btn-sm rounded-pill px-3 text-decoration-none">
                                             Chi tiết
-                                        </button>
+                                        </a>
                                     </td>
                                 </tr>
                                 {% empty %}

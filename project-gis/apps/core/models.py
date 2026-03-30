@@ -21,9 +21,17 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     stock = models.IntegerField(default=0, verbose_name="Số lượng kho")
     created_at = models.DateTimeField(auto_now_add=True)
+    content = models.TextField(null=True, blank=True, verbose_name="Bài viết giới thiệu")
 
     def __str__(self):
         return self.name
+    
+class ProductImage(models.Model):
+        product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+        image = models.ImageField(upload_to='products/gallery/')
+
+        def __str__(self):
+            return f"Image for {self.product.name}"
 
 # ==========================================
 # 2. PHẦN MỚI THÊM VÀO (CHO GIS/BẢN ĐỒ)
@@ -110,18 +118,48 @@ class StockTransaction(models.Model):
         choices=TRANSACTION_TYPES, 
         verbose_name="Loại giao dịch"
     )
+
+    # --- CÁC TRƯỜNG BỔ SUNG MỚI ---
+    # 1. Giá nhập (Chỉ dùng khi transaction_type == 'in')
+    price = models.DecimalField(
+        max_digits=12, 
+        decimal_places=0, 
+        default=0, 
+        verbose_name="Giá nhập đơn vị"
+    )
+
+    # 2. Cửa hàng đích (Chỉ dùng khi transaction_type == 'out')
+    store_destination = models.ForeignKey(
+        'Store', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        verbose_name="Cửa hàng nhận"
+    )
+    # ------------------------------
     
     # Thông tin bổ sung
     note = models.TextField(blank=True, null=True, verbose_name="Ghi chú/Lý do")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Thời gian thực hiện")
     
-    # Người thực hiện (Lấy từ User đang đăng nhập)
+    # Người thực hiện
     user = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, 
         null=True, 
         verbose_name="Người thực hiện"
     )
+
+    def __str__(self):
+        return f"{self.get_transaction_type_display()} - {self.product.name} ({self.quantity})"
+
+    # Hàm tính tổng tiền giao dịch (dùng cho nhật ký)
+    def get_total_value(self):
+        return self.quantity * self.price
+
+    class Meta:
+        verbose_name = "Giao dịch kho"
+        verbose_name_plural = "Danh sách giao dịch kho"
 
     class Meta:
         verbose_name = "Giao dịch kho"
@@ -130,3 +168,4 @@ class StockTransaction(models.Model):
 
     def __str__(self):
         return f"{self.get_transaction_type_display()} - {self.product.name} ({self.quantity})"
+    

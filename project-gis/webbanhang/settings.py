@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,8 +25,8 @@ SECRET_KEY = 'django-insecure-c@x^+og_+hu^!l%+-=v0t(+913&4=$0=^jya)cvpnqu*h24i#^
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
+#DEBUG =False (mở lên khi test 404)
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -139,10 +140,5 @@ os.environ['PROJ_LIB'] = os.path.join(OSGEO4W_ROOT, 'share', 'proj')
 # Ví dụ nếu bạn thấy file gdal310.dll thì sửa thành 'gdal310.dll'
 GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, 'bin', 'gdal310.dll')
 
-import os
-
-# Đường dẫn URL để truy cập ảnh trên trình duyệt
 MEDIA_URL = '/media/'
-
-# Đường dẫn thư mục lưu ảnh thực tế trên máy tính
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

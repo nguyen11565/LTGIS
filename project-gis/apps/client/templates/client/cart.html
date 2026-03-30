@@ -1,7 +1,6 @@
 {% extends 'client/base.html' %}
 {% load static %}
-
-{% block title %}Giỏ hàng của bạn - Phone Store{% endblock %}
+{% load humanize %} {% block title %}Giỏ hàng của bạn - Phone Store{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -17,6 +16,7 @@
     .summary-box {
         background-color: #fff; border-radius: 15px; padding: 25px;
     }
+    .hover-danger:hover { color: #dc3545 !important; }
 </style>
 {% endblock %}
 
@@ -62,8 +62,8 @@
                                         <input type="number" class="form-control form-control-sm qty-input text-center mx-auto" 
                                                value="{{ item.quantity }}" readonly>
                                     </td>
-                                    <td class="text-end">{{ item.price|floatformat:0 }}₫</td>
-                                    <td class="text-end fw-bold text-danger">{{ item.total_price|floatformat:0 }}₫</td>
+                                    <td class="text-end">{{ item.price|floatformat:0|intcomma }}₫</td>
+                                    <td class="text-end fw-bold text-danger">{{ item.total_price|floatformat:0|intcomma }}₫</td>
                                     <td class="pe-4 text-end">
                                         <a href="{% url 'client:cart_remove' item.product.id %}" class="text-muted hover-danger" title="Xóa">
                                             <i class="fas fa-trash-alt"></i>
@@ -88,7 +88,7 @@
                     <h5 class="fw-bold mb-4">Chi tiết thanh toán</h5>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Tạm tính:</span>
-                        <span class="fw-bold">{{ cart.get_total_price|floatformat:0 }}₫</span>
+                        <span class="fw-bold">{{ cart.get_total_price|floatformat:0|intcomma }}₫</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Phí vận chuyển:</span>
@@ -98,15 +98,20 @@
                     <div class="d-flex justify-content-between align-items-end mb-4">
                         <span class="fw-bold">Tổng tiền:</span>
                         <div class="text-end">
-                            <div class="fs-3 fw-bold text-danger">{{ cart.get_total_price|floatformat:0 }}₫</div>
+                            <div class="fs-3 fw-bold text-danger">{{ cart.get_total_price|floatformat:0|intcomma }}₫</div>
                             <small class="text-muted">(Đã bao gồm VAT)</small>
                         </div>
                     </div>
                     
-                    <a href="{% url 'client:checkout' %}" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill py-3">
-                        TIẾN HÀNH THANH TOÁN
-                    </a>
-                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'client:checkout' %}" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill py-3">
+                            TIẾN HÀNH THANH TOÁN
+                        </a>
+                    {% else %}
+                        <a href="{% url 'client:login' %}?next={% url 'client:checkout' %}" class="btn btn-warning btn-lg w-100 fw-bold rounded-pill py-3 text-dark shadow-sm">
+                            <i class="fas fa-sign-in-alt me-2"></i> ĐĂNG NHẬP ĐỂ THANH TOÁN
+                        </a>
+                    {% endif %}
                     <div class="mt-4 p-3 bg-light rounded-3 small">
                         <p class="mb-1 text-muted"><i class="fas fa-check-circle text-success me-2"></i>Sản phẩm chính hãng 100%</p>
                         <p class="mb-0 text-muted"><i class="fas fa-check-circle text-success me-2"></i>Bảo mật thanh toán tuyệt đối</p>

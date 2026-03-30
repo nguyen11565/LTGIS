@@ -1,7 +1,6 @@
 {% extends 'client/base.html' %}
 {% load static %}
-
-{% block title %}Đặt hàng thành công - Phone Store{% endblock %}
+{% load humanize %} {% block title %}Đặt hàng thành công - Phone Store{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -68,7 +67,7 @@
                 <div class="p-3 bg-light rounded-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="fw-bold">Tổng thanh toán:</span>
-                        <span class="fs-4 fw-bold text-danger">{{ order.total_price|floatformat:0 }}₫</span>
+                        <span class="fs-4 fw-bold text-danger">{{ order.total_price|floatformat:0|intcomma }}₫</span>
                     </div>
                 </div>
             </div>

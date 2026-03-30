@@ -11,17 +11,22 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.db.models import Sum
+from apps.core.models import Order, OrderItem
 
 # =========================================
 # 1. TRANG CHỦ & DANH MỤC
 # =========================================
 
 def home(request):
-    # 1. Lấy dữ liệu cơ bản
+    # 1. Lấy dữ liệu cơ bản từ request
     category_id = request.GET.get('category')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    price_range = request.GET.get('price_range')
+    
     categories = Category.objects.all().order_by('name')
     
-    # 2. Logic lọc sản phẩm (Đã sửa lỗi ghi đè)
+    # 2. Logic lọc sản phẩm theo danh mục (Đã sửa lỗi ghi đè)
     if category_id:
         # Lọc sản phẩm theo danh mục
         products = Product.objects.filter(category_id=category_id).order_by('-id')
@@ -31,20 +36,51 @@ def home(request):
         products = Product.objects.all().order_by('-id')
         current_category = None
     
-    # --- XÓA DÒNG products = Product.objects.all() Ở ĐÂY VÌ NÓ LÀM MẤT LOGIC LỌC PHÍA TRÊN ---
+    # 3. THÊM MỚI: Logic lọc theo mức giá (price_range hoặc min/max)
+    # Chú ý: Chúng ta tiếp tục dùng biến 'products' ở trên để lọc tiếp, 
+    # giúp khách hàng có thể vừa chọn Hãng vừa chọn Giá cùng lúc.
+    if price_range:
+        # Nếu người dùng chọn các mức giá có sẵn (Radio button)
+        if price_range == '1-3':
+            products = products.filter(price__gte=1000000, price__lte=3000000)
+        elif price_range == '3-5':
+            products = products.filter(price__gte=3000000, price__lte=5000000)
+        elif price_range == '5-10':
+            products = products.filter(price__gte=5000000, price__lte=10000000)
+        elif price_range == '10-15':
+            products = products.filter(price__gte=10000000, price__lte=15000000)
+        elif price_range == '15-20':
+            products = products.filter(price__gte=15000000, price__lte=20000000)
+        elif price_range == '20-25':
+            products = products.filter(price__gte=20000000, price__lte=25000000)
+        elif price_range == '25-30':
+            products = products.filter(price__gte=25000000, price__lte=30000000)
+        elif price_range == '30-50':
+            products = products.filter(price__gte=30000000, price__lte=50000000)
+        elif price_range == '50-85':
+            products = products.filter(price__gte=50000000, price__lte=85000000)
+        elif price_range == '85+':
+            products = products.filter(price__gte=85000000)
+    else:
+        # Nếu không chọn khoảng giá sẵn, kiểm tra xem có kéo thanh trượt không
+        if min_price and min_price.isdigit():
+            products = products.filter(price__gte=int(min_price))
+        if max_price and max_price.isdigit():
+            products = products.filter(price__lte=int(max_price))
 
-    # 3. LOGIC Lấy Top 5 sản phẩm bán chạy nhất
+    # 4. LOGIC Lấy Top 5 sản phẩm bán chạy nhất
     best_selling_products = Product.objects.filter(
         orderitem__order__status='completed'
     ).annotate(
         total_sold=Sum('orderitem__quantity')
     ).order_by('-total_sold')[:5]
 
+    # 5. Truyền dữ liệu ra template
     context = {
         'products': products,
         'categories': categories,
         'best_selling_products': best_selling_products,
-        'current_category': current_category, # Cập nhật biến này để template nhận diện
+        'current_category': current_category,
     }
     return render(request, 'client/home.html', context)
 
@@ -93,11 +129,15 @@ def cart_remove(request, product_id):
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
+    # Lấy danh sách ảnh phụ của sản phẩm này
+    product_images = product.images.all() 
+    
     # Gợi ý sản phẩm cùng danh mục
     related_products = Product.objects.filter(category=product.category).exclude(id=product.id)[:4]
     
     return render(request, 'client/product_detail.html', {
         'product': product,
+        'product_images': product_images, # Truyền biến này xuống template
         'related_products': related_products
     })
 
@@ -150,7 +190,7 @@ def store_locator(request):
 # =========================================
 # 6. THANH TOÁN (CHECKOUT)
 # =========================================
-
+@login_required(login_url='client:login')
 def checkout(request):
     cart = Cart(request)
     if cart.get_total_price() == 0:
@@ -203,15 +243,36 @@ def register_view(request):
     return render(request, 'client/register.html')
 
 def login_view(request):
+    # Lấy tham số 'next' từ URL (nếu có)
+    next_url = request.GET.get('next')
+
     if request.method == 'POST':
-        u = request.POST.get('username')
-        p = request.POST.get('password')
-        user = authenticate(username=u, password=p)
-        if user:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
             login(request, user)
-            return redirect('client:home')
+            
+            # Nếu là Admin
+            if user.is_staff or user.is_superuser:
+                messages.success(request, f"Chào Admin {user.username}!")
+                return redirect('client:admin_dashboard') 
+            
+            # Nếu là Khách hàng bình thường
+            else:
+                # Nếu có đường dẫn 'next' (ví dụ đang từ giỏ hàng bị bắt đăng nhập) -> Trả về trang đó
+                if next_url:
+                    return redirect(next_url)
+                
+                # Nếu đăng nhập bình thường -> Về trang chủ
+                messages.success(request, "Đăng nhập thành công!")
+                return redirect('client:home') 
+            
         else:
-            messages.error(request, "Sai tài khoản hoặc mật khẩu")
+            messages.error(request, "Tên đăng nhập hoặc mật khẩu không chính xác.")
+            
     return render(request, 'client/login.html')
 
 def logout_view(request):
@@ -222,3 +283,30 @@ def logout_view(request):
 def my_orders(request):
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
     return render(request, 'client/my_orders.html', {'orders': orders})
+
+def order_detail(request, order_id):
+    # Lấy đơn hàng, đảm bảo đơn hàng đó thuộc về người dùng đang đăng nhập
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    # Lấy danh sách sản phẩm trong đơn hàng
+    items = order.items.all() 
+    
+    return render(request, 'client/order_detail.html', {
+        'order': order,
+        'items': items
+    })
+
+def cancel_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    # Chỉ cho phép hủy nếu đơn hàng đang chờ xác nhận
+    if order.status == 'pending':
+        order.status = 'cancelled'
+        order.save()
+        messages.success(request, f"Đã hủy đơn hàng #{order.id} thành công.")
+    else:
+        messages.error(request, "Không thể hủy đơn hàng này do đã được xử lý hoặc đã giao.")
+        
+    return redirect('client:order_detail', order_id=order.id)
+
+def error_404(request, exception):
+    return render(request, '404.html', status=404)

@@ -1,16 +1,21 @@
 {% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
 
 {% block admin_content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
+    <div class="col-md-10">
         <div class="card shadow border-0 p-4">
-            <h4 class="fw-bold text-danger mb-4">THÔNG TIN SẢN PHẨM</h4>
+            <h4 class="fw-bold text-danger mb-4">
+                {% if product %}CHỈNH SỬA SẢN PHẨM{% else %}THÊM SẢN PHẨM MỚI{% endif %}
+            </h4>
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
+                
                 <div class="mb-3">
                     <label class="form-label fw-bold">Tên điện thoại</label>
-                    <input type="text" name="name" class="form-control" value="{{ product.name }}" required>
+                    <input type="text" name="name" class="form-control" value="{{ product.name }}" placeholder="Ví dụ: iPhone 15 Pro Max" required>
                 </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Danh mục</label>
@@ -22,26 +27,92 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label fw-bold">Giá bán (₫)</label>
-                        <input type="number" name="price" class="form-control" value="{{ product.price }}" required>
+                        <input type="number" name="price" class="form-control" value="{{ product.price|floatformat:0 }}" placeholder="Nhập số tiền..." required>
+                        <div class="form-text small">Ví dụ: 22950000 </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Mô tả ngắn</label>
-                    <textarea name="description" class="form-control" rows="4">{{ product.description }}</textarea>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Thông số kỹ thuật (Tóm tắt)</label>
+                    <textarea name="description" id="editor_specs" class="form-control">{{ product.description|default:'' }}</textarea>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Hình ảnh</label>
-                    <input type="file" name="image" class="form-control">
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" class="img-thumbnail mt-2" style="height: 120px;">
-                    {% endif %}
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Bài viết giới thiệu sản phẩm</label>
+                    <textarea name="content" id="editor_content" class="form-control">{{ product.content|default:'' }}</textarea>
                 </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label fw-bold text-primary">Hình ảnh đại diện (Ảnh bìa)</label>
+                        <input type="file" name="image" class="form-control shadow-sm">
+                        {% if product.image %}
+                            <div class="mt-2">
+                                <img src="{{ product.image.url }}" class="rounded border shadow-sm" style="height: 100px; width: 100px; object-fit: contain; background: #f8f9fa;">
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 mb-4 p-3 border rounded bg-light shadow-sm">
+                        <label class="form-label fw-bold text-success">Album ảnh bổ sung</label>
+                        <input type="file" name="more_images" class="form-control shadow-sm" multiple>
+                        <div class="form-text small text-muted mb-3">Giữ Ctrl để chọn nhiều ảnh cùng lúc</div>
+                        
+                        {% if product.images.all %}
+                            <div class="d-flex flex-wrap gap-3 mt-2">
+                                {% for img in product.images.all %}
+                                    <div class="position-relative d-inline-block image-container-{{ img.id }}">
+                                        <img src="{{ img.image.url }}" class="rounded border shadow-sm" style="width: 65px; height: 65px; object-fit: cover;">
+                                        
+                                        <input type="checkbox" name="delete_images" value="{{ img.id }}" id="delete_img_{{ img.id }}" class="d-none">
+                                        
+                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 start-100 translate-middle rounded-circle p-0"
+                                                style="width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px;"
+                                                onclick="removeImage('{{ img.id }}')" title="Xóa ảnh này">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr class="my-4">
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-danger px-5">LƯU SẢN PHẨM</button>
-                    <a href="{% url 'client:admin_product_list' %}" class="btn btn-secondary">Hủy</a>
+                    <button type="submit" class="btn btn-danger px-5 fw-bold shadow-sm">
+                        <i class="fas fa-save me-2"></i>LƯU SẢN PHẨM
+                    </button>
+                    <a href="{% url 'client:admin_product_list' %}" class="btn btn-secondary px-4 shadow-sm">Hủy</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.ckeditor.com/4.22.1/standard/ckeditor.js"></script>
+<script>
+    // Kích hoạt cho khung Thông số kỹ thuật
+    CKEDITOR.replace('editor_specs', { height: 200, language: 'vi' });
+
+    // Kích hoạt cho khung Bài viết giới thiệu
+    CKEDITOR.replace('editor_content', { height: 400, language: 'vi' });
+
+    // HÀM XỬ LÝ ẨN/XÓA ẢNH ALBUM
+    function removeImage(imgId) {
+        if(confirm('Ảnh này sẽ bị xóa khi bạn nhấn Lưu Sản Phẩm. Bạn đồng ý chứ?')) {
+            // 1. Tích vào checkbox ẩn để báo cho backend biết ảnh này cần xóa
+            document.getElementById('delete_img_' + imgId).checked = true;
+            
+            // 2. Làm mờ và ẩn ảnh khỏi màn hình cho trực quan
+            const imgContainer = document.querySelector('.image-container-' + imgId);
+            imgContainer.style.opacity = '0.3';
+            setTimeout(() => {
+                imgContainer.style.display = 'none';
+            }, 300);
+        }
+    }
+</script>
 {% endblock %}

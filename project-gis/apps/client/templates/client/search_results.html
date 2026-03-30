@@ -1,6 +1,5 @@
 {% extends 'client/base.html' %}
-
-{% block title %}Kết quả tìm kiếm cho "{{ query }}" - Phone Store{% endblock %}
+{% load humanize %} {% block title %}Kết quả tìm kiếm cho "{{ query }}" - Phone Store{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -28,7 +27,7 @@
                             </div>
                             <div class="card-body">
                                 <h6 class="card-title text-dark fw-bold mb-2">{{ product.name }}</h6>
-                                <p class="text-danger fw-bold mb-0">{{ product.price|floatformat:0 }}₫</p>
+                                <p class="text-danger fw-bold mb-0">{{ product.price|floatformat:0|intcomma }}₫</p>
                             </div>
                         </a>
                     </div>
@@ -46,4 +45,9 @@
         </div>
     {% endif %}
 </div>
+
+<style>
+    .product-card { transition: 0.3s; }
+    .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+</style>
 {% endblock %}

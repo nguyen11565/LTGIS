@@ -1,59 +1,119 @@
 {% extends 'admin_custom/base_admin.html' %}
-
-{% block title %}Quản lý đơn hàng{% endblock %}
+{% load humanize %} {% block title %}Quản lý đơn hàng{% endblock %}
 
 {% block admin_content %}
 <div class="card shadow border-0">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-shopping-cart me-2"></i>Danh sách đơn hàng</h5>
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap">
+        <h5 class="mb-0 fw-bold text-dark">
+            <i class="fas fa-shopping-cart me-2"></i>Danh sách đơn hàng
+        </h5>
+        <span class="badge bg-light text-dark border">
+            Tổng số: {{ orders|length }} đơn hàng
+        </span>
     </div>
-    <div class="card-body">
+
+    <div class="card-body bg-light border-bottom py-3">
+        <form method="GET" action="{% url 'client:admin_order_list' %}" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">Mã đơn hàng</label>
+                <input type="text" name="order_id" class="form-control form-control-sm" placeholder="VD: 123" value="{{ request.GET.order_id }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">Trạng thái</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Tất cả</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Chờ xử lý</option>
+                    <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Đang đóng gói</option>
+                    <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>Đang giao hàng</option>
+                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Hoàn thành</option>
+                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">Từ ngày - Đến ngày</label>
+                <div class="input-group input-group-sm">
+                    <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+                    <span class="input-group-text px-2 border-0 bg-transparent">-</span>
+                    <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">Tổng tiền (Từ - Đến)</label>
+                <div class="input-group input-group-sm">
+                    <input type="number" name="min_price" class="form-control" placeholder="Tối thiểu" value="{{ request.GET.min_price }}">
+                    <span class="input-group-text px-2 border-0 bg-transparent">-</span>
+                    <input type="number" name="max_price" class="form-control" placeholder="Tối đa" value="{{ request.GET.max_price }}">
+                </div>
+            </div>
+
+            <div class="col-md-2 text-md-end text-start">
+                <button type="submit" class="btn btn-danger btn-sm px-3 fw-bold shadow-sm w-100 mb-2">
+                    <i class="fas fa-filter me-1"></i> Lọc
+                </button>
+                <a href="{% url 'client:admin_order_list' %}" class="btn btn-outline-secondary btn-sm w-100 shadow-sm">
+                    Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Mã Đơn</th>
+                        <th class="ps-3">Mã Đơn</th>
                         <th>Khách hàng</th>
                         <th>Ngày đặt</th>
                         <th>Tổng tiền</th>
                         <th>Trạng thái</th>
-                        <th class="text-center">Thao tác</th>
+                        <th class="text-center pe-3">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for order in orders %}
                     <tr>
-                        <td class="fw-bold">#{{ order.id }}</td>
+                        <td class="ps-3 fw-bold">#{{ order.id }}</td>
                         <td>
-                            <div>{{ order.full_name }}</div>
-                            <small class="text-muted">{{ order.phone }}</small>
+                            <div class="fw-bold">{{ order.full_name }}</div>
+                            <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ order.phone }}</small>
                         </td>
                         <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
-                        <td class="text-danger fw-bold">{{ order.total_price|floatformat:0 }}₫</td>
+                        
+                        <td class="text-danger fw-bold">
+                            {{ order.total_price|floatformat:0|intcomma }}₫
+                        </td>
+
                         <td>
                             {% if order.status == 'completed' %}
-                                <span class="badge bg-success">Hoàn thành</span>
+                                <span class="badge bg-success rounded-pill px-3">Hoàn thành</span>
                             {% elif order.status == 'shipped' %}
-                                <span class="badge bg-primary">Đang giao hàng</span>
+                                <span class="badge bg-primary rounded-pill px-3">Đang giao hàng</span>
                             {% elif order.status == 'processing' %}
-                                <span class="badge bg-info text-dark">Đang đóng gói</span>
+                                <span class="badge bg-info text-dark rounded-pill px-3">Đang đóng gói</span>
                             {% elif order.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Chờ xử lý</span>
+                                <span class="badge bg-warning text-dark rounded-pill px-3">Chờ xử lý</span>
                             {% elif order.status == 'cancelled' %}
-                                <span class="badge bg-danger">Đã hủy</span>
+                                <span class="badge bg-danger rounded-pill px-3">Đã hủy</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ order.status }}</span>
+                                <span class="badge bg-secondary rounded-pill px-3">{{ order.status }}</span>
                             {% endif %}
                         </td>
-                        <td class="text-center">
-                            <a href="{% url 'client:admin_order_detail' order.id %}" class="btn btn-outline-primary btn-sm">
+                        <td class="text-center pe-3">
+                            <a href="{% url 'client:admin_order_detail' order.id %}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                 <i class="fas fa-eye me-1"></i> Chi tiết
                             </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">Chưa có đơn hàng nào.</td>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fas fa-search fa-3x mb-3 d-block opacity-25"></i>
+                            Không tìm thấy đơn hàng nào phù hợp với bộ lọc.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -61,4 +121,16 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Hiệu ứng hover cho hàng trong bảng quản trị */
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: 0.2s;
+    }
+    .badge {
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+</style>
 {% endblock %}

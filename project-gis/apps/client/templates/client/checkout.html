@@ -1,7 +1,6 @@
 {% extends 'client/base.html' %}
 {% load static %}
-
-{% block title %}Thanh toán đơn hàng - Phone Store{% endblock %}
+{% load humanize %} {% block title %}Thanh toán đơn hàng - Phone Store{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -86,7 +85,7 @@
                             <div class="text-muted small">Mã: SP-00{{ item.product.id }}</div>
                         </div>
                         <div class="text-end small fw-bold">
-                            {{ item.total_price|floatformat:0 }}₫
+                            {{ item.total_price|floatformat:0|intcomma }}₫
                         </div>
                     </div>
                     {% endfor %}
@@ -95,7 +94,7 @@
                 <div class="border-top pt-3">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Tạm tính</span>
-                        <span>{{ cart.get_total_price|floatformat:0 }}₫</span>
+                        <span>{{ cart.get_total_price|floatformat:0|intcomma }}₫</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Vận chuyển</span>
@@ -103,7 +102,7 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
                         <span class="fw-bold fs-5">Tổng cộng</span>
-                        <span class="text-danger fw-bold fs-4">{{ cart.get_total_price|floatformat:0 }}₫</span>
+                        <span class="text-danger fw-bold fs-4">{{ cart.get_total_price|floatformat:0|intcomma }}₫</span>
                     </div>
                 </div>
                 

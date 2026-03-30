@@ -1,6 +1,5 @@
 {% extends 'admin_custom/base_admin.html' %}
-
-{% block title %}Chi tiết đơn hàng #{{ order.id }}{% endblock %}
+{% load humanize %} {% block title %}Chi tiết đơn hàng #{{ order.id }}{% endblock %}
 
 {% block admin_content %}
 <div class="mb-4">
@@ -33,7 +32,7 @@
                     {% endif %}
                 </p>
 
-                <form method="POST" class="mt-4 p-3 bg-light rounded border">
+                <form method="POST" class="mt-4 p-3 bg-light rounded border shadow-sm">
                     {% csrf_token %}
                     <label class="form-label fw-bold small text-muted text-uppercase">Thay đổi trạng thái đơn</label>
                     <div class="input-group">
@@ -44,7 +43,7 @@
                                 </option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn btn-primary btn-sm">Cập nhật</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-3">Cập nhật</button>
                     </div>
                 </form>
             </div>
@@ -53,41 +52,47 @@
 
     <div class="col-md-8">
         <div class="card shadow border-0">
-            <div class="card-header bg-white fw-bold">Sản phẩm đã đặt</div>
+            <div class="card-header bg-white fw-bold border-bottom">Sản phẩm đã đặt</div>
             <div class="card-body p-0">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Sản phẩm</th>
-                            <th class="text-center">Số lượng</th>
-                            <th class="text-end">Đơn giá</th>
-                            <th class="text-end">Thành tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in order_items %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    {% if item.product.image %}
-                                        <img src="{{ item.product.image.url }}" width="40" class="rounded me-2">
-                                    {% endif %}
-                                    <span>{{ item.product.name }}</span>
-                                </div>
-                            </td>
-                            <td class="text-center">x{{ item.quantity }}</td>
-                            <td class="text-end">{{ item.price|floatformat:0 }}₫</td>
-                            <td class="text-end fw-bold text-danger">{{ item.get_total_item_price|floatformat:0 }}₫</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                    <tfoot class="table-light">
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold">TỔNG CỘNG:</td>
-                            <td class="text-end fw-bold text-danger fs-5">{{ order.total_price|floatformat:0 }}₫</td>
-                        </tr>
-                    </tfoot>
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Sản phẩm</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end pe-3">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order_items %}
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product.image %}
+                                            <img src="{{ item.product.image.url }}" width="45" height="45" class="rounded me-3 shadow-sm" style="object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                                <i class="fas fa-image text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="fw-bold">{{ item.product.name }}</div>
+                                    </div>
+                                </td>
+                                <td class="text-center">x{{ item.quantity }}</td>
+                                <td class="text-end">{{ item.price|floatformat:0|intcomma }}₫</td>
+                                <td class="text-end fw-bold text-danger pe-3">{{ item.get_total_item_price|floatformat:0|intcomma }}₫</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr class="border-top-0">
+                                <td colspan="3" class="text-end fw-bold pt-3 pb-3">TỔNG CỘNG:</td>
+                                <td class="text-end fw-bold text-danger fs-5 pt-3 pb-3 pe-3">{{ order.total_price|floatformat:0|intcomma }}₫</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

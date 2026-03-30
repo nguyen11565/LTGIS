@@ -5,13 +5,10 @@ from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.utils.text import slugify  # Quan trọng: Dùng để tạo slug tự động
 from datetime import datetime, timedelta
-from django.contrib import messages
 from django.db import transaction
-from apps.core.models import Product, StockTransaction
-
-
-# Import models
-from apps.core.models import Store, Product, Order, Category, OrderItem
+from apps.core.models import Store, Product, Order, Category, OrderItem, StockTransaction, ProductImage
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse # Dùng cho chức năng xóa ảnh bằng AJAX
 
 # =========================================
 # 1. DASHBOARD & THỐNG KÊ
@@ -117,36 +114,62 @@ def store_delete(request, pk):
 
 @staff_member_required(login_url='client:login')
 def product_list(request):
+    # 1. Lấy dữ liệu cơ bản
     categories = Category.objects.all().order_by('name')
-    
-    # Lấy slug danh mục từ tham số GET trên URL (ví dụ: ?category=iphone)
     category_slug = request.GET.get('category')
     
+    # 2. Lấy các tham số lọc mới từ thanh công cụ tìm kiếm
+    search_query = request.GET.get('search')
+    price_range = request.GET.get('price_range')
+    
+    # 3. Khởi tạo QuerySet sản phẩm
+    products = Product.objects.all().order_by('-id')
+    
+    # --- BẮT ĐẦU LOGIC LỌC ---
+    
+    # Lọc theo danh mục (Giữ nguyên cũ)
     if category_slug:
-        # Lọc sản phẩm thuộc danh mục có slug tương ứng
-        # Lưu ý: Dùng 'category__slug' vì Product liên kết với Category
-        products = Product.objects.filter(category__slug=category_slug).order_by('-id')
-    else:
-        # Nếu không có tham số, hiển thị tất cả sản phẩm như cũ
-        products = Product.objects.all().order_by('-id')
+        products = products.filter(category__slug=category_slug)
+        
+    # Lọc theo từ khóa tìm kiếm (Tên sản phẩm hoặc ID)
+    if search_query:
+        if search_query.isdigit():
+            products = products.filter(id=search_query)
+        else:
+            products = products.filter(name__icontains=search_query)
+            
+    # Lọc theo khoảng giá (Mới thêm theo UI)
+    if price_range:
+        if price_range == '0-10':
+            products = products.filter(price__lt=10000000)
+        elif price_range == '10-20':
+            products = products.filter(price__gte=10000000, price__lte=20000000)
+        elif price_range == '20-30':
+            products = products.filter(price__gte=20000000, price__lte=30000000)
+        elif price_range == '30+':
+            products = products.filter(price__gt=30000000)
+            
+    # --- KẾT THÚC LOGIC LỌC ---
 
-    # --- Phần xử lý POST (thêm danh mục) giữ nguyên như cũ ---
+    # 4. Chức năng thêm danh mục nhanh (Giữ nguyên cũ)
     if request.method == 'POST' and 'add_category' in request.POST:
         cat_name = request.POST.get('cat_name')
         if cat_name:
             new_slug = slugify(cat_name)
+            # Kiểm tra tránh trùng lặp slug
             if not Category.objects.filter(slug=new_slug).exists():
                 Category.objects.create(name=cat_name, slug=new_slug)
                 messages.success(request, f"Đã thêm danh mục: {cat_name}")
                 return redirect('client:admin_product_list')
+            else:
+                messages.error(request, "Danh mục này đã tồn tại.")
 
     context = {
         'categories': categories,
         'products': products,
-        'selected_category': category_slug, # Gửi slug đang chọn về template
+        'selected_category': category_slug,
     }
     return render(request, 'admin_custom/product_management.html', context)
-
 @staff_member_required(login_url='client:login')
 def product_add(request):
     categories = Category.objects.all()
@@ -155,17 +178,26 @@ def product_add(request):
         category_id = request.POST.get('category')
         price = request.POST.get('price')
         description = request.POST.get('description')
+        content = request.POST.get('content') # LẤY DỮ LIỆU BÀI VIẾT CHI TIẾT
         image = request.FILES.get('image')
         
         category = get_object_or_404(Category, id=category_id)
         
-        Product.objects.create(
+        # 1. Tạo sản phẩm chính (Thêm trường content vào đây)
+        product = Product.objects.create(
             name=name,
             category=category,
             price=price,
             description=description,
+            content=content, # LƯU VÀO DATABASE
             image=image
         )
+
+        # 2. Lưu nhiều ảnh phụ (Gallery)
+        extra_images = request.FILES.getlist('more_images') 
+        for img in extra_images:
+            ProductImage.objects.create(product=product, image=img)
+
         messages.success(request, f"Đã thêm sản phẩm {name} thành công!")
         return redirect('client:admin_product_list')
         
@@ -182,12 +214,29 @@ def product_edit(request, pk):
         product.category = get_object_or_404(Category, id=category_id)
         product.price = request.POST.get('price')
         product.description = request.POST.get('description')
+        product.content = request.POST.get('content') # CẬP NHẬT DỮ LIỆU BÀI VIẾT CHI TIẾT
         
         new_image = request.FILES.get('image')
         if new_image:
             product.image = new_image
-            
+        
         product.save()
+
+        # ==========================================
+        # 1. CẬP NHẬT MỚI: Xử lý xóa ảnh trong Album
+        # ==========================================
+        images_to_delete = request.POST.getlist('delete_images')
+        if images_to_delete:
+            # Lọc ra các ảnh có ID nằm trong danh sách gửi lên và xóa chúng khỏi Database
+            ProductImage.objects.filter(id__in=images_to_delete).delete()
+
+        # ==========================================
+        # 2. GIỮ NGUYÊN: Lưu thêm ảnh phụ mới nếu có
+        # ==========================================
+        extra_images = request.FILES.getlist('more_images')
+        for img in extra_images:
+            ProductImage.objects.create(product=product, image=img)
+
         messages.success(request, f"Cập nhật sản phẩm '{product.name}' thành công!")
         return redirect('client:admin_product_list')
         
@@ -195,7 +244,6 @@ def product_edit(request, pk):
         'product': product,
         'categories': categories
     })
-
 @staff_member_required(login_url='client:login')
 def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -212,7 +260,7 @@ def category_edit(request, pk):
         new_name = request.POST.get('cat_name')
         if new_name:
             category.name = new_name
-            category.slug = slugify(new_name) # Cập nhật slug theo tên mới
+            category.slug = slugify(new_name)
             category.save()
             messages.success(request, f"Đã cập nhật danh mục thành: {new_name}")
     return redirect('client:admin_product_list')
@@ -237,6 +285,54 @@ def order_list(request):
     return render(request, 'admin_custom/order_list.html', {'orders': orders})
 
 @staff_member_required(login_url='client:login')
+def order_list(request):
+    # 1. Lấy danh sách tất cả đơn hàng (Sắp xếp mới nhất lên đầu)
+    orders = Order.objects.all().order_by('-created_at')
+    
+    # 2. Lấy các tham số lọc từ URL (GET parameters)
+    order_id = request.GET.get('order_id')
+    status = request.GET.get('status')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+
+    # 3. Áp dụng các bộ lọc nếu có
+    # Lọc theo Mã Đơn
+    if order_id and order_id.isdigit():
+        orders = orders.filter(id=order_id)
+
+    # Lọc theo Trạng thái
+    if status:
+        orders = orders.filter(status=status)
+
+    # Lọc theo Ngày đặt (Từ ngày - Đến ngày)
+    if start_date:
+        try:
+            # Lọc các đơn hàng có ngày tạo >= start_date
+            orders = orders.filter(created_at__date__gte=datetime.strptime(start_date, '%Y-%m-%d').date())
+        except ValueError:
+            pass # Bỏ qua nếu định dạng ngày không hợp lệ
+
+    if end_date:
+        try:
+            # Lọc các đơn hàng có ngày tạo <= end_date
+            orders = orders.filter(created_at__date__lte=datetime.strptime(end_date, '%Y-%m-%d').date())
+        except ValueError:
+            pass
+
+    # Lọc theo Tổng tiền
+    if min_price and min_price.isdigit():
+        orders = orders.filter(total_price__gte=int(min_price))
+        
+    if max_price and max_price.isdigit():
+        orders = orders.filter(total_price__lte=int(max_price))
+
+    # 4. Trả về template
+    return render(request, 'admin_custom/order_list.html', {'orders': orders})
+
+
+@staff_member_required(login_url='client:login')
 def order_detail(request, pk):
     order = get_object_or_404(Order, pk=pk)
     order_items = order.items.all() 
@@ -256,58 +352,125 @@ def order_detail(request, pk):
     }
     return render(request, 'admin_custom/order_detail.html', context)
 
-#nhập xuất kho
-def stock_management(request):
-    # 1. Lấy dữ liệu hiển thị (Dùng đúng tên model mới StockTransaction)
-    products = Product.objects.all().order_by("name")
-    transactions = StockTransaction.objects.all().order_by('-created_at')[:10]
+# =========================================
+# 5. QUẢN LÝ KHO HÀNG (STOCK)
+# =========================================
 
+@staff_member_required(login_url='client:login')
+def stock_management(request):
+    # 1. Lấy dữ liệu cơ bản
+    products = Product.objects.all().order_by("name")
+    categories = Category.objects.all() # Lấy thêm categories để đổ vào form lọc
+    transactions = StockTransaction.objects.all().select_related('product', 'user').order_by('-created_at')[:10]
+    stores = Store.objects.all()
+
+    # 2. LOGIC LỌC TÌM KIẾM (MỚI THÊM)
+    category_id = request.GET.get('category')
+    stock_status = request.GET.get('stock_status')
+
+    # Lọc theo Danh mục
+    if category_id:
+        products = products.filter(category_id=category_id)
+
+    # Lọc theo Trạng thái Tồn kho
+    if stock_status == 'in_stock':
+        products = products.filter(stock__gt=0)
+    elif stock_status == 'out_of_stock':
+        products = products.filter(stock__lte=0) # Dùng lte=0 để bắt cả trường hợp âm hoặc bằng 0
+    elif stock_status == 'low_stock':
+        products = products.filter(stock__gt=0, stock__lt=10)
+
+    # 3. XỬ LÝ NHẬP/XUẤT KHO (GIỮ NGUYÊN)
     if request.method == "POST":
         product_id = request.POST.get("product_id")
         quantity_str = request.POST.get("quantity")
         t_type = request.POST.get("transaction_type")
-        note = request.POST.get("note", "") # Lấy thêm ghi chú từ form
+        note = request.POST.get("note", "")
+        import_price = request.POST.get("price") 
+        store_id = request.POST.get("store_id")   
 
         if not product_id or not quantity_str:
             messages.error(request, "Dữ liệu không hợp lệ")
             return redirect("client:admin_stock_management")
 
-        quantity = int(quantity_str)
-        product = get_object_or_404(Product, id=product_id)
+        try:
+            quantity = int(quantity_str)
+            product = get_object_or_404(Product, id=product_id)
 
-        # 2. Cập nhật tồn kho của Sản phẩm
-        if t_type == "in":
-            product.stock = product.stock + quantity
-        elif t_type == "out":
-            if product.stock < quantity:
-                messages.error(request, f"Không đủ hàng (Hiện còn: {product.stock})")
-                return redirect("client:admin_stock_management")
-            product.stock = product.stock - quantity
-        
-        product.save()
+            if t_type == "in":
+                product.stock = (product.stock or 0) + quantity
+            elif t_type == "out":
+                if (product.stock or 0) < quantity:
+                    messages.error(request, f"Không đủ hàng trong kho (Hiện còn: {product.stock})")
+                    return redirect("client:admin_stock_management")
+                product.stock = product.stock - quantity
+            
+            product.save()
 
-        # 3. QUAN TRỌNG: Tạo bản ghi lịch sử giao dịch (Chỗ này bạn đang thiếu)
-        StockTransaction.objects.create(
-            product=product,
-            quantity=quantity,
-            transaction_type=t_type,
-            note=note,
-            user=request.user # Lưu người thực hiện
-        )
+            StockTransaction.objects.create(
+                product=product,
+                quantity=quantity,
+                transaction_type=t_type,
+                note=note,
+                user=request.user,
+                price=float(import_price) if import_price and t_type == "in" else 0,
+                store_destination_id=store_id if t_type == "out" and store_id else None
+            )
 
-        messages.success(request, f"Đã { 'nhập' if t_type == 'in' else 'xuất' } {quantity} {product.name} thành công")
+            messages.success(request, f"Đã { 'nhập' if t_type == 'in' else 'xuất' } {quantity} {product.name} thành công")
+            
+        except Exception as e:
+            messages.error(request, f"Có lỗi xảy ra: {str(e)}")
+
         return redirect("client:admin_stock_management")
 
-    return render(
-        request,
-        "admin_custom/stock_management.html",
-        {
+    # 4. Gửi dữ liệu ra giao diện
+    return render(request, "admin_custom/stock_management.html", {
             "products": products,
-            "transactions": transactions
+            "categories": categories, # Truyền thêm categories ra template
+            "transactions": transactions,
+            "stores": stores
         }
     )
-# In hóa đơn nhập xuất kho
-@staff_member_required
+@staff_member_required(login_url='client:login')
 def print_stock_transaction(request, transaction_id):
     transaction = get_object_or_404(StockTransaction, id=transaction_id)
     return render(request, 'admin_custom/print_stock.html', {'t': transaction})
+
+# =========================================
+# 6. CHI TIẾT CỬA HÀNG & KHO TỔNG
+# =========================================
+
+@staff_member_required(login_url='client:login')
+def store_detail(request, store_id):
+    store = get_object_or_404(Store, id=store_id)
+    
+    if store.name == "Kho hàng PhoneStore":
+        inventory = Product.objects.filter(stock__gt=0).values(
+            'id', 'name', 'image', 'stock'
+        ).annotate(total_quantity=Sum('stock'))
+    else:
+        inventory = StockTransaction.objects.filter(
+            store_destination=store, 
+            transaction_type='out'
+        ).values(
+            'product__id', 'product__name', 'product__image'
+        ).annotate(total_quantity=Sum('quantity')).order_by('-total_quantity')
+
+    return render(request, 'admin_custom/store_detail.html', {
+        'store': store,
+        'inventory': inventory,
+        'is_main_warehouse': store.name == "Kho hàng PhoneStore"
+    })
+
+# =========================================
+# 7. XÓA ẢNH TRONG GALLERY (AJAX/REDIRECT)
+# =========================================
+
+@staff_member_required(login_url='client:login')
+def delete_product_image(request, img_id):
+    image = get_object_or_404(ProductImage, id=img_id)
+    product_id = image.product.id
+    image.delete()
+    messages.success(request, "Đã xóa ảnh khỏi bộ sưu tập.")
+    return redirect('client:admin_product_edit', pk=product_id)

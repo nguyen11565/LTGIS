@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import views_admin
+from django.conf.urls import handler404
 app_name = 'client'
 
 urlpatterns = [
@@ -30,6 +31,8 @@ urlpatterns = [
     path('my-orders/', views.my_orders, name='my_orders'),
     #tim kiem san pham
     path('search/', views.search_view, name='search'),
+    path('my-orders/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('my-orders/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
 
     # ĐƯỜNG DẪN ADMIN
     path('my-admin/', views_admin.dashboard, name='admin_dashboard'),
@@ -39,6 +42,7 @@ urlpatterns = [
     path('my-admin/stores/delete/<int:pk>/', views_admin.store_delete, name='admin_store_delete'),
     path('my-admin/stock/', views_admin.stock_management, name='admin_stock_management'),
     path('my-admin/stock/print/<int:transaction_id>/', views_admin.print_stock_transaction, name='print_stock'),
+    path('my-admin/stores/<int:store_id>/', views_admin.store_detail, name='admin_store_detail'),
 
     # QUẢN LÝ SẢN PHẨM
     path('my-admin/products/', views_admin.product_list, name='admin_product_list'),
@@ -51,4 +55,7 @@ urlpatterns = [
     # QUẢN LÝ ĐƠN HÀNG
     path('my-admin/orders/', views_admin.order_list, name='admin_order_list'),
     path('my-admin/orders/<int:pk>/', views_admin.order_detail, name='admin_order_detail'),
+
+    
 ]
+handler404 = 'apps.client.views.error_404'

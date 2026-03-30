@@ -1,40 +1,63 @@
 {% extends 'client/base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}{{ product.name }} - Phone Store{% endblock %}
+{% block title %} {{ product.name }} - Phone Store {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <style>
-    .detail-product-img {
-        max-height: 450px;
-        object-fit: contain;
-        transition: transform 0.3s ease;
+    /* Slider chính */
+    .product-main-slider { height: 450px; width: 100%; border-radius: 16px; background: #fff; }
+    .product-main-slider .swiper-slide { display: flex; justify-content: center; align-items: center; }
+    .product-main-slider .swiper-slide img { max-height: 100%; max-width: 100%; object-fit: contain; }
+
+    /* Slider ảnh nhỏ (Thumbnails) */
+    .product-thumbs-slider { margin-top: 15px; height: 80px; box-sizing: border-box; }
+    .product-thumbs-slider .swiper-slide { width: 25%; height: 100%; opacity: 0.5; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid transparent; transition: 0.3s; }
+    .product-thumbs-slider .swiper-slide-thumb-active { opacity: 1; border-color: #d70018; }
+    .product-thumbs-slider .swiper-slide img { width: 100%; height: 100%; object-fit: cover; }
+
+    .swiper-button-next, .swiper-button-prev { color: #d70018; transform: scale(0.7); }
+    .price-tag { font-size: 2rem; color: #d70018; font-weight: 800; }
+    
+    /* -------------------------------------------
+       CSS CHO BẢNG THÔNG SỐ KỸ THUẬT & MODAL
+    ---------------------------------------------*/
+    .specs-box { background: #fff; border-radius: 12px; padding: 25px; color: #333; }
+    .specs-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; }
+    .specs-table tr:nth-child(odd) { background-color: #f8f9fa; }
+    .specs-table td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .specs-table td:first-child { width: 40%; font-weight: bold; color: #444; }
+    
+    /* -------------------------------------------
+       CSS CHO BÀI VIẾT GIỚI THIỆU (THU GỌN)
+    ---------------------------------------------*/
+    .content-box { background: #fff; border-radius: 12px; padding: 25px; color: #333; line-height: 1.6; position: relative; }
+    .content-wrapper { position: relative; max-height: 500px; overflow: hidden; transition: max-height 0.5s ease; }
+    
+    .content-wrapper.collapsed::after {
+        content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 100px;
+        background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
     }
-    .detail-product-img:hover {
-        transform: scale(1.05);
+    .content-wrapper.expanded { max-height: none; }
+    
+    /* Nút Xem thêm chung */
+    .btn-view-more {
+        display: block; width: fit-content; margin: 20px auto 0; padding: 10px 25px;
+        border: 1px solid #d70018; color: #d70018; background: #fff; border-radius: 50px;
+        font-weight: bold; transition: 0.3s; cursor: pointer; text-decoration: none; text-align: center;
     }
-    .price-tag {
-        font-size: 2rem;
-        color: #d70018;
-        font-weight: 800;
-    }
-    .description-box {
-        background: #fff;
-        border-radius: 12px;
-        padding: 20px;
-        color: #333;
-    }
-    .related-card {
-        border: none;
-        transition: 0.3s;
-    }
-    .related-card:hover {
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .breadcrumb-item a {
-        color: #666;
-        text-decoration: none;
-    }
+    .btn-view-more:hover { background: #d70018; color: #fff; }
+
+    /* Định dạng chung nội dung CKEditor */
+    .content-box ul, .content-box ol { padding-left: 20px; margin-bottom: 15px; }
+    .content-box p { margin-bottom: 15px; }
+    .content-box img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 15px auto; }
+
+    .related-card { border: none; transition: 0.3s; }
+    .related-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .breadcrumb-item a { color: #666; text-decoration: none; }
 </style>
 {% endblock %}
 
@@ -50,25 +73,40 @@
 
     <div class="row g-5">
         <div class="col-md-6">
-            <div class="card border-0 shadow-sm p-4 text-center rounded-4">
-                {% if product.image %}
-                    <img src="{{ product.image.url }}" class="img-fluid detail-product-img" alt="{{ product.name }}">
-                {% else %}
-                    <img src="https://via.placeholder.com/500" class="img-fluid rounded" alt="No image">
-                {% endif %}
+            <div class="swiper product-main-slider shadow-sm border p-3">
+                <div class="swiper-wrapper">
+                    {% if product.image %}
+                        <div class="swiper-slide"><img src="{{ product.image.url }}" alt="{{ product.name }}"></div>
+                        {% for extra in product.images.all %}
+                        <div class="swiper-slide"><img src="{{ extra.image.url }}" alt="{{ product.name }}"></div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="swiper-slide"><img src="https://via.placeholder.com/500" alt="No image"></div>
+                    {% endif %}
+                </div>
+                <div class="swiper-button-next"></div><div class="swiper-button-prev"></div>
+            </div>
+
+            <div thumbsSlider="" class="swiper product-thumbs-slider">
+                <div class="swiper-wrapper">
+                    {% if product.image %}
+                        <div class="swiper-slide border"><img src="{{ product.image.url }}"></div>
+                        {% for extra in product.images.all %}
+                        <div class="swiper-slide border"><img src="{{ extra.image.url }}"></div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
             </div>
         </div>
 
         <div class="col-md-6">
             <h1 class="fw-bold mb-2">{{ product.name }}</h1>
             <div class="d-flex align-items-center mb-3">
-                <div class="text-warning me-2">
-                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star text-secondary"></i>
-                </div>
+                <div class="text-warning me-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star text-secondary"></i></div>
                 <span class="text-muted small">(4.0 đánh giá)</span>
             </div>
             
-            <div class="price-tag mb-4">{{ product.price|floatformat:0 }}₫</div>
+            <div class="price-tag mb-4">{{ product.price|floatformat:0|intcomma }}₫</div>
 
             <div class="alert alert-light border d-flex align-items-center mb-4 shadow-sm">
                 <i class="fas fa-truck text-danger me-3 fs-4"></i>
@@ -82,9 +120,7 @@
                 <a href="{% url 'client:cart_add' product.id %}" class="btn btn-danger btn-lg py-3 fw-bold rounded-3">
                     <i class="fas fa-cart-plus me-2"></i>THÊM VÀO GIỎ HÀNG
                 </a>
-                <button class="btn btn-outline-dark btn-lg py-3 fw-bold rounded-3">
-                    MUA TRẢ GÓP 0%
-                </button>
+                <button class="btn btn-outline-dark btn-lg py-3 fw-bold rounded-3">MUA TRẢ GÓP 0%</button>
             </div>
 
             <div class="mt-4 p-3 border rounded-3 bg-light">
@@ -99,14 +135,37 @@
 
     <div class="row mt-5">
         <div class="col-lg-8">
+            
+            {% if product.content %}
             <h4 class="fw-bold mb-4 border-start border-4 border-danger ps-3">Đặc điểm nổi bật</h4>
-            <div class="description-box shadow-sm border">
-                {{ product.description|linebreaks }}
+            <div class="content-box shadow-sm border mb-5">
+                <div id="productArticle" class="content-wrapper collapsed">
+                    {{ product.content|safe }}
+                </div>
+                <button id="toggleArticle" class="btn-view-more">
+                    Xem toàn bộ bài viết <i class="fas fa-chevron-down ms-1"></i>
+                </button>
             </div>
+            {% endif %}
+
         </div>
         
         <div class="col-lg-4">
-            <h4 class="fw-bold mb-4 border-start border-4 border-danger ps-3">Gợi ý khác</h4>
+            <h4 class="fw-bold mb-4 border-start border-4 border-danger ps-3">Thông số kỹ thuật</h4>
+            <div class="specs-box shadow-sm border mb-5">
+                <div class="specs-table-wrapper" style="max-height: 350px; overflow: hidden; position: relative;">
+                    <table class="specs-table">
+                        {{ product.description|safe }}
+                    </table>
+                    <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));"></div>
+                </div>
+                
+                <button class="btn-view-more w-100 mt-3" data-bs-toggle="modal" data-bs-target="#specsModal">
+                    Xem cấu hình chi tiết <i class="fas fa-cogs ms-1"></i>
+                </button>
+            </div>
+
+            <h4 class="fw-bold mb-4 border-start border-4 border-danger ps-3 mt-4">Gợi ý khác</h4>
             {% for item in related_products %}
             <div class="card related-card mb-3 shadow-sm p-2">
                 <div class="row g-0 align-items-center">
@@ -116,7 +175,7 @@
                     <div class="col-8">
                         <div class="card-body py-1 px-3">
                             <a href="{% url 'client:product_detail' item.id %}" class="text-decoration-none text-dark small fw-bold d-block mb-1">{{ item.name }}</a>
-                            <div class="text-danger small fw-bold">{{ item.price|floatformat:0 }}₫</div>
+                            <div class="text-danger small fw-bold">{{ item.price|floatformat:0|intcomma }}₫</div>
                         </div>
                     </div>
                 </div>
@@ -125,4 +184,70 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="specsModal" tabindex="-1" aria-labelledby="specsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-bottom bg-light">
+                <h5 class="modal-title fw-bold text-danger" id="specsModalLabel">
+                    <i class="fas fa-microchip me-2"></i>THÔNG SỐ KỸ THUẬT
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <table class="specs-table">
+                    {{ product.description|safe }}
+                </table>
+            </div>
+            <div class="modal-footer border-top bg-light">
+                <button type="button" class="btn btn-danger px-4 fw-bold" data-bs-dismiss="modal">ĐÓNG</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script>
+    // Swiper Logic
+    var swiperThumbs = new Swiper(".product-thumbs-slider", {
+        spaceBetween: 10,
+        slidesPerView: 4,
+        freeMode: true,
+        watchSlidesProgress: true,
+        breakpoints: {
+            320: { slidesPerView: 3 },
+            480: { slidesPerView: 4 }
+        }
+    });
+
+    var swiperMain = new Swiper(".product-main-slider", {
+        spaceBetween: 10,
+        navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+        thumbs: { swiper: swiperThumbs },
+    });
+
+    // Thu gọn / Mở rộng cho BÀI VIẾT GIỚI THIỆU
+    const toggleArticleBtn = document.getElementById('toggleArticle');
+    if (toggleArticleBtn) {
+        toggleArticleBtn.addEventListener('click', function() {
+            const content = document.getElementById('productArticle');
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                content.classList.add('expanded');
+                this.innerHTML = 'Thu gọn bài viết <i class="fas fa-chevron-up ms-1"></i>';
+            } else {
+                content.classList.remove('expanded');
+                content.classList.add('collapsed');
+                this.innerHTML = 'Xem toàn bộ bài viết <i class="fas fa-chevron-down ms-1"></i>';
+                window.scrollTo({
+                    top: content.parentElement.offsetTop - 50,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    }
+</script>
 {% endblock %}
