@@ -1,0 +1,816 @@
+{% extends 'client/base.html' %}
+{% load humanize %} 
+
+{% block title %}Tài khoản của tôi | Phone Store{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row g-4">
+        <!-- SIDEBAR NAVIGATION -->
+        <div class="col-lg-3">
+            <div class="glass-container p-4 sticky-sidebar">
+                <div class="text-center mb-4">
+                    <div class="avatar-wrapper mx-auto mb-3">
+                        {% if profile.avatar %}
+                            <img src="{{ profile.avatar.url }}" class="profile-avatar shadow" alt="Avatar">
+                        {% else %}
+                            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=d70018&color=fff" class="profile-avatar shadow" alt="Avatar">
+                        {% endif %}
+                        <div class="rank-badge-overlay {{ rank|lower }}-rank">
+                            <i class="{% if rank == 'GOLD' %}fas fa-crown{% elif rank == 'SILVER' %}fas fa-medal{% else %}fas fa-star{% endif %}"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-0">{{ user.first_name }} {{ user.last_name|default:user.username }}</h5>
+                    <p class="text-secondary small">{{ rank }} Member</p>
+                </div>
+
+                <div class="nav flex-column nav-pills custom-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                    <button class="nav-link {% if not request.GET.status and not request.GET.start_date and request.GET.tab != 'profile' %}active{% endif %} mb-2" 
+                            id="v-pills-overview-tab" data-bs-toggle="pill" data-bs-target="#v-pills-overview" type="button" role="tab">
+                        <i class="fas fa-grid-2 me-2"></i> Tổng quan
+                    </button>
+                    
+                    <button class="nav-link {% if request.GET.status or request.GET.start_date %}active{% endif %} mb-2" 
+                            id="v-pills-orders-tab" data-bs-toggle="pill" data-bs-target="#v-pills-orders" type="button" role="tab">
+                        <i class="fas fa-shopping-bag me-2"></i> Lịch sử đơn hàng
+                    </button>
+                    
+                    <button class="nav-link mb-2" id="v-pills-rank-tab" data-bs-toggle="pill" data-bs-target="#v-pills-rank" type="button" role="tab">
+                        <i class="fas fa-gem me-2"></i> Hạng & Đặc quyền
+                    </button>
+                    
+                    <button class="nav-link {% if request.GET.tab == 'profile' %}active{% endif %} mb-4" 
+                            id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab">
+                        <i class="fas fa-user-gear me-2"></i> Cài đặt tài khoản
+                    </button>
+                    
+                    <div class="border-top pt-3">
+                        <a href="{% url 'client:logout' %}" class="nav-link text-danger logout-link py-2">
+                            <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="col-lg-9">
+            <div class="tab-content no-scroll-animation" id="v-pills-tabContent">
+                
+                <!-- TAB: OVERVIEW -->
+                <div class="tab-pane fade {% if not request.GET.status and not request.GET.start_date and request.GET.tab != 'profile' %}show active{% endif %}" id="v-pills-overview" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold m-0 text-gradient-dark">Dashboard</h4>
+                        <span class="badge bg-white shadow-sm text-dark px-3 py-2 rounded-pill small">
+                            Hôm nay: {{ today|date:"d/m/Y" }}
+                        </span>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- 3D VIRTUAL CARD -->
+                        <div class="col-xl-7 col-lg-12">
+                            <div class="card-scene" onmousemove="rotateCard(event)" onmouseleave="resetCard()">
+                                <div class="virtual-membership-card {{ rank|lower }}-bg" id="memberCard">
+                                    <div class="card-inner-glass"></div>
+                                    <div class="card-content">
+                                        <div class="d-flex justify-content-between align-items-start h-100 flex-column">
+                                            <div class="w-100 d-flex justify-content-between">
+                                                <div class="card-chip"></div>
+                                                <i class="fas fa-wifi fa-rotate-90 opacity-50"></i>
+                                            </div>
+                                            <div class="card-number mb-auto mt-4">
+                                                {% if rank == 'GOLD' %}PREMIUM GOLD MEMBER{% elif rank == 'SILVER' %}SILVER ELITE MEMBER{% else %}STARTER MEMBER{% endif %}
+                                            </div>
+                                            <div class="w-100 d-flex justify-content-between align-items-end">
+                                                <div class="card-holder">
+                                                    <span class="small opacity-75 d-block text-uppercase mb-1">Chủ thẻ</span>
+                                                    <span class="h5 fw-bold mb-0">{{ user.username|upper }}</span>
+                                                </div>
+                                                <div class="card-logo">
+                                                    <i class="fas fa-mobile-alt me-2"></i>PhoneStore
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-rank-watermark">
+                                        <i class="{% if rank == 'GOLD' %}fas fa-crown{% elif rank == 'SILVER' %}fas fa-medal{% else %}fas fa-star{% endif %}"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STATS CARDS -->
+                        <div class="col-xl-5 col-lg-12">
+                            <div class="row g-3 h-100">
+                                <div class="col-12">
+                                    <div class="glass-container h-100 p-4 d-flex align-items-center stats-card">
+                                        <div class="stats-icon text-success me-4">
+                                            <i class="fas fa-coins fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-secondary small mb-1">Điểm tích lũy</p>
+                                            <h3 class="fw-bold mb-0">{{ profile.points }} <span class="fs-6 fw-normal text-muted">Pts</span></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="glass-container h-100 p-4 d-flex align-items-center stats-card">
+                                        <div class="stats-icon text-danger me-4">
+                                            <i class="fas fa-wallet fa-2x"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-secondary small mb-1">Tổng chi tiêu</p>
+                                            <h3 class="fw-bold mb-0 text-danger">{{ profile.total_spent|intcomma }}<span class="fs-6 fw-normal">₫</span></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RANK PROGRESS -->
+                    <div class="glass-container p-4 mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold m-0"><i class="fas fa-chart-line me-2 text-primary"></i> Tiến trình lên hạng mới</h6>
+                            {% if next_threshold > 0 %}
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3">Cần thêm: {{ next_threshold|intcomma }}₫</span>
+                            {% else %}
+                                <span class="badge bg-warning-subtle text-warning rounded-pill px-3">Hạng Cao Nhất</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if next_threshold > 0 %}
+                            <div class="progress custom-progress mb-2" style="height: 12px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" 
+                                     style="width: {% widthratio profile.total_spent next_threshold|add:profile.total_spent 100 %}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-secondary">
+                                <span>{{ profile.total_spent|intcomma }}₫</span>
+                                <span>{{ next_threshold|add:profile.total_spent|intcomma }}₫</span>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success border-0 rounded-4 m-0 py-2">
+                                <i class="fas fa-trophy me-2 text-warning"></i> Chúc mừng bạn đã đạt cấp độ cao nhất!
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- RECENT ACTIONS -->
+                    <div class="mt-5">
+                        <h5 class="fw-bold mb-4">Hoạt động & Lối tắt</h5>
+                        <div class="row g-3">
+                            <div class="col-md-3 col-6">
+                                <a href="?status=pending" class="action-btn-modern">
+                                    <div class="icon-circle bg-warning-subtle text-warning">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <span>Đang chờ</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a href="?status=shipped" class="action-btn-modern">
+                                    <div class="icon-circle bg-primary-subtle text-primary">
+                                        <i class="fas fa-truck-fast"></i>
+                                    </div>
+                                    <span>Đang giao</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a href="?status=completed" class="action-btn-modern">
+                                    <div class="icon-circle bg-success-subtle text-success">
+                                        <i class="fas fa-check-double"></i>
+                                    </div>
+                                    <span>Hoàn thành</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <a href="{% url 'client:home' %}" class="action-btn-modern featured">
+                                    <div class="icon-circle bg-danger text-white">
+                                        <i class="fas fa-shop"></i>
+                                    </div>
+                                    <span>Mua sắm</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: ORDERS -->
+                <div class="tab-pane fade {% if request.GET.status or request.GET.start_date %}show active{% endif %}" id="v-pills-orders" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                        <h4 class="fw-bold m-0">Đơn hàng của bạn</h4>
+                        <div class="order-filters glass-container p-1 d-flex gap-1 overflow-auto">
+                            <a href="?status=all" class="filter-link {% if current_status == 'all' or not current_status %}active{% endif %}">Tất cả</a>
+                            <a href="?status=pending" class="filter-link {% if current_status == 'pending' %}active{% endif %}">Chờ xử lý</a>
+                            <a href="?status=shipped" class="filter-link {% if current_status == 'shipped' %}active{% endif %}">Đang giao</a>
+                            <a href="?status=completed" class="filter-link {% if current_status == 'completed' %}active{% endif %}">Thành công</a>
+                        </div>
+                    </div>
+
+                    {% for order in orders %}
+                    <div class="order-card-modern glass-container mb-3 p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3 border-bottom pb-2">
+                            <div class="pe-3" style="max-width: 60%;">
+                                <h6 class="fw-bold mb-0 text-truncate" title="{% for item in order.items.all %}{{ item.product.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                                    {% for item in order.items.all %}
+                                        {{ item.product.name }}{% if item.variation %} ({{ item.variation.color }}){% endif %}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </h6>
+                                <span class="text-secondary small">Đơn hàng #{{ order.id }} &bull; {{ order.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <span class="badge-status {{ order.status }} text-end">
+                                {% if order.status == 'pending' %}Chờ xử lý
+                                {% elif order.status == 'processing' %}Đang đóng gói
+                                {% elif order.status == 'shipped' %}Đang giao hàng
+                                {% elif order.status == 'completed' %}Đã hoàn thành
+                                {% elif order.status == 'cancelled' %}Đã hủy
+                                {% else %}{{ order.get_status_display }}{% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="order-meta">
+                                <p class="mb-1 small text-secondary"><i class="fas fa-location-dot me-2"></i>{{ order.address|truncatechars:50 }}</p>
+                                <h5 class="fw-bold text-danger m-0">{{ order.total_price|intcomma }}₫</h5>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {% if order.payment_status == 'paid' or order.payment_method == 'cod' and order.status == 'completed' %}
+                                <a href="{% url 'client:client_print_receipt' order.id %}" target="_blank" class="btn btn-outline-danger rounded-pill px-4">In hóa đơn</a>
+                                {% endif %}
+                                <a href="{% url 'client:order_detail' order.id %}" class="btn btn-dark rounded-pill px-4">Chi tiết</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5 glass-container">
+                        <i class="fas fa-box-open fa-4x text-muted opacity-25 mb-3"></i>
+                        <p class="text-muted">Bạn chưa có đơn hàng nào trong mục này.</p>
+                        <a href="{% url 'client:home' %}" class="btn btn-danger rounded-pill px-5 mt-2">Đến Cửa Hàng</a>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- TAB: RANK & PRIVILEGES -->
+                <div class="tab-pane fade" id="v-pills-rank" role="tabpanel">
+                    <h4 class="fw-bold mb-4 text-gradient-dark">Hạng & Đặc quyền</h4>
+                    
+                    <div class="row g-4">
+                        {% for r_name, r_color, r_icon in rank_data %}
+                        <div class="col-md-6">
+                            <div class="rank-info-card glass-container p-4 h-100 {% if rank == r_name %}active-rank{% endif %}">
+                                <div class="rank-header mb-4">
+                                    <div class="rank-icon-3d {{ r_name|lower }}-rank">
+                                        <i class="fas {{ r_icon }}"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="fw-bold mb-0">{{ r_name }}</h5>
+                                        <span class="small text-secondary">Cấp độ {{ forloop.counter }}</span>
+                                    </div>
+                                    {% if rank == r_name %}
+                                    <div class="ms-auto">
+                                        <span class="badge bg-success rounded-pill px-3">Của bạn</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="rank-benefits">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2"><i class="fas fa-circle-check text-success me-2"></i> Tích điểm {{ forloop.counter }}% mọi đơn hàng</li>
+                                        <li class="mb-2"><i class="fas fa-circle-check text-success me-2"></i> Ưu tiên hỗ trợ 24/7</li>
+                                        {% if r_name == 'SILVER' or r_name == 'GOLD' %}
+                                        <li class="mb-2"><i class="fas fa-circle-check text-success me-2"></i> Voucher sinh nhật đặc biệt</li>
+                                        {% endif %}
+                                        {% if r_name == 'GOLD' %}
+                                        <li class="mb-2"><i class="fas fa-circle-check text-success me-2"></i> Miễn phí vận chuyển trọn đời</li>
+                                        <li class="mb-2"><i class="fas fa-circle-check text-success me-2"></i> Quà tặng tri ân hằng năm</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- TAB: PROFILE & SETTINGS -->
+                <div class="tab-pane fade {% if request.GET.tab == 'profile' %}show active{% endif %}" id="v-pills-profile" role="tabpanel">
+                    <h4 class="fw-bold mb-4">Cài đặt tài khoản</h4>
+
+                    <!-- PROFILE UPDATE FORM -->
+                    <div class="glass-container p-4 mb-4">
+                        <h6 class="fw-bold mb-4 border-bottom pb-2">Thông tin cá nhân</h6>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="update_profile">
+                            <div class="row g-4">
+                                <div class="col-12 text-center mb-2">
+                                    <div class="avatar-upload-preview mb-3 position-relative d-inline-block">
+                                        {% if user.profile.avatar %}
+                                            <img src="{{ user.profile.avatar.url }}" id="avatarPreview" class="profile-avatar-lg shadow" alt="Avatar">
+                                        {% else %}
+                                            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=d70018&color=fff&size=128" id="avatarPreview" class="profile-avatar-lg shadow" alt="Avatar">
+                                        {% endif %}
+                                        <label for="avatarInput" class="avatar-edit-btn">
+                                            <i class="fas fa-camera"></i>
+                                        </label>
+                                        <input type="file" id="avatarInput" name="avatar" class="d-none" onchange="previewAvatar(this)">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <input type="text" class="form-control" name="full_name" value="{{ user.first_name }} {{ user.last_name }}" placeholder="Họ và tên">
+                                        <label>Họ và tên</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <input type="email" class="form-control" name="email" value="{{ user.email }}" placeholder="Email">
+                                        <label>Email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <input type="text" class="form-control" name="phone" value="{{ profile.phone }}" placeholder="Số điện thoại">
+                                        <label>Số điện thoại</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating-custom">
+                                        <input type="text" class="form-control bg-light" value="{{ user.username }}" readonly disabled placeholder="Tên đăng nhập">
+                                        <label>Tên đăng nhập</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating-custom">
+                                        <textarea class="form-control" name="address" style="height: 100px" placeholder="Địa chỉ">{{ profile.address }}</textarea>
+                                        <label>Địa chỉ</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 text-end">
+                                    <button type="submit" class="btn btn-danger rounded-pill px-5 py-2 fw-bold">Lưu thay đổi</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- SECURITY SETTINGS -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <div class="glass-container p-4 h-100">
+                                <h6 class="fw-bold mb-4 border-bottom pb-2"><i class="fas fa-lock me-2"></i> Đổi mật khẩu</h6>
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="change_password">
+                                    <div class="mb-3">
+                                        <label class="small text-secondary mb-1">Mật khẩu hiện tại</label>
+                                        <input type="password" name="old_password" class="form-control rounded-3 {% if request.GET.pwd_error == 'old' %}is-invalid{% endif %}" required>
+                                        {% if request.GET.pwd_error == 'old' %}
+                                        <div class="invalid-feedback">Mật khẩu hiện tại không chính xác.</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="small text-secondary mb-1">Mật khẩu mới</label>
+                                        <input type="password" name="new_password" class="form-control rounded-3 {% if request.GET.pwd_error == 'length' %}is-invalid{% endif %}" required>
+                                        {% if request.GET.pwd_error == 'length' %}
+                                        <div class="invalid-feedback">Mật khẩu mới phải có ít nhất 6 ký tự.</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="small text-secondary mb-1">Xác nhận mật khẩu</label>
+                                        <input type="password" name="confirm_password" class="form-control rounded-3 {% if request.GET.pwd_error == 'mismatch' %}is-invalid{% endif %}" required>
+                                        {% if request.GET.pwd_error == 'mismatch' %}
+                                        <div class="invalid-feedback">Mật khẩu xác nhận không khớp.</div>
+                                        {% endif %}
+                                    </div>
+                                    {% if request.GET.pwd_success == 'true' %}
+                                    <div class="alert alert-success fs-6 py-2 mb-3"><i class="fas fa-check-circle me-1"></i> Đổi mật khẩu thành công!</div>
+                                    {% endif %}
+                                    <button type="submit" class="btn btn-dark w-100 rounded-pill fw-bold py-2">Cập nhật mật khẩu</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="glass-container p-4 h-100 border-danger-subtle">
+                                <h6 class="fw-bold mb-4 border-bottom pb-2 text-danger"><i class="fas fa-user-slash me-2"></i> Vùng nguy hiểm</h6>
+                                <p class="small text-secondary mb-4">
+                                    Một khi bạn xóa tài khoản, toàn bộ dữ liệu đơn hàng và điểm tích lũy sẽ không thể khôi phục. Hãy cân nhắc kỹ.
+                                </p>
+                                <button type="button" class="btn btn-outline-danger w-100 rounded-pill fw-bold py-2 mt-auto" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                                    Xóa tài khoản
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ADDRESS BOOK SECTION -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 pt-4 border-top">
+                        <h5 class="fw-bold mb-0">Sổ địa chỉ</h5>
+                        <button type="button" class="btn btn-danger rounded-pill px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            <i class="fas fa-plus-circle me-2"></i> Thêm mới
+                        </button>
+                    </div>
+
+                    <div class="row g-3">
+                        {% for addr in addresses %}
+                        <div class="col-md-6">
+                            <div class="address-card glass-container p-4 h-100 {% if addr.is_default %}is-default{% endif %}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0">{{ addr.receiver_name }}</h6>
+                                        {% if addr.is_default %}
+                                        <span class="badge bg-success rounded-pill small px-2">Mặc định</span>
+                                        {% endif %}
+                                    </div>
+                                    <form method="post" class="m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa địa chỉ này?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="delete_address">
+                                        <input type="hidden" name="address_id" value="{{ addr.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Xóa địa chỉ">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                <p class="text-secondary small mb-1"><i class="fas fa-phone-alt me-2"></i> {{ addr.phone_number }}</p>
+                                <p class="text-secondary small mb-0">
+                                    <i class="fas fa-location-dot me-2 text-danger"></i> {{ addr.address_detail }}
+                                    {% if addr.area_info %}<br><span class="ms-4 opacity-75">{{ addr.area_info }}</span>{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 py-4 text-center glass-container opacity-50">
+                            <p class="m-0">Chưa có địa chỉ nhận hàng nào được lưu.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DELETE ACCOUNT -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-modal rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold text-danger m-0">Xác nhận xóa tài khoản?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="mb-0">Hệ thống sẽ xóa vĩnh viễn tài khoản <strong>{{ user.username }}</strong>. Hành động này không thể hoàn tác!</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy bỏ</button>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_account">
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Xác nhận xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ADD ADDRESS -->
+<div class="modal fade" id="addAddressModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content glass-modal rounded-4 border-0 shadow-lg">
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_address">
+                <div class="modal-header border-0 p-4 pb-0">
+                    <h5 class="fw-bold mb-0">Địa chỉ mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">Người nhận</label>
+                            <input type="text" name="receiver_name" class="form-control rounded-3" placeholder="Tên" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary">SĐT</label>
+                            <input type="text" name="phone_number" class="form-control rounded-3" placeholder="09xxx..." required>
+                        </div>
+                        <div class="col-12">
+                            <div id="address-map" style="height: 250px; border-radius: 8px; border: 1px solid #ddd;" class="mb-2"></div>
+                            <p class="small text-primary mb-2"><i class="fas fa-crosshairs me-1"></i>Nhấp bản đồ để chọn nhanh địa chỉ giao hàng.</p>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Tỉnh/Huyện/Xã</label>
+                            <input type="text" name="area_info" id="input-area" class="form-control rounded-3" placeholder="VD: Quận 1, TP. HCM">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-secondary">Địa chỉ chi tiết</label>
+                            <textarea name="address_detail" id="input-detail" class="form-control rounded-3" rows="2" placeholder="Số nhà, tên đường..." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_default">
+                                <label class="form-check-label small fw-bold">Đặt làm mặc định</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-5 fw-bold">Lưu địa chỉ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     CSS MODERN DESIGN FOR ACCOUNT PAGE
+     ========================================== -->
+<style>
+    /* VARIABLES */
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.5);
+        --new-gradient: linear-gradient(135deg, #d70018 0%, #1a1a1a 100%);
+        --silver-gradient: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+        --gold-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    }
+
+    /* GLASSMORPHISM BASE */
+    .glass-container {
+        background: var(--glass-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .glass-modal {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    }
+
+    /* SIDEBAR & NAV */
+    .sticky-sidebar { position: sticky; top: 100px; }
+    .avatar-wrapper { position: relative; width: 100px; height: 100px; }
+    .profile-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #fff; }
+    .profile-avatar-lg { width: 128px; height: 128px; border-radius: 50%; object-fit: cover; border: 5px solid #fff; }
+    
+    .rank-badge-overlay {
+        position: absolute; bottom: 0; right: 0;
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; border: 2px solid white; font-size: 14px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .new-rank, .member-rank { background: #d70018; }
+    .silver-rank { background: #adb5bd; }
+    .gold-rank { background: #ffc107; }
+
+    .custom-pills .nav-link {
+        color: #555; font-weight: 600; padding: 12px 20px; border-radius: 16px; 
+        text-align: left; transition: 0.3s;
+    }
+    .custom-pills .nav-link:hover { background: rgba(0,0,0,0.03); color: #d70018; }
+    .custom-pills .nav-link.active { background: #d70018; color: white !important; box-shadow: 0 8px 20px rgba(215, 0, 24, 0.25); }
+    .logout-link { font-weight: 600; text-decoration: none; display: block; border-radius: 12px; transition: 0.2s; }
+    .logout-link:hover { background: rgba(220, 53, 69, 0.05); }
+
+    /* 3D VIRTUAL CARD */
+    .card-scene {
+        perspective: 1200px;
+        width: 100%; height: 260px;
+        cursor: pointer;
+    }
+    .virtual-membership-card {
+        width: 100%; height: 100%; border-radius: 24px;
+        position: relative; overflow: hidden; transform-style: preserve-3d;
+        transition: transform 0.1s ease-out;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        color: white; padding: 30px;
+    }
+    .card-inner-glass {
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+        backdrop-filter: blur(1px); z-index: 1;
+    }
+    .card-content { position: relative; z-index: 2; height: 100%; }
+    .card-chip {
+        width: 50px; height: 40px; border-radius: 8px;
+        background: linear-gradient(135deg, #f0d075, #a38520);
+        position: relative;
+    }
+    .card-chip::after {
+        content: ''; position: absolute; inset: 6px;
+        border: 1px solid rgba(0,0,0,0.1); border-radius: 4px;
+    }
+    .card-number { font-family: 'Courier New', Courier, monospace; font-size: 1.4rem; letter-spacing: 4px; opacity: 0.9; }
+    .card-rank-watermark {
+        position: absolute; bottom: -20px; right: -20px;
+        font-size: 10rem; opacity: 0.1; z-index: 0;
+    }
+
+    /* CARD BACKGROUNDS */
+    .new-bg, .member-bg { background: var(--new-gradient); }
+    .silver-bg { background: var(--silver-gradient); color: #333 !important; }
+    .silver-bg .card-inner-glass { background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, transparent 100%); }
+    .silver-bg .card-number { color: #333; }
+    .gold-bg { background: var(--gold-gradient); }
+
+    /* PROGRESS & STATS */
+    .custom-progress { background-color: rgba(0,0,0,0.05); border-radius: 50px; overflow: hidden; }
+    .custom-progress .progress-bar { background: var(--new-gradient); }
+    .stats-card { border: none !important; border-radius: 20px !important; }
+    .stats-icon { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.03); }
+
+    /* ACTION BUTTONS */
+    .action-btn-modern {
+        background: var(--glass-bg); border: 1px solid var(--glass-border);
+        border-radius: 20px; padding: 20px; display: flex; flex-direction: column;
+        align-items: center; gap: 12px; text-decoration: none; color: #333;
+        transition: 0.3s;
+    }
+    .action-btn-modern:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); background: #fff; color: #d70018; }
+    .action-btn-modern.featured { background: #d70018; color: white !important; border: none; }
+    .action-btn-modern.featured:hover { transform: scale(1.05); }
+    .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+    /* ORDERS TABLE */
+    .filter-link {
+        padding: 5px 15px; border-radius: 12px; color: #666; font-weight: 600;
+        text-decoration: none; font-size: 13px; transition: 0.2s;
+    }
+    .filter-link:hover { color: #d70018; }
+    .filter-link.active { background: #d70018; color: white !important; }
+    
+    .order-card-modern { border-left: 5px solid #6c757d; }
+    .order-card-modern:hover { transform: translateX(5px); }
+    .badge-status { padding: 4px 14px; border-radius: 50px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .badge-status.pending { background: #fff3cd; color: #856404; }
+    .badge-status.completed { background: #d4edda; color: #155724; }
+    .badge-status.shipped { background: #cce5ff; color: #004085; }
+    .badge-status.cancelled { background: #f8d7da; color: #721c24; }
+
+    /* RANK CARDS */
+    .rank-info-card { transition: 0.4s; position: relative; border: 2px solid transparent !important; }
+    .rank-info-card.active-rank { border-color: #d70018 !important; }
+    .rank-header { display: flex; align-items: center; }
+    .rank-icon-3d {
+        width: 55px; height: 55px; border-radius: 15px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .rank-benefits li { font-size: 14px; display: flex; align-items: center; }
+
+    /* FORMS & INPUTS */
+    .form-floating-custom { position: relative; margin-bottom: 20px; }
+    .form-floating-custom input, .form-floating-custom textarea {
+        border-radius: 14px; border: 1px solid #ddd; padding: 25px 15px 10px; width: 100%;
+        background: rgba(255,255,255,0.8); transition: 0.3s;
+    }
+    .form-floating-custom label {
+        position: absolute; left: 15px; top: 10px; font-size: 11px;
+        font-weight: 700; text-transform: uppercase; color: #999;
+    }
+    .form-floating-custom input:focus { border-color: #d70018; background: #fff; box-shadow: 0 0 0 4px rgba(215, 0, 24, 0.1); outline: none; }
+
+    /* AVATAR UPLOAD */
+    .avatar-edit-btn {
+        position: absolute; bottom: 5px; right: 5px;
+        background: #d70018; color: white; width: 34px; height: 34px;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; border: 3px solid white; transition: 0.2s;
+    }
+    .avatar-edit-btn:hover { transform: scale(1.1); }
+
+    /* ADDRESS CARDS */
+    .address-card { border-radius: 20px; position: relative; overflow: hidden; border: 1px solid var(--glass-border); }
+    .address-card.is-default { border: 2px solid #28a745 !important; background: rgba(40, 167, 69, 0.02); }
+
+    /* ANIMATIONS */
+    .tab-pane.fade { transition: opacity 0.4s linear, transform 0.4s ease-out; }
+    .tab-pane.fade:not(.show) { transform: translateY(15px); }
+</style>
+
+<!-- ==========================================
+     JS SCRIPTS FOR ACCOUNT PAGE
+     ========================================== -->
+<script>
+    // 3D Card Rotation Effect
+    const card = document.getElementById('memberCard');
+    function rotateCard(e) {
+        const cardRect = card.getBoundingClientRect();
+        const cardWidth = cardRect.width;
+        const cardHeight = cardRect.height;
+        const centerX = cardRect.left + cardWidth / 2;
+        const centerY = cardRect.top + cardHeight / 2;
+        const mouseX = e.clientX - centerX;
+        const mouseY = e.clientY - centerY;
+        const rotateX = (mouseY / cardHeight) * 25; // 25 degree max
+        const rotateY = (mouseX / cardWidth) * -25;
+        
+        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    }
+
+    function resetCard() {
+        card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    }
+
+    // Avatar Preview
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('avatarPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Auto-select tab from URL ?tab=profile
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab === 'profile') {
+            const profileTab = document.getElementById('v-pills-profile-tab');
+            if (profileTab) profileTab.click();
+            
+            {% if request.GET.pwd_error or request.GET.pwd_success %}
+            setTimeout(() => {
+                const pwdForm = document.querySelector('input[name="old_password"]');
+                if (pwdForm) pwdForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+            {% endif %}
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var mapInit = false;
+    var map, marker;
+
+    const addressModal = document.getElementById('addAddressModal');
+    if (addressModal) {
+        addressModal.addEventListener('shown.bs.modal', function () {
+            if (!mapInit) {
+                map = L.map('address-map').setView([10.823, 106.629], 13); // Default HCMC
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                }).addTo(map);
+                
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        map.setView([position.coords.latitude, position.coords.longitude], 15);
+                    });
+                }
+
+                map.on('click', function(e) {
+                    var lat = e.latlng.lat;
+                    var lon = e.latlng.lng;
+                    if (marker) {
+                        marker.setLatLng(e.latlng);
+                    } else {
+                        marker = L.marker(e.latlng).addTo(map);
+                    }
+                    
+                    var inputArea = document.getElementById('input-area');
+                    var inputDetail = document.getElementById('input-detail');
+                    inputArea.value = "Đang lấy thông tin...";
+                    inputDetail.value = "";
+
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data && data.address) {
+                                var a = data.address;
+                                var area = [];
+                                if (a.suburb) area.push(a.suburb);
+                                if (a.county || a.district) area.push(a.county || a.district);
+                                if (a.city || a.state) area.push(a.city || a.state);
+                                
+                                var detail = [];
+                                if (a.house_number) detail.push(a.house_number);
+                                if (a.road) detail.push(a.road);
+
+                                inputArea.value = area.join(', ');
+                                inputDetail.value = detail.join(' ') || data.display_name.split(',')[0];
+                            } else {
+                                inputArea.value = "Không phân tích được khu vực";
+                            }
+                        });
+                });
+                mapInit = true;
+            }
+            map.invalidateSize();
+        });
+    }
+</script>
+{% endblock %}

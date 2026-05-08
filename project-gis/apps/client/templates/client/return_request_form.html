@@ -1,0 +1,76 @@
+{% extends 'client/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'client:my_orders' %}" class="text-decoration-none">Đơn hàng của tôi</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'client:order_detail' order.id %}" class="text-decoration-none">Chi tiết đơn hàng #{{ order.id }}</a></li>
+            <li class="breadcrumb-item active">Yêu cầu trả hàng</li>
+        </ol>
+    </nav>
+
+    <div class="row align-items-start">
+        <!-- Chi tiết đơn gốc (Bên trái) -->
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-box-open text-primary me-2"></i>Sản phẩm sẽ trả</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% for item in order.items.all %}
+                    <div class="d-flex align-items-center border-bottom pb-3 mb-3">
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" class="rounded-3 shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-image text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <div class="ms-3">
+                            <h6 class="fw-bold mb-1">{{ item.product.name }}</h6>
+                            <div class="text-muted small">Số lượng: {{ item.quantity }} | Giá: {{ item.price|floatformat:0|intcomma }}đ</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-between mt-4">
+                        <span class="fs-5 fw-bold">Tổng tiền hoàn lại:</span>
+                        <span class="fs-5 fw-bold text-danger">{{ order.total_price|floatformat:0|intcomma }}đ</span>
+                    </div>
+                    <small class="text-muted d-block mt-2">*Hệ thống sẽ hoàn 100% giá trị hóa đơn đã thanh toán khi nhận lại hàng.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Yêu cầu (Bên phải) -->
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 rounded-4 border-top border-4 border-warning">
+                <div class="card-body p-5">
+                    <h4 class="fw-bold mb-4">Gửi Yêu cầu Trả Hàng</h4>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Lý do trả hàng <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control bg-light" rows="4" placeholder="Vui lòng mô tả chi tiết lý do bạn muốn trả hàng (VD: hàng bị lỗi, giao sai sản phẩm...)" required></textarea>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <label class="form-label fw-bold">Hình ảnh minh chứng <span class="text-danger">*</span></label>
+                            <input type="file" name="proof_image" class="form-control" accept="image/*" required>
+                            <small class="text-muted mt-2 d-block"><i class="fas fa-info-circle me-1"></i>Vui lòng tải lên hình ảnh sản phẩm lỗi hoặc tình trạng hiện tại của sản phẩm để Admin xác minh.</small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold rounded-pill text-dark">
+                                Gửi Yêu Cầu <i class="fas fa-paper-plane ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

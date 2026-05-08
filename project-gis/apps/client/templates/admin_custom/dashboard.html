@@ -1,141 +1,498 @@
 {% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
 
 {% block title %}Tổng quan hệ thống{% endblock %}
 
 {% block admin_content %}
-<div class="row g-4">
-    <div class="col-md-4">
-        <div class="card card-stat bg-primary p-4 border-0 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center text-white">
-                <div>
-                    <h6 class="text-white-50 small">TỔNG CỬA HÀNG</h6>
-                    <h2 class="fw-bold mb-0">{{ total_stores }}</h2>
+
+<!-- === ROW 1: 4 STAT CARDS CHÍNH === -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden stat-card">
+            <div class="card-body p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="d-flex justify-content-between align-items-start text-white">
+                    <div>
+                        <div class="text-white-50 small text-uppercase fw-semibold mb-1">Cửa hàng</div>
+                        <h3 class="fw-bold mb-0">{{ total_stores }}</h3>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-store"></i></div>
                 </div>
-                <i class="fas fa-map-marked-alt fa-3x opacity-50"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card card-stat bg-success p-4 border-0 shadow-sm">
-            <div class="d-flex justify-content-between align-items-center text-white">
-                <div>
-                    <h6 class="text-white-50 small">TỔNG SẢN PHẨM</h6>
-                    <h2 class="fw-bold mb-0">{{ total_products }}</h2>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden stat-card">
+            <div class="card-body p-3" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="d-flex justify-content-between align-items-start text-white">
+                    <div>
+                        <div class="text-white-50 small text-uppercase fw-semibold mb-1">Sản phẩm</div>
+                        <h3 class="fw-bold mb-0">{{ total_products }}</h3>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-mobile-alt"></i></div>
                 </div>
-                <i class="fas fa-mobile-button fa-3x opacity-50"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card card-stat bg-warning p-4 border-0 shadow-sm text-dark">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h6 class="text-dark-50 small">ĐƠN HÀNG MỚI</h6>
-                    <h2 class="fw-bold mb-0">{{ total_orders }}</h2>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden stat-card">
+            <div class="card-body p-3" style="background: linear-gradient(135deg, #F7971E 0%, #FFD200 100%);">
+                <div class="d-flex justify-content-between align-items-start text-white">
+                    <div>
+                        <div class="text-white-50 small text-uppercase fw-semibold mb-1">Đơn hàng</div>
+                        <h3 class="fw-bold mb-0">{{ total_orders }}</h3>
+                        {% if pending_orders > 0 %}
+                        <span class="badge bg-white text-warning mt-1" style="font-size:0.7rem;">
+                            <i class="fas fa-clock me-1"></i>{{ pending_orders }} chờ xử lý
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
                 </div>
-                <i class="fas fa-shopping-bag fa-3x opacity-25"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 overflow-hidden stat-card">
+            <div class="card-body p-3" style="background: linear-gradient(135deg, #d70018 0%, #ff416c 100%);">
+                <div class="d-flex justify-content-between align-items-start text-white">
+                    <div>
+                        <div class="text-white-50 small text-uppercase fw-semibold mb-1">Doanh thu</div>
+                        <h3 class="fw-bold mb-0">{{ total_revenue|intcomma }}₫</h3>
+                        <span class="badge bg-white bg-opacity-25 text-white mt-1" style="font-size:0.7rem;">
+                            <i class="fas fa-calendar-day me-1"></i>Hôm nay: {{ today_revenue|intcomma }}₫
+                        </span>
+                    </div>
+                    <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-5">
+<!-- === ROW 2: 4 STAT CARDS PHỤ === -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 stat-card-secondary">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="icon-box bg-warning bg-opacity-10 me-3">
+                    <i class="fas fa-exclamation-triangle text-warning fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase">SP sắp hết kho</div>
+                    <h4 class="fw-bold mb-0 text-warning">{{ low_stock_count }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 stat-card-secondary">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="icon-box bg-purple-soft me-3">
+                    <i class="fas fa-exchange-alt text-purple fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase">Điều chuyển chờ</div>
+                    <h4 class="fw-bold mb-0 text-purple">{{ pending_transfers }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 stat-card-secondary">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="icon-box bg-danger bg-opacity-10 me-3">
+                    <i class="fas fa-undo text-danger fs-5"></i>
+                </div>
+                <div>
+                    <div class="text-muted small text-uppercase">Trả hàng chờ</div>
+                    <h4 class="fw-bold mb-0 text-danger">{{ pending_returns }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 stat-card-secondary">
+            <div class="card-body p-3 d-flex align-items-center">
+                <div class="icon-box bg-info bg-opacity-10 me-3">
+                    <i class="fas fa-users text-info fs-5"></i>
+                </div>
+                <div>
+                    {% if total_customers is not None %}
+                    <div class="text-muted small text-uppercase">Khách hàng</div>
+                    <h4 class="fw-bold mb-0 text-info">{{ total_customers }}</h4>
+                    {% else %}
+                    <div class="text-muted small text-uppercase">Chi nhánh</div>
+                    <h4 class="fw-bold mb-0 text-info">{{ total_stores }}</h4>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === ROW 3: BIỂU ĐỒ DOANH THU THÁNG + PIE CHART === -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="fas fa-chart-bar me-2 text-danger"></i>Doanh thu theo tháng
+                </h6>
+                <div class="d-flex align-items-center gap-2">
+                    <select id="yearSelect" class="form-select form-select-sm" style="width: auto;" onchange="location.href='?chart_year='+this.value">
+                        {% for y in available_years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>Năm {{ y }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if request.user.profile.role in 'super_admin,regional_manager,store_admin' %}
+                    <a href="{% url 'client:export_monthly_revenue' %}?year={{ selected_year }}" 
+                       class="btn btn-success btn-sm shadow-sm px-3" title="Xuất Excel doanh thu năm {{ selected_year }}">
+                        <i class="fas fa-file-excel me-1"></i>Xuất Excel
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="height: 320px; position: relative;">
+                    <canvas id="monthlyRevenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="fas fa-chart-pie me-2 text-info"></i>Tỷ lệ trạng thái đơn
+                </h6>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div style="max-width: 280px; width: 100%; position: relative;">
+                    <canvas id="orderStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === ROW 4: BIỂU ĐỒ 7 NGÀY (thu nhỏ) === -->
+<div class="row g-4 mb-4">
     <div class="col-12">
-        <div class="card shadow-sm border-0 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-secondary mb-0">
-                    <i class="fas fa-chart-line me-2"></i>Doanh thu 7 ngày gần nhất
-                </h5>
-                <span class="badge bg-light text-primary border px-3 py-2">Đơn vị: VNĐ</span>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="fas fa-chart-area me-2 text-primary"></i>Doanh thu 7 ngày gần nhất
+                </h6>
+                <span class="badge bg-light text-primary border px-3 py-2 small">Đơn vị: VNĐ</span>
             </div>
-            <div style="height: 350px; position: relative;">
-                <canvas id="revenueChart"></canvas>
+            <div class="card-body">
+                <div style="height: 250px; position: relative;">
+                    <canvas id="revenueChart7d"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="mt-5">
-    <h5 class="fw-bold text-secondary mb-3">Thao tác nhanh</h5>
-    <div class="d-flex gap-3">
-        <a href="{% url 'client:admin_store_add' %}" class="btn btn-white shadow-sm p-3 border-0 bg-white">
-            <i class="fas fa-plus-circle text-danger me-2"></i> Thêm chi nhánh
+<!-- === ROW 5: ĐƠN HÀNG GẦN ĐÂY === -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-dark mb-0">
+                    <i class="fas fa-clock me-2 text-secondary"></i>Đơn hàng gần đây
+                </h6>
+                <a href="{% url 'client:admin_order_list' %}" class="btn btn-sm btn-outline-primary px-3">
+                    Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Mã ĐH</th>
+                                <th>Khách hàng</th>
+                                <th>Cửa hàng xử lý</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày đặt</th>
+                                <th class="text-end pe-3">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td class="ps-3 fw-bold text-primary">#{{ order.id }}</td>
+                                <td>
+                                    <div class="fw-semibold">{{ order.full_name|default:"Khách vãng lai" }}</div>
+                                    <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ order.phone }}</small>
+                                </td>
+                                <td>
+                                    {% if order.fulfillment_store %}
+                                    <span class="badge bg-secondary bg-opacity-10 text-dark border">{{ order.fulfillment_store.name }}</span>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-danger fw-bold">{{ order.total_price|floatformat:0|intcomma }}₫</td>
+                                <td>
+                                    {% if order.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark rounded-pill px-2">Chờ xử lý</span>
+                                    {% elif order.status == 'processing' %}
+                                        <span class="badge bg-info text-dark rounded-pill px-2">Đang đóng gói</span>
+                                    {% elif order.status == 'shipped' %}
+                                        <span class="badge bg-primary rounded-pill px-2">Đang giao</span>
+                                    {% elif order.status == 'completed' %}
+                                        <span class="badge bg-success rounded-pill px-2">Hoàn thành</span>
+                                    {% elif order.status == 'cancelled' %}
+                                        <span class="badge bg-danger rounded-pill px-2">Đã hủy</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary rounded-pill px-2">{{ order.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted small">{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end pe-3">
+                                    <a href="{% url 'client:admin_order_detail' order.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>Chưa có đơn hàng nào
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- === ROW 6: THAO TÁC NHANH (PHÂN QUYỀN) === -->
+<div class="mb-4">
+    <h6 class="fw-bold text-secondary mb-3"><i class="fas fa-bolt me-2"></i>Thao tác nhanh</h6>
+    <div class="d-flex flex-wrap gap-3">
+        {% if request.user.profile.role == 'super_admin' %}
+        <a href="{% url 'client:admin_store_add' %}" class="btn btn-white shadow-sm p-3 border-0 rounded-3 d-flex align-items-center quick-action-btn">
+            <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-store text-danger fa-lg"></i>
+            </div>
+            <div class="text-start">
+                <div class="fw-bold text-dark">Thêm chi nhánh</div>
+                <small class="text-muted">Mở rộng hệ thống</small>
+            </div>
         </a>
-        <a href="{% url 'client:admin_product_add' %}" class="btn btn-white shadow-sm p-3 border-0 bg-white">
-            <i class="fas fa-plus-circle text-success me-2"></i> Đăng sản phẩm
+        {% endif %}
+        {% if request.user.profile.role in 'super_admin,store_admin' %}
+        <a href="{% url 'client:admin_product_add' %}" class="btn btn-white shadow-sm p-3 border-0 rounded-3 d-flex align-items-center quick-action-btn">
+            <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-box-open text-success fa-lg"></i>
+            </div>
+            <div class="text-start">
+                <div class="fw-bold text-dark">Đăng sản phẩm</div>
+                <small class="text-muted">Thêm mặt hàng mới</small>
+            </div>
+        </a>
+        {% endif %}
+        {% if request.user.profile.role != 'sales_staff' %}
+        <a href="{% url 'client:admin_stock_transaction_create' 'in' %}" class="btn btn-white shadow-sm p-3 border-0 rounded-3 d-flex align-items-center quick-action-btn">
+            <div class="bg-info bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-dolly text-info fa-lg"></i>
+            </div>
+            <div class="text-start">
+                <div class="fw-bold text-dark">Nhập kho</div>
+                <small class="text-muted">Tạo phiếu nhập kho</small>
+            </div>
+        </a>
+        {% endif %}
+        <a href="{% url 'client:admin_order_list' %}" class="btn btn-white shadow-sm p-3 border-0 rounded-3 d-flex align-items-center quick-action-btn">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-clipboard-list text-primary fa-lg"></i>
+            </div>
+            <div class="text-start">
+                <div class="fw-bold text-dark">Quản lý đơn hàng</div>
+                <small class="text-muted">Xử lý giao dịch</small>
+            </div>
         </a>
     </div>
 </div>
+
+<style>
+    .stat-card { transition: transform 0.2s ease, box-shadow 0.2s ease; border-radius: 12px; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,.15)!important; }
+    .stat-icon { font-size: 2.5rem; opacity: 0.3; }
+    .stat-card-secondary { border-radius: 12px; transition: transform 0.2s ease; }
+    .stat-card-secondary:hover { transform: translateY(-2px); }
+    .icon-box { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .bg-purple-soft { background-color: #f3e5f5; }
+    .text-purple { color: #7b1fa2; }
+    .quick-action-btn { transition: all 0.3s ease; background-color: white; }
+    .quick-action-btn:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        
-        // Tạo gradient cho đường biểu đồ
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(215, 0, 24, 0.2)');
-        gradient.addColorStop(1, 'rgba(215, 0, 24, 0.01)');
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {{ chart_labels|safe }}, // Dữ liệu ngày từ views
-                datasets: [{
-                    label: 'Doanh thu thực tế',
-                    data: {{ chart_data|safe }}, // Dữ liệu tiền từ views
-                    borderColor: '#d70018',
-                    backgroundColor: gradient,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4, // Tạo đường cong mềm mại
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#d70018',
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }]
+document.addEventListener("DOMContentLoaded", function() {
+    // === BIỂU ĐỒ DOANH THU THEO THÁNG ===
+    const ctxMonthly = document.getElementById('monthlyRevenueChart').getContext('2d');
+    new Chart(ctxMonthly, {
+        type: 'bar',
+        data: {
+            labels: {{ monthly_labels|safe }},
+            datasets: [{
+                label: 'Doanh thu {{ selected_year }}',
+                data: {{ monthly_data|safe }},
+                backgroundColor: function(context) {
+                    const chart = context.chart;
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) return '#d70018';
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, 'rgba(215, 0, 24, 0.6)');
+                    gradient.addColorStop(1, 'rgba(255, 65, 108, 0.9)');
+                    return gradient;
+                },
+                hoverBackgroundColor: '#a80012',
+                borderRadius: 8,
+                borderSkipped: false,
+                barPercentage: 0.6,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#212529',
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN', {style:'currency', currency:'VND'}).format(context.parsed.y);
+                        }
+                    }
+                }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#212529',
-                        titleFont: { size: 14 },
-                        bodyFont: { size: 14 },
-                        padding: 12,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) { label += ': '; }
-                                if (context.parsed.y !== null) {
-                                    label += new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(context.parsed.y);
-                                }
-                                return label;
-                            }
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { borderDash: [5,5], color: '#e9ecef', drawBorder: false },
+                    ticks: {
+                        callback: function(v) {
+                            if (v >= 1e9) return (v/1e9).toFixed(1) + ' Tỷ';
+                            if (v >= 1e6) return (v/1e6).toFixed(1) + ' Tr';
+                            if (v >= 1e3) return (v/1e3).toFixed(0) + ' K';
+                            return v;
                         }
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: { borderDash: [5, 5] },
-                        ticks: {
-                            callback: function(value) {
-                                return (value / 1000000).toFixed(1) + ' Tr';
-                            }
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // === PIE CHART TRẠNG THÁI ĐƠN ===
+    const ctxPie = document.getElementById('orderStatusChart').getContext('2d');
+    new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: ['Chờ xử lý', 'Đang đóng gói', 'Đang giao', 'Hoàn thành', 'Đã hủy'],
+            datasets: [{
+                data: {{ order_status_counts|safe }},
+                backgroundColor: ['#ffc107', '#17a2b8', '#0d6efd', '#198754', '#dc3545'],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '55%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 15, usePointStyle: true, pointStyleWidth: 10, font: { size: 11 } }
+                },
+                tooltip: {
+                    backgroundColor: '#212529',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                            const pct = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                            return context.label + ': ' + context.parsed + ' (' + pct + '%)';
                         }
-                    },
-                    x: {
-                        grid: { display: false }
                     }
                 }
             }
-        });
+        }
     });
+
+    // === BIỂU ĐỒ 7 NGÀY ===
+    const ctx7d = document.getElementById('revenueChart7d').getContext('2d');
+    new Chart(ctx7d, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Doanh thu',
+                data: {{ chart_data|safe }},
+                borderColor: '#d70018',
+                backgroundColor: 'rgba(215, 0, 24, 0.08)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#d70018',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#212529',
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN', {style:'currency', currency:'VND'}).format(context.parsed.y);
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { borderDash: [5,5], color: '#e9ecef', drawBorder: false },
+                    ticks: {
+                        callback: function(v) {
+                            if (v >= 1e6) return (v/1e6).toFixed(1) + ' Tr';
+                            if (v >= 1e3) return (v/1e3).toFixed(0) + ' K';
+                            return v;
+                        }
+                    }
+                },
+                x: { grid: { display: false } }
+            },
+            interaction: { intersect: false, mode: 'index' }
+        }
+    });
+});
 </script>
 {% endblock %}

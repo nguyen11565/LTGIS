@@ -1,0 +1,64 @@
+{% extends 'client/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <h3 class="fw-bold mb-0"><i class="fas fa-undo text-warning me-2"></i>Lịch sử Trả hàng</h3>
+        <a href="{% url 'client:my_orders' %}" class="btn btn-outline-secondary rounded-pill fw-bold">
+            <i class="fas fa-arrow-left me-1"></i> Quay lại
+        </a>
+    </div>
+
+    {% if returns %}
+    <div class="row g-4">
+        {% for r in returns %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Yêu cầu #{{ r.id }}</span>
+                    <span class="badge 
+                        {% if r.status == 'pending' %}bg-warning text-dark
+                        {% elif r.status == 'approved' %}bg-primary
+                        {% elif r.status == 'completed' %}bg-success
+                        {% elif r.status == 'rejected' %}bg-danger{% endif %} rounded-pill">
+                        {{ r.get_status_display }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1 text-muted small">Mã đơn hàng: <a href="{% url 'client:order_detail' r.order.id %}" class="fw-bold text-decoration-none">#{{ r.order.id }}</a></p>
+                    <p class="mb-3 text-muted small">Ngày yêu cầu: {{ r.created_at|date:"d/m/Y H:i" }}</p>
+                    
+                    <div class="mb-3">
+                        <strong class="d-block mb-1">Lý do trả:</strong>
+                        <div class="bg-light p-2 rounded-3 small text-muted fst-italic">
+                            "{{ r.reason }}"
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Hoàn tiền:</span>
+                        <span class="fs-5 fw-bold text-danger">{{ r.refund_amount|floatformat:0|intcomma }}đ</span>
+                    </div>
+                </div>
+                {% if r.proof_image %}
+                <div class="card-footer bg-white border-0 text-center pb-3">
+                    <a href="{{ r.proof_image.url }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill">
+                        <i class="fas fa-image me-1"></i> Xem ảnh chứng minh
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-box-open fs-1 text-muted mb-3"></i>
+        <h5 class="text-muted">Bạn chưa có yêu cầu trả hàng nào.</h5>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

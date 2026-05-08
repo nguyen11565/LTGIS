@@ -1,0 +1,72 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Link không hợp lệ - Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .failed-container {
+        min-height: 82vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #f4f6f8 0%, #fff1f2 100%);
+    }
+    .failed-card { border-radius: 20px; border: none; }
+    .shake {
+        animation: shake 0.6s ease-out;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-8px); }
+        40%, 80% { transform: translateX(8px); }
+    }
+    .btn-retry {
+        background: #d70018; border: none; border-radius: 10px;
+        padding: 13px 32px; font-weight: 700; font-size: 15px;
+        color: #fff; text-decoration: none; display: inline-block;
+        transition: 0.3s;
+    }
+    .btn-retry:hover {
+        background: #b50014; color: #fff;
+        box-shadow: 0 6px 16px rgba(215,0,24,0.3);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container failed-container py-5">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow-lg failed-card">
+                <div class="card-body p-5 text-center">
+                    <div class="shake" style="font-size:72px;line-height:1;margin-bottom:20px;">❌</div>
+                    <h3 class="fw-bold text-danger mb-2">Link không hợp lệ!</h3>
+                    <p class="text-muted mb-4" style="font-size:15px;">
+                        Link xác thực đã <strong>hết hạn</strong> hoặc đã được sử dụng rồi.<br>
+                        Link chỉ có hiệu lực trong <strong>24 giờ</strong> và chỉ dùng được <strong>một lần</strong>.
+                    </p>
+
+                    <div class="bg-light rounded-3 p-3 mb-4" style="border:1px solid #dee2e6;">
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-info-circle text-primary me-1"></i>
+                            Nếu tài khoản của bạn chưa được kích hoạt, hãy đăng nhập và yêu cầu gửi lại link xác thực.
+                        </p>
+                    </div>
+
+                    <a href="{% url 'client:login' %}" class="btn-retry">
+                        <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập & Gửi lại link
+                    </a>
+
+                    <div class="mt-4">
+                        <a href="{% url 'client:home' %}" class="text-muted small text-decoration-none">
+                            <i class="fas fa-home me-1"></i>Về trang chủ
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

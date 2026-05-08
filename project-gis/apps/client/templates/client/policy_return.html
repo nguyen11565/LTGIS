@@ -1,0 +1,185 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Chính sách đổi trả – Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .policy-hero {
+        background: linear-gradient(135deg, #0d6efd 0%, #4d9fff 100%);
+        border-radius: 0 0 32px 32px;
+        padding: 52px 0 40px;
+        color: white;
+    }
+    .policy-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+        padding: 32px 36px;
+        margin-bottom: 24px;
+        border-left: 5px solid #0d6efd;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .policy-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.1); }
+    .policy-card h4 { color: #0d6efd; font-weight: 700; margin-bottom: 14px; }
+    .policy-card ul li { margin-bottom: 8px; color: #444; line-height: 1.7; }
+    .timeline-item { display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start; }
+    .timeline-icon {
+        width: 44px; height: 44px; border-radius: 50%;
+        background: #e8f0fe; display: flex; align-items: center;
+        justify-content: center; flex-shrink: 0; font-size: 18px; color: #0d6efd;
+    }
+    .highlight-box {
+        background: linear-gradient(135deg, #f0f5ff, #f8fbff);
+        border: 1px solid #ccdcff; border-radius: 12px; padding: 20px 24px;
+    }
+    .return-badge {
+        display: inline-block; padding: 4px 14px; border-radius: 20px;
+        font-size: 12px; font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<div class="policy-hero mb-5">
+    <div class="container text-center">
+        <div style="font-size:52px; margin-bottom:12px;">🔄</div>
+        <h1 class="fw-bold fs-2 mb-2">Chính Sách Đổi Trả</h1>
+        <p class="mb-0" style="opacity:.85; font-size:15px;">
+            Mua hàng an tâm – Đổi trả dễ dàng trong vòng 30 ngày
+        </p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <!-- TỔNG QUAN -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="text-center p-4 bg-white rounded-3 shadow-sm h-100">
+                        <div style="font-size:36px;">📅</div>
+                        <div class="fw-bold text-primary fs-4 mt-2">30 ngày</div>
+                        <div class="small text-muted">Đổi trả miễn phí</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-4 bg-white rounded-3 shadow-sm h-100">
+                        <div style="font-size:36px;">🚚</div>
+                        <div class="fw-bold text-primary fs-4 mt-2">Miễn phí</div>
+                        <div class="small text-muted">Vận chuyển đổi trả</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-4 bg-white rounded-3 shadow-sm h-100">
+                        <div style="font-size:36px;">💰</div>
+                        <div class="fw-bold text-primary fs-4 mt-2">100%</div>
+                        <div class="small text-muted">Hoàn tiền nếu lỗi</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ĐIỀU KIỆN ĐỔI TRẢ -->
+            <div class="policy-card">
+                <h4><i class="fas fa-check-circle me-2"></i>Điều Kiện Được Đổi Trả</h4>
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <span class="return-badge bg-success text-white me-2">✓ Miễn phí</span>
+                        Sản phẩm lỗi từ nhà sản xuất (máy không lên, màn hình lỗi điểm ảnh...)
+                    </li>
+                    <li class="mb-3">
+                        <span class="return-badge bg-success text-white me-2">✓ Miễn phí</span>
+                        Giao sai sản phẩm, sai màu sắc, sai model so với đơn hàng
+                    </li>
+                    <li class="mb-3">
+                        <span class="return-badge bg-warning text-dark me-2">! 1–2 ngày</span>
+                        Sản phẩm bị móp méo, trầy xước khi nhận hàng (khiếu nại trong 48 giờ)
+                    </li>
+                    <li class="mb-3">
+                        <span class="return-badge bg-primary text-white me-2">↔ Đổi máy</span>
+                        Máy bị lỗi phần cứng trong 30 ngày đầu sử dụng
+                    </li>
+                </ul>
+            </div>
+
+            <!-- HÌNH THỨC ĐỔI TRẢ -->
+            <div class="policy-card">
+                <h4><i class="fas fa-exchange-alt me-2"></i>Hình Thức Xử Lý</h4>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background:#e8f0fe;">
+                            <div class="fw-bold text-primary mb-1">🔄 Đổi sản phẩm mới</div>
+                            <p class="small text-muted mb-0">Nếu còn hàng cùng model, Phone Store sẽ đổi máy mới 100% cho khách.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3" style="background:#e8faf6;">
+                            <div class="fw-bold text-success mb-1">💵 Hoàn tiền</div>
+                            <p class="small text-muted mb-0">Nếu hết hàng hoặc khách yêu cầu, hoàn 100% tiền trong 3–5 ngày làm việc.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUY TRÌNH ĐỔI TRẢ -->
+            <div class="policy-card" style="border-left-color:#009981;">
+                <h4 style="color:#009981;"><i class="fas fa-list-ol me-2"></i>Quy Trình Đổi Trả</h4>
+
+                <div class="timeline-item">
+                    <div class="timeline-icon" style="background:#e8faf6; color:#009981;">1</div>
+                    <div>
+                        <div class="fw-semibold">Liên hệ Phone Store</div>
+                        <div class="small text-muted">Gọi <strong>1900.2026</strong> hoặc gửi yêu cầu qua trang Gửi ý kiến trong vòng 30 ngày kể từ ngày nhận hàng.</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon" style="background:#e8f0fe; color:#0d6efd;">2</div>
+                    <div>
+                        <div class="fw-semibold">Gửi sản phẩm lại</div>
+                        <div class="small text-muted">Đóng gói nguyên hộp, kèm hóa đơn, phụ kiện đầy đủ. Phone Store hỗ trợ lấy hàng tận nơi (miễn phí).</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon" style="background:#fff9e6; color:#e6a817;">3</div>
+                    <div>
+                        <div class="fw-semibold">Kiểm tra sản phẩm</div>
+                        <div class="small text-muted">Đội kỹ thuật kiểm tra trong 1–2 ngày làm việc và thông báo kết quả cho khách.</div>
+                    </div>
+                </div>
+                <div class="timeline-item mb-0">
+                    <div class="timeline-icon" style="background:#e8faf6; color:#009981;">✓</div>
+                    <div>
+                        <div class="fw-semibold">Nhận sản phẩm mới / hoàn tiền</div>
+                        <div class="small text-muted">Sản phẩm đổi mới được giao trong 2–3 ngày. Hoàn tiền qua chuyển khoản trong 3–5 ngày làm việc.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KHÔNG ĐƯỢC ĐỔI TRẢ -->
+            <div class="policy-card" style="border-left-color:#ffc107;">
+                <h4 style="color:#e6a817;"><i class="fas fa-exclamation-triangle me-2"></i>Trường Hợp Không Được Đổi Trả</h4>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Sản phẩm đã qua 30 ngày kể từ ngày mua</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Sản phẩm bị va đập, vỡ, ngấm nước do người dùng</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Đã tự ý sửa chữa hoặc thay thế linh kiện</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Mất hộp, mất phụ kiện, không có hóa đơn</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Sản phẩm thuộc danh mục không đổi trả (phụ kiện dùng một lần)</li>
+                </ul>
+            </div>
+
+            <!-- CTA -->
+            <div class="highlight-box text-center">
+                <p class="mb-3 fw-semibold text-primary">Cần đổi trả sản phẩm? Liên hệ chúng tôi ngay!</p>
+                <a href="{% url 'client:feedback' %}" class="btn btn-primary me-2">
+                    <i class="fas fa-comment-dots me-1"></i>Gửi yêu cầu đổi trả
+                </a>
+                <a href="{% url 'client:my_orders' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-clipboard-list me-1"></i>Xem đơn hàng của tôi
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

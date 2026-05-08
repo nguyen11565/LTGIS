@@ -10,17 +10,88 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root { --main-red: #d70018; --dark-gray: #333; }
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
+        :root { --main-red: #d70018; --dark-gray: #333; --main-green: #009981; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
         
         /* HEADER */
         .main-header { background-color: var(--main-red); color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header-search-input { border-radius: 8px 0 0 8px; border: none; }
+        .header-search-input { border-radius: 8px 0 0 8px; border: none; outline: none; }
         .header-search-btn { background-color: var(--dark-gray); color: white; border-radius: 0 8px 8px 0; }
+
+        /* === AUTOCOMPLETE DROPDOWN === */
+        .search-wrapper { position: relative; }
+        .search-dropdown {
+            position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+            background: #fff; border-radius: 12px; z-index: 99999;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.18);
+            overflow: hidden; display: none;
+            border: 1px solid rgba(0,0,0,0.06);
+            animation: dropFadeIn 0.18s ease;
+        }
+        @keyframes dropFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .search-dropdown.show { display: block; }
+        .search-drop-section {
+            padding: 6px 0; border-bottom: 1px solid #f5f5f5;
+        }
+        .search-drop-section:last-child { border-bottom: none; }
+        .search-drop-label {
+            font-size: 10px; font-weight: 700; color: #bbb;
+            text-transform: uppercase; letter-spacing: 0.6px;
+            padding: 6px 14px 4px;
+        }
+        .suggestion-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 14px; cursor: pointer; text-decoration: none;
+            color: #222; transition: background 0.12s;
+        }
+        .suggestion-item:hover, .suggestion-item.active {
+            background: #f8f9fa;
+        }
+        .suggestion-img {
+            width: 38px; height: 38px; object-fit: contain;
+            border-radius: 7px; background: #f4f4f4; flex-shrink: 0;
+        }
+        .suggestion-img-placeholder {
+            width: 38px; height: 38px; border-radius: 7px;
+            background: #f4f4f4; display: flex; align-items: center;
+            justify-content: center; color: #ccc; font-size: 16px; flex-shrink: 0;
+        }
+        .suggestion-text { flex: 1; min-width: 0; }
+        .suggestion-name {
+            font-size: 13px; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .suggestion-name mark {
+            background: #fff3cd; color: #d70018; font-weight: 700; border-radius: 2px; padding: 0 1px;
+        }
+        .suggestion-cat { font-size: 11px; color: #aaa; margin-top: 1px; }
+        .suggestion-price { font-size: 12px; font-weight: 700; color: #d70018; white-space: nowrap; flex-shrink: 0; }
+        .history-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 14px; cursor: pointer; color: #555;
+            font-size: 13px; transition: background 0.12s;
+        }
+        .history-item:hover { background: #f8f9fa; }
+        .history-item i { color: #bbb; font-size: 13px; }
+        .history-remove {
+            margin-left: auto; font-size: 14px; color: #ccc; cursor: pointer;
+            padding: 0 4px; transition: color 0.12s;
+        }
+        .history-remove:hover { color: #d70018; }
+        .search-drop-footer {
+            padding: 9px 14px; background: #f8f9fa;
+            font-size: 12px; color: #999; display: flex; align-items: center; gap: 6px;
+        }
+        .search-drop-footer a { color: #d70018; font-weight: 600; text-decoration: none; }
+        .search-drop-footer a:hover { text-decoration: underline; }
         
         .nav-link-custom {
             color: white; font-size: 11px; display: flex; flex-direction: column;
             align-items: center; padding: 5px 10px; border-radius: 10px; position: relative;
+            text-decoration: none; transition: 0.3s;
         }
         .nav-link-custom:hover { background: rgba(255,255,255,0.15); color: white; }
         .nav-link-custom i { font-size: 20px; margin-bottom: 2px; }
@@ -29,12 +100,116 @@
         .cart-badge {
             position: absolute; top: 2px; right: 5px; background: #fff; color: var(--main-red);
             font-size: 10px; font-weight: bold; border-radius: 50%; padding: 1px 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
+
+        /* Dropdown User Custom */
+        .user-dropdown .dropdown-menu { border-radius: 12px; min-width: 220px; max-width: 90vw; padding: 10px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important; }
+        .user-dropdown .dropdown-item { border-radius: 8px; padding: 8px 12px; font-size: 14px; margin-bottom: 2px; }
+        .user-dropdown .dropdown-item:hover { background-color: #f1f3f5; color: var(--main-green); }
+        .user-dropdown .dropdown-item i { width: 20px; margin-right: 8px; color: #666; }
+
+        /* Notification Bell */
+        .notif-bell { position: relative; }
+        .notif-badge {
+            position: absolute; top: 0px; right: 4px;
+            background: #fff; color: var(--main-red);
+            font-size: 9px; font-weight: 800; border-radius: 50%;
+            padding: 1px 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+            min-width: 16px; text-align: center; line-height: 14px;
+            animation: pulse-badge 1.5s infinite;
+        }
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        /* Notification Dropdown */
+        .notif-dropdown {
+            width: 340px; max-width: 90vw; max-height: 420px; overflow-y: auto;
+            border-radius: 14px; border: none;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15) !important;
+            padding: 0; left: auto !important; right: -10px !important;
+        }
+        .notif-dropdown::-webkit-scrollbar { width: 5px; }
+        .notif-dropdown::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        .notif-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 12px 14px; border-bottom: 1px solid #f5f5f5;
+            text-decoration: none; color: inherit; transition: background 0.2s;
+        }
+        .notif-item:hover { background: #f8f9fa; }
+        .notif-item.unread { background: #f0f7ff; }
+        .notif-item.unread:hover { background: #e3f0ff; }
+        .notif-icon-wrap {
+            width: 38px; height: 38px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 16px;
+        }
+        .notif-msg { font-size: 12.5px; color: #333; line-height: 1.4; margin: 0 0 3px; }
+        .notif-time { font-size: 11px; color: #999; }
 
         /* Footer */
         .footer-link { color: #ccc; text-decoration: none; font-size: 14px; }
         .footer-link:hover { color: white; }
         .hover-white:hover { color: white !important; transition: 0.3s; }
+
+        /* CHAT WIDGET */
+        .chat-widget-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+        }
+        .chat-sub-buttons {
+            display: flex; flex-direction: column; gap: 10px;
+            max-height: 0; opacity: 0; overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+        }
+        .chat-widget-container:hover .chat-sub-buttons {
+            max-height: 250px; opacity: 1; overflow: visible;
+        }
+        .chat-widget-btn {
+            width: 55px; height: 55px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer; transition: all 0.3s ease; text-decoration: none; border: none;
+        }
+        .chat-widget-btn:hover { transform: scale(1.1); color: white; }
+        .chat-main-btn { background: linear-gradient(135deg, #ff416c, #ff4b2b); animation: pulse-badge 2s infinite; }
+        .chat-sub-btn { width: 45px; height: 45px; font-size: 20px; margin-right: 5px; }
+        .btn-zalo { background-color: #0068ff; }
+        .btn-messenger { background: linear-gradient(135deg, #00c6ff, #0072ff); }
+        .btn-hotline { background-color: #009981; }
+        .btn-ai { background: linear-gradient(135deg, #7F00FF, #E100FF); }
+
+        /* AI CHATBOX */
+        .ai-chatbox {
+            position: fixed; bottom: 85px; right: 20px;
+            width: 340px; max-width: calc(100vw - 40px); height: 450px; background: #fff;
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 10000; display: none; flex-direction: column;
+            overflow: hidden; border: 1px solid #eee;
+            transform-origin: bottom right; transform: scale(0); transition: transform 0.3s ease;
+        }
+        .ai-chatbox.show { display: flex; transform: scale(1); }
+        .ai-chatbox-header {
+            background: linear-gradient(135deg, #7F00FF, #E100FF); color: white;
+            padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .ai-chatbox-close { cursor: pointer; font-size: 18px; }
+        .ai-chatbox-body {
+            flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .chat-msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.4; word-wrap: break-word; }
+        .msg-bot { background: #fff; border: 1px solid #e0e0e0; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .msg-user { background: #e3f2fd; color: #0d47a1; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .ai-chatbox-footer { padding: 10px; background: #fff; border-top: 1px solid #eee; display: flex; gap: 8px; }
+        .ai-chatbox-input { flex: 1; padding: 8px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; font-size: 14px; }
+        .ai-chatbox-btn { background: #7F00FF; color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .typing-indicator { display: none; align-self: flex-start; background: transparent; padding: 5px 10px; border: none; }
+        .typing-indicator span { display: inline-block; width: 6px; height: 6px; background-color: #999; border-radius: 50%; animation: typing 1s infinite alternate; margin: 0 2px; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0% { opacity: 0.3; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -42,45 +217,128 @@
     <header class="main-header sticky-top py-2">
         <div class="container">
             <div class="row align-items-center g-2">
-                <div class="col-auto">
-                    <a href="{% url 'client:home' %}" class="fw-bold text-white fs-4 text-uppercase text-decoration-none">
+                <div class="col-5 col-md-auto">
+                    <a href="{% url 'client:home' %}" class="fw-bold text-white fs-4 text-uppercase text-decoration-none" style="font-size: clamp(1.2rem, 4vw, 1.5rem) !important;">
                         <i class="fas fa-mobile-alt me-1"></i>PhoneStore
                     </a>
                 </div>
 
-                <div class="col mx-md-4">
-                    <form action="{% url 'client:search' %}" method="GET" class="input-group">
-                        <input type="text" name="q" class="form-control header-search-input py-2" placeholder="Bạn tìm gì hôm nay?" value="{{ query|default:'' }}">
-                        <button class="btn header-search-btn px-3" type="submit"><i class="fas fa-search"></i></button>
-                    </form>
+                <div class="col-12 col-md mx-md-4 order-3 order-md-2 mt-2 mt-md-0">
+                    <div class="search-wrapper">
+                        <form action="{% url 'client:search' %}" method="GET" class="input-group" id="mainSearchForm">
+                            <input type="text" name="q" id="mainSearchInput"
+                                   class="form-control header-search-input py-2"
+                                   placeholder="Bạn tìm gì hôm nay?"
+                                   value="{{ query|default:'' }}"
+                                   autocomplete="off">
+                            <button class="btn header-search-btn px-3" type="submit" id="mainSearchBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                        <div class="search-dropdown" id="searchDropdown"></div>
+                    </div>
                 </div>
 
-                <div class="col-auto d-flex gap-1">
-                    <a href="{% url 'client:store_locator' %}" class="nav-link-custom d-none d-lg-flex">
-                        <i class="fas fa-map-marker-alt"></i><span>Cửa hàng</span>
+                <div class="col-7 col-md-auto d-flex gap-1 align-items-center justify-content-end order-2 order-md-3">
+                    <a href="{% url 'client:news_list' %}" class="nav-link-custom">
+                        <i class="fas fa-newspaper"></i><span class="d-none d-md-block">Tin tức 24h</span>
                     </a>
+                    
+                    <a href="{% url 'client:store_locator' %}" class="nav-link-custom">
+                        <i class="fas fa-map-marker-alt"></i><span class="d-none d-md-block">Cửa hàng</span>
+                    </a>
+                    
+                    {% if user.is_authenticated %}
+                        <div class="dropdown notif-bell" id="notif-dropdown-wrapper">
+                            <a href="#" class="nav-link-custom dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="notifBellBtn">
+                                <i class="fas fa-bell"></i>
+                                <span class="d-none d-md-block">Thông báo</span>
+                                {% if notif_unread_count > 0 %}
+                                    <span class="notif-badge" id="notif-count-badge">{{ notif_unread_count }}</span>
+                                {% endif %}
+                            </a>
+                            <ul class="dropdown-menu notif-dropdown mt-3" id="notifDropdownMenu">
+                                <li>
+                                    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+                                        <span class="fw-bold" style="font-size:13px;">🔔 Thông báo</span>
+                                        {% if notif_unread_count > 0 %}
+                                            <a href="{% url 'client:mark_all_notifications_read' %}" class="text-muted" style="font-size:11px;">Đọc tất cả</a>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                                {% if recent_notifications %}
+                                    {% for notif in recent_notifications %}
+                                    <li>
+                                        <a href="{% url 'client:mark_notification_read' notif.pk %}" 
+                                           class="notif-item {% if not notif.is_read %}unread{% endif %}">
+                                            <div class="notif-icon-wrap"
+                                                 style="background:{% if notif.notif_type == 'order_placed' %}#e8faf6{% elif notif.notif_type == 'order_shipped' %}#e8f0fe{% elif notif.notif_type == 'order_completed' %}#fff9e6{% else %}#fde8e8{% endif %};">
+                                                <i class="fas {% if notif.notif_type == 'order_placed' %}fa-check-circle{% elif notif.notif_type == 'order_shipped' %}fa-shipping-fast{% elif notif.notif_type == 'order_completed' %}fa-star{% else %}fa-times-circle{% endif %}"
+                                                   style="color:{% if notif.notif_type == 'order_placed' %}#009981{% elif notif.notif_type == 'order_shipped' %}#0d6efd{% elif notif.notif_type == 'order_completed' %}#e6a817{% else %}#dc3545{% endif %};"></i>
+                                            </div>
+                                            <div>
+                                                <p class="notif-msg {% if not notif.is_read %}fw-semibold{% endif %}">{{ notif.message|truncatechars:80 }}</p>
+                                                <span class="notif-time">{{ notif.created_at|timesince }} trước</span>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li>
+                                        <div class="text-center py-4 text-muted">
+                                            <i class="fas fa-bell-slash fa-2x mb-2 d-block"></i>
+                                            <small>Chưa có thông báo nào</small>
+                                        </div>
+                                    </li>
+                                {% endif %}
+                                <li>
+                                    <a href="{% url 'client:notifications' %}" 
+                                       class="d-block text-center py-2 text-primary border-top" 
+                                       style="font-size:12px;text-decoration:none;">
+                                        Xem tất cả thông báo →
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% endif %}
+
                     <a href="{% url 'client:cart' %}" class="nav-link-custom">
-                        <i class="fas fa-shopping-bag"></i><span>Giỏ hàng</span>
-                        <span class="cart-badge">{{ cart|length }}</span>
+                        <i class="fas fa-shopping-bag"></i><span class="d-none d-md-block">Giỏ hàng</span>
+                        <span class="cart-badge">{% if cart %}{{ cart|length }}{% else %}0{% endif %}</span>
                     </a>
 
                     {% if user.is_authenticated %}
-                        <div class="dropdown">
-                            <a href="#" class="nav-link-custom dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle"></i><span>{{ user.username }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3">
-                                {% if user.is_staff %}
-                                    <li><a class="dropdown-item fw-bold text-primary" href="{% url 'client:admin_dashboard' %}"><i class="fas fa-user-shield me-2"></i>Quản trị</a></li>
-                                    <li><hr class="dropdown-divider"></li>
+                        <div class="dropdown user-dropdown">
+                            <a href="#" class="nav-link-custom dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.profile.avatar %}
+                                    <img src="{{ user.profile.avatar.url }}" class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover; border: 1.5px solid rgba(255,255,255,0.8);">
+                                {% else %}
+                                    <i class="fas fa-user-circle"></i>
                                 {% endif %}
-                                <li><a class="dropdown-item" href="{% url 'client:my_orders' %}"><i class="fas fa-box me-2"></i>Đơn hàng</a></li>
-                                <li><a class="dropdown-item text-danger" href="{% url 'client:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                                <span class="ms-1 d-none d-md-block">Chào, {{ user.username|truncatechars:10 }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow mt-3 border-0">
+                                <li>
+                                    <a class="dropdown-item fw-bold pb-0" href="{% url 'client:user_account' %}"><i class="fas fa-user-circle"></i> Tài khoản của tôi</a>
+                                    <div class="px-3 pb-2 text-muted" style="font-size: 11px;">Hạng thành viên: 
+                                        <span class="text-{% if user.profile.rank == 'GOLD' %}warning{% elif user.profile.rank == 'SILVER' %}secondary{% else %}success{% endif %} fw-bold">
+                                            {{ user.profile.rank|default:"NEW" }}
+                                        </span>
+                                    </div>
+                                </li>
+                                
+                                {% if user.is_staff %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-primary fw-bold" href="{% url 'client:admin_dashboard' %}"><i class="fas fa-user-shield"></i>Trang quản trị</a></li>
+                                {% endif %}
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'client:logout' %}"><i class="fas fa-sign-out-alt"></i>Đăng xuất</a></li>
                             </ul>
                         </div>
                     {% else %}
                         <a href="{% url 'client:login' %}" class="nav-link-custom">
-                            <i class="fas fa-user"></i><span>Đăng nhập</span>
+                            <i class="fas fa-user"></i><span class="d-none d-md-block">Đăng nhập</span>
                         </a>
                     {% endif %}
                 </div>
@@ -91,7 +349,8 @@
     {% if messages %}
         <div class="container mt-3">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm js-auto-close" role="alert">
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm js-auto-close border-0" role="alert">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} me-2"></i>
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -99,7 +358,7 @@
         </div>
     {% endif %}
 
-    <main>
+    <main class="min-vh-100">
         {% block content %}{% endblock %}
     </main>
 
@@ -111,50 +370,362 @@
                     <p class="text-secondary small">
                         Hệ thống bán lẻ điện thoại chính hãng, giá rẻ, dịch vụ bảo hành uy tín số 1 Việt Nam.
                     </p>
+                    <div class="d-flex gap-2 mt-3">
+                        <img src="https://hoanghamobile.com/Content/web/img/logo-da-thong-bao-bo-cong-thuong.png" width="120">
+                    </div>
                 </div>
 
                 <div class="col-md-4 text-md-center">
-                    <h5 class="fw-bold mb-3">Hỗ trợ</h5>
+                    <h5 class="fw-bold mb-3">Hỗ trợ khách hàng</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="text-secondary small text-decoration-none hover-white">Chính sách bảo hành</a></li>
-                        <li class="mb-2"><a href="#" class="text-secondary small text-decoration-none hover-white">Chính sách đổi trả</a></li>
+                        <li class="mb-2"><a href="{% url 'client:policy_warranty' %}" class="text-secondary small text-decoration-none hover-white">Chính sách bảo hành</a></li>
+                        <li class="mb-2"><a href="{% url 'client:policy_return' %}" class="text-secondary small text-decoration-none hover-white">Chính sách đổi trả</a></li>
+                        <li class="mb-2"><a href="{% url 'client:policy_guide' %}" class="text-secondary small text-decoration-none hover-white">Hướng dẫn mua hàng</a></li>
+                        <li class="mb-2"><a href="{% url 'client:feedback' %}" class="text-secondary small text-decoration-none hover-white"><i class="fas fa-comment-dots me-1"></i>Gửi ý kiến / Liên hệ</a></li>
                     </ul>
                 </div>
 
                 <div class="col-md-4 text-md-end">
-                    <h5 class="fw-bold mb-3">Kết nối</h5>
+                    <h5 class="fw-bold mb-3">Kết nối với chúng tôi</h5>
                     <div class="d-flex justify-content-md-end gap-3 fs-4">
                         <a href="#" class="text-primary"><i class="fab fa-facebook"></i></a>
                         <a href="#" class="text-danger"><i class="fab fa-youtube"></i></a>
                         <a href="#" class="text-white"><i class="fab fa-tiktok"></i></a>
                     </div>
+                    <p class="small text-secondary mt-3">Hotline: <b class="text-white">1900.2026</b></p>
                 </div>
             </div>
 
             <hr class="mt-4 border-secondary">
             <div class="text-center">
-                <p class="text-secondary small mb-0">© 2026 Phone Store. All rights reserved.</p>
+                <p class="text-secondary small mb-0">© 2026 Phone Store. Thiết kế bởi Nhóm 6. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <div class="chat-widget-container">
+        <div class="chat-sub-buttons">
+            <a href="tel:19002026" class="chat-widget-btn chat-sub-btn btn-hotline" title="Gọi Hotline">
+                <i class="fas fa-phone-alt"></i>
+            </a>
+            <a href="#" class="chat-widget-btn chat-sub-btn btn-zalo" title="Chat Zalo">
+                <span class="fw-bold" style="font-size: 12px; font-family: sans-serif;">Zalo</span>
+            </a>
+            <a href="#" class="chat-widget-btn chat-sub-btn btn-messenger" title="Chat Fanpage">
+                <i class="fab fa-facebook-messenger"></i>
+            </a>
+            <button onclick="toggleAiChat()" class="chat-widget-btn chat-sub-btn btn-ai" title="Chat với AI">
+                <i class="fas fa-robot"></i>
+            </button>
+        </div>
+        <button class="chat-widget-btn chat-main-btn" title="Liên hệ">
+            <i class="fas fa-comment-dots"></i>
+        </button>
+    </div>
+
+    <div class="ai-chatbox" id="aiChatbox">
+        <div class="ai-chatbox-header">
+            <div><i class="fas fa-robot me-2"></i>PhoneBot AI</div>
+            <div class="ai-chatbox-close" onclick="toggleAiChat()"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="ai-chatbox-body" id="aiChatBody">
+            <div class="chat-msg msg-bot">Xin chào! Tôi là trợ lý ảo của Phone Store. Tôi có thể giúp gì cho bạn hôm nay?</div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="ai-chatbox-footer">
+            <input type="text" id="aiChatInput" class="ai-chatbox-input" placeholder="Nhập tin nhắn..." onkeypress="handleAiChatKey(event)">
+            <button class="ai-chatbox-btn" onclick="sendAiMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Tìm tất cả các alert có class js-auto-close
             const autoCloseAlerts = document.querySelectorAll('.js-auto-close');
-            
             autoCloseAlerts.forEach(function(alert) {
-                // Sau 3 giây (3000ms) sẽ thực hiện lệnh đóng
                 setTimeout(function() {
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
-                }, 3000);
+                }, 3500);
             });
         });
+
+        // AI Chat Logic
+        function toggleAiChat() {
+            const chatbox = document.getElementById('aiChatbox');
+            if (chatbox.classList.contains('show')) {
+                chatbox.classList.remove('show');
+                setTimeout(() => chatbox.style.display = 'none', 300);
+            } else {
+                chatbox.style.display = 'flex';
+                setTimeout(() => chatbox.classList.add('show'), 10);
+                document.getElementById('aiChatInput').focus();
+            }
+        }
+
+        function handleAiChatKey(e) {
+            if (e.key === 'Enter') {
+                sendAiMessage();
+            }
+        }
+
+        function appendMessage(text, type) {
+            const body = document.getElementById('aiChatBody');
+            const typing = document.getElementById('typingIndicator');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-msg msg-${type}`;
+            // Thay thế dòng mới bằng <br>
+            msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+            
+            body.insertBefore(msgDiv, typing);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        async function sendAiMessage() {
+            const input = document.getElementById('aiChatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Xóa input
+            input.value = '';
+            
+            // Hiển thị tin nhắn user
+            appendMessage(message, 'user');
+
+            // Hiển thị typing...
+            const typing = document.getElementById('typingIndicator');
+            typing.style.display = 'block';
+            document.getElementById('aiChatBody').scrollTop = document.getElementById('aiChatBody').scrollHeight;
+
+            try {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const response = await fetch('/api/ai-chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                typing.style.display = 'none';
+
+                if (response.ok) {
+                    appendMessage(data.response, 'bot');
+                } else {
+                    appendMessage('Có lỗi xảy ra: ' + (data.error || 'Server error'), 'bot');
+                }
+            } catch (error) {
+                typing.style.display = 'none';
+                appendMessage('Không thể kết nối đến máy chủ AI.', 'bot');
+            }
+        }
     </script>
 
     {% block extra_js %}{% endblock %}
+
+    <script>
+    // ============================================================
+    //  NAVBAR SEARCH AUTOCOMPLETE  — AJAX + localStorage history
+    // ============================================================
+    (function () {
+        const input  = document.getElementById('mainSearchInput');
+        const form   = document.getElementById('mainSearchForm');
+        const dropdown = document.getElementById('searchDropdown');
+        if (!input || !dropdown) return;
+
+        const HISTORY_KEY = 'ps_search_history';
+        let debounceTimer = null;
+        let activeIdx = -1;
+        let currentItems = [];
+
+        // --- Lịch sử ---
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+        }
+        function saveHistory(q) {
+            let hist = getHistory().filter(h => h.toLowerCase() !== q.toLowerCase());
+            hist.unshift(q);
+            if (hist.length > 6) hist = hist.slice(0, 6);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+        }
+        function removeHistory(q) {
+            const hist = getHistory().filter(h => h !== q);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+        }
+
+        // --- Format giá ---
+        function formatPrice(n) {
+            return n.toLocaleString('vi-VN') + '₫';
+        }
+
+        // --- Highlight text ---
+        function highlight(text, q) {
+            if (!q) return text;
+            const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return text.replace(new RegExp('(' + esc + ')', 'gi'), '<mark>$1</mark>');
+        }
+
+        // --- Render dropdown ---
+        function renderSuggestions(suggestions, q) {
+            let html = '';
+            currentItems = [];
+
+            if (suggestions.length > 0) {
+                html += '<div class="search-drop-section">';
+                html += '<div class="search-drop-label"><i class="fas fa-search me-1"></i>Gợi ý sản phẩm</div>';
+                suggestions.forEach((s, i) => {
+                    currentItems.push({ type: 'product', url: s.url });
+                    const imgHtml = s.image
+                        ? `<img src="${s.image}" class="suggestion-img" alt="">`
+                        : `<div class="suggestion-img-placeholder"><i class="fas fa-mobile-alt"></i></div>`;
+                    html += `
+                    <a href="${s.url}" class="suggestion-item" data-idx="${i}">
+                        ${imgHtml}
+                        <div class="suggestion-text">
+                            <div class="suggestion-name">${highlight(s.name, q)}</div>
+                            <div class="suggestion-cat">${s.category}</div>
+                        </div>
+                        <div class="suggestion-price">${formatPrice(s.price)}</div>
+                    </a>`;
+                });
+                html += '</div>';
+                const offset = currentItems.length;
+                html += `<div class="search-drop-footer">
+                    <i class="fas fa-list"></i>
+                    <a href="/search/?q=${encodeURIComponent(q)}">Xem tất cả ${suggestions.length >= 8 ? 'kết quả' : suggestions.length + ' sản phẩm'} cho &ldquo;${q}&rdquo; →</a>
+                </div>`;
+            } else if (q.length >= 2) {
+                html += `<div class="search-drop-section">
+                    <div style="padding:18px 14px;text-align:center;color:#999;font-size:13px;">
+                        <i class="fas fa-search-minus me-2"></i>Không tìm thấy sản phẩm nào
+                    </div>
+                </div>`;
+            }
+
+            dropdown.innerHTML = html;
+            dropdown.classList.add('show');
+            activeIdx = -1;
+
+            // Gán click cho suggestion items
+            dropdown.querySelectorAll('.suggestion-item').forEach(el => {
+                el.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    saveHistory(q);
+                    window.location.href = el.href;
+                });
+            });
+        }
+
+        function renderHistory() {
+            const hist = getHistory();
+            if (hist.length === 0) { dropdown.innerHTML = ''; dropdown.classList.remove('show'); return; }
+            let html = '<div class="search-drop-section">';
+            html += '<div class="search-drop-label"><i class="fas fa-history me-1"></i>Lịch sử tìm kiếm</div>';
+            hist.forEach(h => {
+                html += `
+                <div class="history-item" data-q="${h}">
+                    <i class="fas fa-clock"></i>
+                    <span>${h}</span>
+                    <span class="history-remove" data-remove="${h}">×</span>
+                </div>`;
+            });
+            html += '</div>';
+            dropdown.innerHTML = html;
+            dropdown.classList.add('show');
+
+            dropdown.querySelectorAll('.history-item').forEach(el => {
+                el.addEventListener('mousedown', e => {
+                    const removeBtn = e.target.closest('[data-remove]');
+                    if (removeBtn) {
+                        e.preventDefault();
+                        removeHistory(removeBtn.dataset.remove);
+                        renderHistory();
+                        return;
+                    }
+                    e.preventDefault();
+                    input.value = el.dataset.q;
+                    form.submit();
+                });
+            });
+        }
+
+        function closeDropdown() {
+            dropdown.classList.remove('show');
+            activeIdx = -1;
+        }
+
+        // --- AJAX fetch ---
+        async function fetchSuggestions(q) {
+            try {
+                const res = await fetch(`/api/search-autocomplete/?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                renderSuggestions(data.suggestions, q);
+            } catch (e) { /* silent fail */ }
+        }
+
+        // --- Events ---
+        input.addEventListener('focus', function () {
+            const q = this.value.trim();
+            if (!q) renderHistory();
+            else fetchSuggestions(q);
+        });
+
+        input.addEventListener('input', function () {
+            const q = this.value.trim();
+            clearTimeout(debounceTimer);
+            if (!q) { renderHistory(); return; }
+            if (q.length < 2) { closeDropdown(); return; }
+            debounceTimer = setTimeout(() => fetchSuggestions(q), 300);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', function (e) {
+            const items = dropdown.querySelectorAll('.suggestion-item, .history-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIdx = Math.max(activeIdx - 1, -1);
+                items.forEach((el, i) => el.classList.toggle('active', i === activeIdx));
+            } else if (e.key === 'Enter') {
+                if (activeIdx >= 0 && items[activeIdx]) {
+                    e.preventDefault();
+                    const href = items[activeIdx].href;
+                    const q = items[activeIdx].dataset && items[activeIdx].dataset.q;
+                    if (href) { saveHistory(input.value.trim()); window.location.href = href; }
+                    else if (q) { input.value = q; form.submit(); }
+                } else {
+                    if (input.value.trim()) saveHistory(input.value.trim());
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+
+        // Close on outside click
+        document.addEventListener('mousedown', function (e) {
+            if (!input.closest('.search-wrapper').contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        // Save history on form submit
+        form.addEventListener('submit', function () {
+            const q = input.value.trim();
+            if (q) saveHistory(q);
+        });
+    })();
+    </script>
 </body>
 </html>

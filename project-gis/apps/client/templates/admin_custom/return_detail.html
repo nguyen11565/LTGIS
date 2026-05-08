@@ -1,0 +1,192 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}Chi tiết Yêu cầu Trả hàng #{{ return_req.id }}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <a href="{% url 'client:admin_return_list' %}" class="text-decoration-none text-muted">
+            <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <!-- Tiêu đề & Trạng thái -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark mb-0">Xử lý Yêu cầu ##{{ return_req.id }}</h3>
+        <span class="badge fs-6
+            {% if return_req.status == 'pending' %}bg-warning text-dark
+            {% elif return_req.status == 'approved' %}bg-primary
+            {% elif return_req.status == 'completed' %}bg-success
+            {% elif return_req.status == 'rejected' %}bg-danger{% endif %} rounded-pill px-4 py-2">
+            Trạng thái: {{ return_req.get_status_display }}
+        </span>
+    </div>
+
+    <div class="row g-4">
+        <!-- Thông tin chung & Sản phẩm -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Hàng hóa đổi trả</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th class="text-end pe-4">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r_item in return_req.items.all %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        {% if r_item.order_item.product.image %}
+                                        <img src="{{ r_item.order_item.product.image.url }}" class="rounded shadow-sm" width="50" height="50" style="object-fit: cover;">
+                                        {% endif %}
+                                        <div class="ms-3">
+                                            <div class="fw-bold">{{ r_item.order_item.product.name }}</div>
+                                            <small class="text-muted">Đơn giá: {{ r_item.order_item.price|floatformat:0|intcomma }}đ</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>x{{ r_item.quantity }}</td>
+                                <td class="text-end pe-4 fw-bold">{{ r_item.order_item.get_total_item_price|floatformat:0|intcomma }}đ</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-light">
+                                <td colspan="2" class="text-end fw-bold">Tổng tiền hoàn lại:</td>
+                                <td class="text-end pe-4 fw-bold text-danger fs-5">{{ return_req.refund_amount|floatformat:0|intcomma }}đ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Lý do & Ảnh bằng chứng -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Thông tin phản hồi của khách</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-muted text-uppercase small">Lý do trả hàng</h6>
+                        <div class="p-3 bg-light rounded-3 border">
+                            {{ return_req.reason|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    {% if return_req.proof_image %}
+                    <div>
+                        <h6 class="fw-bold text-muted text-uppercase small">Hình ảnh minh chứng</h6>
+                        <a href="{{ return_req.proof_image.url }}" target="_blank">
+                            <img src="{{ return_req.proof_image.url }}" class="img-thumbnail rounded" style="max-height: 250px;">
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Cột Phải: Xử lý Action -->
+        <div class="col-lg-4">
+            <!-- Thông tin Đơn -> Khách -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-muted text-uppercase small mb-3">Người yêu cầu</h6>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="fw-bold mb-0">{{ return_req.user.username }}</h6>
+                            <small class="text-muted">{{ return_req.user.email }}</small>
+                        </div>
+                    </div>
+                    
+                    <h6 class="fw-bold text-muted text-uppercase small mt-4 mb-2">Thông tin Đơn hàng</h6>
+                    <p class="mb-1">Mã đơn: <a href="{% url 'client:admin_order_detail' return_req.order.id %}" class="fw-bold">#{{ return_req.order.id }}</a></p>
+                    <p class="mb-1">Cửa hàng gốc: <span class="badge bg-secondary">{{ return_req.order.fulfillment_store.name|default:"Hệ thống" }}</span></p>
+                    <p class="mb-1">Ngày mua: {{ return_req.order.created_at|date:"d/m/Y H:i" }}</p>
+                </div>
+            </div>
+
+            <!-- Bảng Điều Khiển Xử Lý -->
+            <div class="card border-0 shadow-sm rounded-4 border-top border-4 border-primary">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Hành động xử lý</h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if return_req.status == 'pending' %}
+                        <p class="text-muted small mb-4">Hãy kiểm tra lý do và hình ảnh của khách trước khi duyệt. Việc duyệt sẽ yêu cầu khách gửi hàng về cơ sở.</p>
+                        
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <button type="submit" class="btn btn-primary w-100 mb-2 rounded-pill fw-bold">
+                                Phê duyệt yêu cầu <i class="fas fa-check ms-1"></i>
+                            </button>
+                        </form>
+                        
+                        <!-- Nút kích hoạt modal Từ chối -->
+                        <button type="button" class="btn btn-outline-danger w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            Từ chối yêu cầu <i class="fas fa-times ms-1"></i>
+                        </button>
+
+                    {% elif return_req.status == 'approved' %}
+                        <div class="alert alert-info border-0 rounded-3">
+                            <i class="fas fa-info-circle me-1"></i> Đang chờ khách hàng gửi trả sản phẩm vật lý. Khi nhận được hàng, bấm nút dưới để hoàn thành vòng lặp.
+                        </div>
+                        
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="complete">
+                            <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold pb-2 pt-2" onclick="return confirm('Bạn xác nhận ĐÃ NHẬN HÀNG LỖI VÀ HOÀN TIỀN? Hệ thống sẽ tự động trừ điểm người dùng và lưu vào Kho Hàng Lỗi.')">
+                                Xác nhận Đã Nhận Hàng & Hoàn tiền
+                            </button>
+                        </form>
+
+                    {% elif return_req.status == 'completed' %}
+                        <div class="alert alert-success border-0 rounded-3 text-center">
+                            <i class="fas fa-check-circle fs-3 d-block mb-2"></i>
+                            Yêu cầu đã Xong!<br>
+                            <small>Hàng đã nhập vào kho lỗi, tiền & điểm đã thu hồi tự động.</small>
+                        </div>
+                    {% else %}
+                        <!-- rejected -->
+                        <div class="alert alert-danger border-0 rounded-3 text-center">
+                            <i class="fas fa-times-circle fs-3 d-block mb-2"></i>
+                            Đã từ chối khách trả hàng.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Từ Chối -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" class="modal-content border-0 rounded-4 shadow">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger">Từ chối Yêu cầu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-1">
+                <p>Bạn chắc chắn muốn từ chối yêu cầu đổi trả này chứ?</p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-danger rounded-pill px-4">Đồng ý Từ chối</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

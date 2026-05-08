@@ -1,0 +1,109 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-ticket-alt me-2"></i>Tạo Mã Mới</h5>
+            </div>
+            <div class="card-body bg-light">
+                <form method="POST" action="{% url 'client:admin_coupon_list' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Mã giảm giá (Code)</label>
+                        <input type="text" name="code" class="form-control text-uppercase" required placeholder="VD: TET2026">
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold small">Loại giảm</label>
+                            <select name="discount_type" class="form-select">
+                                <option value="fixed">Tiền mặt (đ)</option>
+                                <option value="percent">Phần trăm (%)</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold small">Mức giảm</label>
+                            <input type="number" name="discount_value" class="form-control" required placeholder="VD: 50000">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Đơn hàng tối thiểu (đ)</label>
+                        <input type="number" name="min_purchase" class="form-control" value="0" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold small">Bắt đầu</label>
+                            <input type="datetime-local" name="valid_from" class="form-control" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold small">Kết thúc</label>
+                            <input type="datetime-local" name="valid_to" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">Giới hạn số lượt dùng</label>
+                        <input type="number" name="usage_limit" class="form-control" value="100" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">
+                        <i class="fas fa-plus me-1"></i> TẠO MÃ NGAY
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-list me-2"></i>Danh sách Mã giảm giá</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Mã Code</th>
+                            <th>Mức giảm</th>
+                            <th>Điều kiện</th>
+                            <th>Hạn sử dụng</th>
+                            <th>Lượt dùng</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in coupons %}
+                        <tr>
+                            <td class="ps-3"><span class="badge bg-dark fs-6">{{ c.code }}</span></td>
+                            <td class="text-danger fw-bold">
+                                {% if c.discount_type == 'percent' %}{{ c.discount_value }}%
+                                {% else %}{{ c.discount_value|intcomma }}đ{% endif %}
+                            </td>
+                            <td class="small text-muted">Đơn từ {{ c.min_purchase|intcomma }}đ</td>
+                            <td class="small">
+                                <span class="d-block text-success">{{ c.valid_from|date:"d/m/Y H:i" }}</span>
+                                <span class="d-block text-danger">{{ c.valid_to|date:"d/m/Y H:i" }}</span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 10px; max-width: 80px;">
+                                    <div class="progress-bar bg-success" style="width: {% widthratio c.used_count c.usage_limit 100 %}%"></div>
+                                </div>
+                                <small class="text-muted">{{ c.used_count }} / {{ c.usage_limit }}</small>
+                            </td>
+                            <td>
+                                <a href="{% url 'client:admin_coupon_delete' c.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa mã này?');"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Chưa có mã giảm giá nào.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'admin_custom/includes/pagination.html' %}
+
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% block title %}Tạo Phiếu Điều Chuyển Kho{% endblock %}
+
+{% block admin_content %}
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-white border-0 pt-4 pb-0">
+        <h4 class="fw-bold mb-0">Tạo Phiếu Điều Chuyển Kho</h4>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" action="{% url 'client:admin_transfer_create' %}">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Từ Kho (Xuất)</label>
+                    {% if profile.role == 'super_admin' %}
+                    <select name="from_store" class="form-select" required>
+                        <option value="">-- Chọn Kho Xuất --</option>
+                        {% for s in stores %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <input type="text" class="form-control" value="{{ profile.store.name }}" readonly>
+                    <input type="hidden" name="from_store" value="{{ profile.store.id }}">
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Đến Kho (Nhập)</label>
+                    <select name="to_store" class="form-select" required>
+                        <option value="">-- Chọn Kho Nhập --</option>
+                        {% for s in stores %}
+                            {% if profile.role == 'super_admin' or s.id != profile.store.id %}
+                            <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Ghi chú</label>
+                <textarea name="note" class="form-control" rows="2" placeholder="Lý do điều chuyển..."></textarea>
+            </div>
+
+            <div class="card border border-light mb-4 shadow-sm">
+                <div class="card-header bg-light fw-bold d-flex justify-content-between align-items-center">
+                    <span>Danh sách Sản phẩm Điều Chuyển</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-add-item">
+                        <i class="fas fa-plus"></i> Thêm Sản phẩm
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-borderless align-middle mb-0" id="transfer-items-table">
+                        <thead class="border-bottom text-muted small">
+                            <tr>
+                                <th style="width: 70%">Tên Sản Phẩm / Biến thể</th>
+                                <th style="width: 20%">Số lượng xuất</th>
+                                <th style="width: 10%"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dòng sản phẩm mẫu (có thể chọn ẩn đi bằng JS và clone) -->
+                            <tr class="item-row">
+                                <td>
+                                    <select name="product_id[]" class="form-select product-select" required>
+                                        <option value="">-- Chọn sản phẩm --</option>
+                                        {% for p in products %}
+                                        <option value="{{ p.id }}">{{ p.name }} (Giá: {{ p.price|floatformat:0 }}đ)</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="quantity[]" class="form-control" min="1" value="1" required>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'client:admin_transfer_list' %}" class="btn btn-light">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Tạo Phiếu & Chờ Duyệt
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tableBody = document.querySelector('#transfer-items-table tbody');
+        const btnAdd = document.getElementById('btn-add-item');
+        
+        btnAdd.addEventListener('click', function() {
+            const rowCount = tableBody.querySelectorAll('.item-row').length;
+            const firstRow = tableBody.querySelector('.item-row');
+            if (firstRow) {
+                const newRow = firstRow.cloneNode(true);
+                // Reset giá trị
+                newRow.querySelector('select').value = '';
+                newRow.querySelector('input[type="number"]').value = '1';
+                tableBody.appendChild(newRow);
+            }
+        });
+
+        tableBody.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-remove-item')) {
+                if (tableBody.querySelectorAll('.item-row').length > 1) {
+                    e.target.closest('tr').remove();
+                } else {
+                    alert("Phải có ít nhất 1 sản phẩm trong phiếu!");
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

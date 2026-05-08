@@ -1,0 +1,44 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load static %}
+
+{% block title %}{% if region %}Chỉnh sửa Khu vực{% else %}Thêm Khu vực{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{% if region %}Chỉnh sửa Khu vực: {{ region.name }}{% else %}Thêm Khu vực Mới{% endif %}</h1>
+        <a href="{% url 'client:admin_region_list' %}" class="btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Thông tin Khu vực</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="name" class="form-label">Tên Khu vực <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ region.name|default:'' }}" required>
+                    <small class="form-text text-muted">Ví dụ: Miền Bắc, Miền Nam, Vùng 1...</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Mô tả</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ region.description|default:'' }}</textarea>
+                </div>
+                
+                <hr>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% if region %}Cập nhật{% else %}Lưu Khu vực{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

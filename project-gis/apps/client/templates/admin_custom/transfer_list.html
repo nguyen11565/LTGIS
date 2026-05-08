@@ -1,0 +1,67 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% block title %}Quản lý Điều Chuyển Kho{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">Phiếu Điều Chuyển Kho</h3>
+    {% if request.user.profile.role != 'sales_staff' %}
+    <a href="{% url 'client:admin_transfer_create' %}" class="btn btn-primary shadow-sm">
+        <i class="fas fa-plus-circle me-1"></i> Tạo Phiếu Điều Chuyển
+    </a>
+    {% endif %}
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã Phiếu</th>
+                        <th>Từ Kho</th>
+                        <th>Đến Kho</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Tạo</th>
+                        <th>Người Tạo</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transfers %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-primary">{{ t.code }}</td>
+                        <td>{{ t.from_store.name }}</td>
+                        <td>{{ t.to_store.name }}</td>
+                        <td>
+                            {% if t.status == 'pending' %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Chờ duyệt</span>
+                            {% elif t.status == 'shipping' %}
+                            <span class="badge bg-info"><i class="fas fa-truck"></i> Đang vận chuyển</span>
+                            {% elif t.status == 'completed' %}
+                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Đã nhận hàng</span>
+                            {% elif t.status == 'cancelled' %}
+                            <span class="badge bg-danger"><i class="fas fa-times-circle"></i> Đã hủy</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ t.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>{{ t.created_by.username }}</td>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'client:admin_transfer_detail' t.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-eye"></i> Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Chưa có phiếu điều chuyển nào.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'admin_custom/includes/pagination.html' %}
+
+{% endblock %}

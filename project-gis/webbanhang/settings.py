@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-c@x^+og_+hu^!l%+-=v0t(+913&4=$0=^jya)cvpnqu*h24i#^
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-#DEBUG =False (mở lên khi test 404)
+#DEBUG =False 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.client.context_processors.notifications_context',
             ],
         },
     },
@@ -142,3 +143,33 @@ GDAL_LIBRARY_PATH = os.path.join(OSGEO4W_ROOT, 'bin', 'gdal310.dll')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# ============================================================
+# CẤU HÌNH EMAIL
+# ============================================================
+
+# --- CHẾ ĐỘ TEST (Mailtrap Sandbox) ---
+# Email bị "bẫy" vào Mailtrap, KHÔNG đến email thật người dùng.
+# Bỏ comment block dưới nếu muốn quay lại test:
+#
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'sandbox.smtp.mailtrap.io'
+EMAIL_HOST_USER = '18f20f705bf57c'
+EMAIL_HOST_PASSWORD = 'a8ee96c8953a56'
+EMAIL_PORT = 2525
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'noreply@phonestore.vn'
+
+# --- CHẾ ĐỘ PRODUCTION (Gmail SMTP - Gửi email thật) ---
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'phuctran212005@gmail.com'
+# EMAIL_HOST_PASSWORD = 'vzby sacc cjem kuop'
+# DEFAULT_FROM_EMAIL = 'Phone Store <phuctran212005@gmail.com>'
+# ADMIN_EMAIL = 'phuctran212005@gmail.com'  # Email nhận thông báo ý kiến khách hàng
+
+# ============================================================
+# CẤU HÌNH AI (GROQ)
+# ============================================================

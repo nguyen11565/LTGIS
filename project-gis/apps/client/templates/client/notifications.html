@@ -1,0 +1,162 @@
+{% extends 'client/base.html' %}
+{% load humanize %}
+
+{% block title %}Thông báo của tôi – Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notif-page-header {
+        background: linear-gradient(135deg, #d70018 0%, #ff4d4d 100%);
+        border-radius: 16px;
+        padding: 28px 32px;
+        margin-bottom: 28px;
+        color: white;
+    }
+    .notif-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        overflow: hidden;
+    }
+    .notif-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f5f5f5;
+        text-decoration: none;
+        color: inherit;
+        transition: background 0.2s;
+    }
+    .notif-row:hover { background: #f8f9fa; color: inherit; }
+    .notif-row.unread { background: #f0f7ff; }
+    .notif-row.unread:hover { background: #e3f0ff; }
+    .notif-row:last-child { border-bottom: none; }
+
+    .notif-icon-lg {
+        width: 52px; height: 52px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
+    }
+    .notif-content { flex: 1; }
+    .notif-content .msg { font-size: 14px; color: #333; margin: 0 0 4px; line-height: 1.5; }
+    .notif-content .notif-meta { font-size: 12px; color: #999; }
+    .unread-dot {
+        width: 9px; height: 9px;
+        background: #d70018; border-radius: 50%;
+        flex-shrink: 0; margin-top: 6px;
+    }
+    .notif-type-badge {
+        font-size: 11px; padding: 2px 10px; border-radius: 20px;
+        font-weight: 600; margin-left: 8px;
+    }
+    .filter-tabs .nav-link {
+        border-radius: 8px; font-size: 13px;
+        color: #666; transition: 0.2s;
+    }
+    .filter-tabs .nav-link.active {
+        background: var(--main-red, #d70018);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="notif-page-header d-flex align-items-center gap-3">
+        <i class="fas fa-bell fa-2x" style="color:rgba(255,255,255,0.85);"></i>
+        <div>
+            <h1 class="fs-4 fw-bold mb-1" style="letter-spacing:0.5px;">Thông báo của tôi</h1>
+            <p class="mb-0" style="font-size:13px;opacity:0.85;">
+                Theo dõi trạng thái đơn hàng và cập nhật mới nhất từ Phone Store
+            </p>
+        </div>
+        <div class="ms-auto">
+            {% if unread_count is not None and unread_count > 0 %}
+            <a href="{% url 'client:mark_all_notifications_read' %}" class="btn btn-light btn-sm fw-semibold">
+                <i class="fas fa-check-double me-1"></i> Đọc tất cả
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Thống kê nhanh -->
+            <div class="row g-3 mb-4">
+                <div class="col-4">
+                    <div class="text-center p-3 bg-white rounded-3 shadow-sm">
+                        <div class="fs-3 fw-bold text-success">{{ placed_count }}</div>
+                        <div class="small text-muted">Đặt hàng</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="text-center p-3 bg-white rounded-3 shadow-sm">
+                        <div class="fs-3 fw-bold text-primary">{{ shipped_count }}</div>
+                        <div class="small text-muted">Đang giao</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="text-center p-3 bg-white rounded-3 shadow-sm">
+                        <div class="fs-3 fw-bold text-warning">{{ completed_count }}</div>
+                        <div class="small text-muted">Hoàn thành</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danh sách thông báo -->
+            <div class="notif-card">
+                {% if notifications %}
+                    {% for notif in notifications %}
+                    <a href="{% url 'client:mark_notification_read' notif.pk %}"
+                       class="notif-row {% if not notif.is_read %}unread{% endif %}">
+
+                        <!-- Icon -->
+                        <div class="notif-icon-lg"
+                             style="background:{% if notif.notif_type == 'order_placed' %}#e8faf6{% elif notif.notif_type == 'order_shipped' %}#e8f0fe{% elif notif.notif_type == 'order_completed' %}#fff9e6{% else %}#fde8e8{% endif %};">
+                            <i class="fas {% if notif.notif_type == 'order_placed' %}fa-check-circle{% elif notif.notif_type == 'order_shipped' %}fa-shipping-fast{% elif notif.notif_type == 'order_completed' %}fa-star{% else %}fa-times-circle{% endif %}"
+                               style="color:{% if notif.notif_type == 'order_placed' %}#009981{% elif notif.notif_type == 'order_shipped' %}#0d6efd{% elif notif.notif_type == 'order_completed' %}#e6a817{% else %}#dc3545{% endif %};"></i>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="notif-content">
+                            <p class="msg {% if not notif.is_read %}fw-semibold{% endif %}">
+                                {{ notif.message }}
+                                <span class="notif-type-badge"
+                                      style="background:{% if notif.notif_type == 'order_placed' %}#e8faf6;color:#009981{% elif notif.notif_type == 'order_shipped' %}#e8f0fe;color:#0d6efd{% elif notif.notif_type == 'order_completed' %}#fff9e6;color:#e6a817{% else %}#fde8e8;color:#dc3545{% endif %};">
+                                    {{ notif.get_notif_type_display }}
+                                </span>
+                            </p>
+                            <span class="notif-meta">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ notif.created_at|timesince }} trước
+                                {% if notif.order %}
+                                    &nbsp;·&nbsp; <strong>Đơn #{{ notif.order.id }}</strong>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Unread dot -->
+                        {% if not notif.is_read %}
+                            <div class="unread-dot"></div>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-bell-slash fa-3x mb-3 d-block" style="color:#ddd;"></i>
+                        <h5 class="fw-semibold">Chưa có thông báo nào</h5>
+                        <p class="small">Khi bạn đặt hàng, chúng tôi sẽ cập nhật thông tin tại đây.</p>
+                        <a href="{% url 'client:home' %}" class="btn btn-danger btn-sm mt-2">
+                            <i class="fas fa-shopping-bag me-1"></i> Khám phá sản phẩm
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

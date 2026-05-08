@@ -1,0 +1,170 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Chính sách bảo hành – Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .policy-hero {
+        background: linear-gradient(135deg, #d70018 0%, #ff4d4d 100%);
+        border-radius: 0 0 32px 32px;
+        padding: 52px 0 40px;
+        color: white;
+    }
+    .policy-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+        padding: 32px 36px;
+        margin-bottom: 24px;
+        border-left: 5px solid #d70018;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .policy-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.1); }
+    .policy-card h4 { color: #d70018; font-weight: 700; margin-bottom: 14px; }
+    .policy-card ul li { margin-bottom: 8px; color: #444; line-height: 1.7; }
+    .policy-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #fff1f2; color: #d70018;
+        padding: 6px 16px; border-radius: 20px;
+        font-size: 13px; font-weight: 600; margin-bottom: 8px;
+    }
+    .warranty-table th { background: #d70018; color: white; font-weight: 600; font-size: 13px; }
+    .warranty-table td { font-size: 13px; vertical-align: middle; }
+    .warranty-table tr:nth-child(even) td { background: #fff5f5; }
+    .highlight-box {
+        background: linear-gradient(135deg, #fff1f2, #fff8f8);
+        border: 1px solid #ffd0d0; border-radius: 12px;
+        padding: 20px 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<div class="policy-hero mb-5">
+    <div class="container text-center">
+        <div style="font-size:52px; margin-bottom:12px;">🛡️</div>
+        <h1 class="fw-bold fs-2 mb-2">Chính Sách Bảo Hành</h1>
+        <p class="mb-0" style="opacity:.85; font-size:15px;">
+            Phone Store cam kết bảo hành chính hãng – minh bạch – nhanh chóng
+        </p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <!-- THỜI GIAN BẢO HÀNH -->
+            <div class="policy-card">
+                <h4><i class="fas fa-clock me-2"></i>Thời Gian Bảo Hành</h4>
+                <div class="table-responsive">
+                    <table class="table warrant-table table-bordered warranty-table rounded overflow-hidden">
+                        <thead>
+                            <tr>
+                                <th>Loại sản phẩm</th>
+                                <th>Thời gian bảo hành</th>
+                                <th>Phạm vi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>📱 Điện thoại chính hãng</td>
+                                <td><strong>12 tháng</strong></td>
+                                <td>Lỗi phần cứng, màn hình, camera</td>
+                            </tr>
+                            <tr>
+                                <td>🔋 Pin & phụ kiện đi kèm</td>
+                                <td><strong>6 tháng</strong></td>
+                                <td>Dung lượng pin dưới 80%</td>
+                            </tr>
+                            <tr>
+                                <td>🎧 Tai nghe / sạc chính hãng</td>
+                                <td><strong>3 tháng</strong></td>
+                                <td>Lỗi kết nối, âm thanh</td>
+                            </tr>
+                            <tr>
+                                <td>💻 Laptop / Máy tính bảng</td>
+                                <td><strong>24 tháng</strong></td>
+                                <td>Lỗi phần cứng toàn bộ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ĐIỀU KIỆN BẢO HÀNH -->
+            <div class="policy-card">
+                <h4><i class="fas fa-check-circle me-2"></i>Điều Kiện Được Bảo Hành</h4>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-circle-check text-success me-2"></i>Sản phẩm còn trong thời hạn bảo hành</li>
+                    <li><i class="fas fa-circle-check text-success me-2"></i>Tem bảo hành, serial number còn nguyên vẹn</li>
+                    <li><i class="fas fa-circle-check text-success me-2"></i>Lỗi do nhà sản xuất, không phải do tác động ngoại lực</li>
+                    <li><i class="fas fa-circle-check text-success me-2"></i>Có hóa đơn mua hàng từ Phone Store</li>
+                    <li><i class="fas fa-circle-check text-success me-2"></i>Máy không bị ngấm nước, va đập mạnh, tự ý sửa chữa</li>
+                </ul>
+            </div>
+
+            <!-- KHÔNG BẢO HÀNH -->
+            <div class="policy-card" style="border-left-color:#ffc107;">
+                <h4 style="color:#e6a817;"><i class="fas fa-exclamation-triangle me-2"></i>Các Trường Hợp Không Bảo Hành</h4>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Màn hình rạn, vỡ do va đập</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Sản phẩm bị ngấm nước, ẩm ướt</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Tem bảo hành bị rách, serial bị xóa</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Đã qua sửa chữa ở nơi khác ngoài Phone Store</li>
+                    <li><i class="fas fa-times-circle text-danger me-2"></i>Hư hỏng do phần mềm, virus, root máy</li>
+                </ul>
+            </div>
+
+            <!-- QUY TRÌNH -->
+            <div class="policy-card" style="border-left-color:#009981;">
+                <h4 style="color:#009981;"><i class="fas fa-route me-2"></i>Quy Trình Bảo Hành</h4>
+                <div class="row g-3 text-center mt-1">
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <div style="font-size:28px;">📦</div>
+                            <div class="fw-semibold mt-2" style="font-size:13px;">Mang sản phẩm<br>đến cửa hàng</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <div style="font-size:28px;">🔍</div>
+                            <div class="fw-semibold mt-2" style="font-size:13px;">Kiểm tra &<br>xác nhận lỗi</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <div style="font-size:28px;">🔧</div>
+                            <div class="fw-semibold mt-2" style="font-size:13px;">Sửa chữa hoặc<br>đổi mới</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="p-3 bg-light rounded-3">
+                            <div style="font-size:28px;">✅</div>
+                            <div class="fw-semibold mt-2" style="font-size:13px;">Nhận lại<br>sản phẩm</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Thời gian xử lý bảo hành: <strong>1–7 ngày làm việc</strong> tùy mức độ hư hỏng.
+                    Hotline hỗ trợ: <strong>1900.2026</strong>
+                </p>
+            </div>
+
+            <!-- CTA -->
+            <div class="highlight-box text-center">
+                <p class="mb-3 fw-semibold" style="color:#d70018;">Cần hỗ trợ bảo hành? Liên hệ chúng tôi ngay!</p>
+                <a href="{% url 'client:feedback' %}" class="btn btn-danger me-2">
+                    <i class="fas fa-comment-dots me-1"></i>Gửi yêu cầu hỗ trợ
+                </a>
+                <a href="{% url 'client:store_locator' %}" class="btn btn-outline-danger">
+                    <i class="fas fa-map-marker-alt me-1"></i>Tìm cửa hàng gần nhất
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

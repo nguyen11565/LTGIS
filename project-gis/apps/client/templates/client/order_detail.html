@@ -2,6 +2,27 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<style>
+    #map-container { height: 350px; width: 100%; z-index: 1; }
+    .map-card-body { padding: 0 !important; overflow: hidden; position: relative; }
+    .status-overlay {
+        position: absolute; top: 15px; left: 15px; z-index: 1000;
+        background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px);
+        padding: 10px 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: none;
+    }
+    .leaflet-routing-container { display: none !important; }
+    
+    .user-pulse-marker { width: 18px; height: 18px; background: #0d6efd; border-radius: 50%; box-shadow: 0 0 0 rgba(13, 110, 253, 0.4); animation: pulse-blue 1.5s infinite; border: 3px solid #fff; }
+    .store-pulse-marker { width: 18px; height: 18px; background: #d70018; border-radius: 50%; box-shadow: 0 0 0 rgba(215, 0, 24, 0.4); animation: pulse-red 1.5s infinite; border: 3px solid #fff; }
+    @keyframes pulse-blue { 0% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(13, 110, 253, 0); } 100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); } }
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(215, 0, 24, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(215, 0, 24, 0); } 100% { box-shadow: 0 0 0 0 rgba(215, 0, 24, 0); } }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <nav aria-label="breadcrumb" class="mb-4">
@@ -12,19 +33,36 @@
     </nav>
 
     <div class="card shadow-sm border-0 rounded-4">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0 fw-bold text-danger">
                 <i class="fas fa-file-invoice me-2"></i>CHI TIẾT ĐƠN HÀNG #{{ order.id }}
             </h5>
-            
-            {% if order.status == 'pending' %}
-            <form action="{% url 'client:cancel_order' order.id %}" method="POST" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
-                    <i class="fas fa-times-circle me-1"></i> Hủy đơn hàng
-                </button>
-            </form>
-            {% endif %}
+
+            <div class="d-flex gap-2 flex-wrap">
+                {# Nút In hóa đơn — hiện khi đã thanh toán hoặc COD hoàn thành #}
+                {% if order.payment_status == 'paid' or order.payment_method == 'cod' and order.status == 'completed' %}
+                <a href="{% url 'client:client_print_receipt' order.id %}"
+                   target="_blank"
+                   class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-print me-1"></i> In hóa đơn
+                </a>
+                {% endif %}
+
+                {% if order.status == 'pending' %}
+                <form action="{% url 'client:cancel_order' order.id %}" method="POST"
+                      onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-bold">
+                        <i class="fas fa-times-circle me-1"></i> Hủy đơn hàng
+                    </button>
+                </form>
+                {% elif order.status == 'completed' %}
+                <a href="{% url 'client:request_return' order.id %}"
+                   class="btn btn-outline-warning btn-sm rounded-pill px-3 fw-bold">
+                    <i class="fas fa-undo me-1"></i> Yêu cầu trả hàng
+                </a>
+                {% endif %}
+            </div>
         </div>
 
         <div class="card-body p-4">
@@ -45,6 +83,20 @@
                     <p class="text-muted mb-1 small text-uppercase">Địa chỉ nhận hàng</p>
                     <p class="mb-1">Người nhận: <strong>{{ order.full_name }}</strong></p>
                     <p class="mb-0 text-muted">{{ order.address }}</p>
+                </div>
+            </div>
+
+            <!-- THE MAP CARD -->
+            <div class="card bg-light border-0 rounded-4 mb-4 shadow-sm overflow-hidden" id="tracking-card">
+                <div class="card-header bg-white border-0 py-3">
+                    <h6 class="mb-0 fw-bold text-dark"><i class="fas fa-map-marked-alt text-primary me-2"></i>THEO DÕI ĐƠN HÀNG TRỰC TUYẾN</h6>
+                </div>
+                <div class="card-body map-card-body position-relative">
+                    <div id="map-status" class="status-overlay">
+                        <small class="fw-bold text-muted d-block mb-1">Trạng thái vận chuyển</small>
+                        <span id="map-status-text" class="text-dark small">Đang khởi tạo bản đồ...</span>
+                    </div>
+                    <div id="map-container"></div>
                 </div>
             </div>
 
@@ -76,6 +128,9 @@
                             </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ item.product.name }}</div>
+                                {% if item.variation %}
+                                    <div class="small text-danger fw-bold"><i class="fas fa-cog me-1"></i>Phiên bản: {{ item.variation.color }} - {{ item.variation.storage }}</div>
+                                {% endif %}
                                 <small class="text-muted">Mã SP: #{{ item.product.id }}</small>
                             </td>
                             <td class="text-center">x{{ item.quantity }}</td>
@@ -88,8 +143,14 @@
                     </tbody>
                     <tfoot class="border-top-0">
                         <tr>
-                            <td colspan="4" class="text-end fw-bold fs-5 border-0 pt-4">TỔNG CỘNG:</td>
-                            <td class="text-end fw-bold fs-5 text-danger border-0 pt-4">
+                            <td colspan="4" class="text-end fw-bold border-0 pt-4 pb-1 text-muted">Phí giao hàng:</td>
+                            <td class="text-end fw-bold text-muted border-0 pt-4 pb-1">
+                                +{{ order.shipping_fee|default:0|floatformat:0|intcomma }}đ
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end fw-bold fs-5 border-top pt-2">TỔNG CỘNG:</td>
+                            <td class="text-end fw-bold fs-5 text-danger border-top pt-2">
                                 {{ order.total_price|floatformat:0|intcomma }}đ
                             </td>
                         </tr>
@@ -110,7 +171,7 @@
 <style>
     /* Làm mờ các đơn hàng đã bị hủy */
     {% if order.status == 'cancelled' %}
-    .table tbody tr {
+    .table tbody tr, #tracking-card {
         opacity: 0.6;
     }
     {% endif %}
@@ -122,4 +183,96 @@
         font-size: 12px;
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var addressStr = "{{ order.address|escapejs }}";
+    var storeLatStr = "{{ order.fulfillment_store.latitude|default_if_none:'' }}";
+    var storeLonStr = "{{ order.fulfillment_store.longitude|default_if_none:'' }}";
+    var storeName = "{{ order.fulfillment_store.name|default_if_none:'Kho hàng'|escapejs }}";
+
+    var mapDom = document.getElementById('map-container');
+    var mapStatus = document.getElementById('map-status');
+    var mapStatusText = document.getElementById('map-status-text');
+    mapStatus.style.display = 'block';
+
+    if (!storeLatStr || !storeLonStr) {
+        mapStatusText.innerHTML = "Đơn hàng đang chờ xử lý, chưa được phân bổ cửa hàng xuất kho.";
+        mapStatusText.className = "text-warning fw-bold small";
+        mapDom.style.background = "#e9ecef";
+        mapDom.innerHTML = "<div class='text-center text-muted' style='padding-top: 100px; height: 350px;'><i class='fas fa-box-open fa-3x mb-3'></i><br>Đang chờ phân bổ kho</div>";
+        return;
+    }
+
+    var storeLat = parseFloat(storeLatStr.replace(',', '.'));
+    var storeLon = parseFloat(storeLonStr.replace(',', '.'));
+
+    var map = L.map('map-container').setView([storeLat, storeLon], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    var userIcon = L.divIcon({ className: 'custom-div-icon', html: "<div class='user-pulse-marker'></div>", iconSize: [20, 20], iconAnchor: [10, 10] });
+    var storeIcon = L.divIcon({ className: 'custom-div-icon', html: "<div class='store-pulse-marker'></div>", iconSize: [20, 20], iconAnchor: [10, 10] });
+
+    L.marker([storeLat, storeLon], {icon: storeIcon}).addTo(map).bindPopup("<b>" + storeName + "</b><br>Kho xuất hàng").openPopup();
+
+    mapStatusText.innerHTML = "Đang lấy tọa độ giao hàng...";
+
+    var safeAddress = addressStr.replace(/TP\.HCM/gi, 'Hồ Chí Minh').replace(/TP\./gi, 'Thành phố ');
+    var addressParts = safeAddress.split(',').map(s => s.trim());
+
+    function geocodeWithFallback(parts) {
+        if(parts.length === 0) {
+            mapStatusText.innerHTML = "<span class='text-warning fw-bold'><i class='fas fa-exclamation-triangle me-1'></i>Hiển thị tọa độ kho.</span><br><small class='text-muted'>Không thể dịch được tọa độ nhà bạn.</small>";
+            return;
+        }
+        var queryStr = parts.join(', ');
+        var geocodeUrl = "https://nominatim.openstreetmap.org/search?format=json&countrycodes=vn&q=" + encodeURIComponent(queryStr);
+        
+        fetch(geocodeUrl)
+          .then(response => response.json())
+          .then(data => {
+              if (data && data.length > 0) {
+                  var userLat = parseFloat(data[0].lat);
+                  var userLon = parseFloat(data[0].lon);
+                  L.marker([userLat, userLon], {icon: userIcon}).addTo(map).bindPopup("<b>Điểm giao hàng</b><br>" + addressStr);
+                  mapStatusText.innerHTML = "Đang tính toán tuyến đường...";
+                  
+                  var control = L.Routing.control({
+                      waypoints: [
+                          L.latLng(storeLat, storeLon),
+                          L.latLng(userLat, userLon)
+                      ],
+                      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
+                      lineOptions: { styles: [{ color: '#0d6efd', weight: 4, opacity: 0.8 }] },
+                      createMarker: function() { return null; },
+                      show: false, addWaypoints: false, draggableWaypoints: false, fitSelectedRoutes: true
+                  }).addTo(map);
+
+                  control.on('routesfound', function(e) {
+                      var routes = e.routes;
+                      var summary = routes[0].summary;
+                      var distanceKm = (summary.totalDistance / 1000).toFixed(1);
+                      var timeMin = Math.round(summary.totalTime / 60);
+                      mapStatusText.innerHTML = "<span class='text-primary fw-bold'><i class='fas fa-route me-1'></i>" + distanceKm + " km</span> - Dự kiến: <span class='text-danger fw-bold'>" + timeMin + " phút</span>";
+                  });
+              } else {
+                  parts.shift();
+                  geocodeWithFallback(parts);
+              }
+          }).catch(error => {
+              console.error("Geocoding Error: ", error);
+              parts.shift();
+              geocodeWithFallback(parts);
+          });
+    }
+
+    geocodeWithFallback(addressParts);
+});
+</script>
 {% endblock %}

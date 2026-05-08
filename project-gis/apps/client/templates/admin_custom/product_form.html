@@ -32,6 +32,58 @@
                     </div>
                 </div>
 
+                <!-- START VARIATIONS -->
+                <div class="card bg-light border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="form-label fw-bold text-primary mb-0"><i class="fas fa-cubes me-2"></i>Biến thể Sản phẩm (Phiên bản màu sắc, dung lượng)</label>
+                            <button type="button" class="btn btn-sm btn-primary fw-bold px-3" onclick="addVariationRow()">
+                                <i class="fas fa-plus me-1"></i>Thêm phân loại
+                            </button>
+                        </div>
+                        <div class="form-text mb-3">Để trống <b>Giá cộng thêm</b> nếu biến thể đó có giá bằng đúng <b>Giá bán gốc</b> ở trên. (VD máy đen 20tr thì nhập Giá bán gốc 20tr, giá cộng của Đen = 0, giá cộng của Trắng = 500000).</div>
+                        
+                        <div id="variation-container">
+                            {% if product and product.variations.all %}
+                                {% for v in product.variations.all %}
+                                <div class="row mb-2 variation-row align-items-center p-2 border rounded bg-white shadow-sm">
+                                    <input type="hidden" name="var_id[]" value="{{ v.id }}">
+                                    <div class="col-md-3">
+                                        <input type="text" name="var_color[]" value="{{ v.color|default:'' }}" class="form-control form-control-sm" placeholder="Màu sắc (VD: Titan)">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" name="var_storage[]" value="{{ v.storage|default:'' }}" class="form-control form-control-sm" placeholder="Bộ nhớ (VD: 256GB)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" name="var_price[]" value="{{ v.additional_price|floatformat:0 }}" class="form-control form-control-sm" placeholder="Giá cộng thêm (₫)">
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm disabled" title="Biến thể cũ không thể xoá trên giao diện này, xoá trắng chữ để bỏ qua"><i class="fas fa-lock"></i></button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="row mb-2 variation-row align-items-center p-2 border rounded bg-white shadow-sm">
+                                    <input type="hidden" name="var_id[]" value="">
+                                    <div class="col-md-3">
+                                        <input type="text" name="var_color[]" class="form-control form-control-sm" placeholder="Màu sắc (VD: Titan)">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" name="var_storage[]" class="form-control form-control-sm" placeholder="Bộ nhớ (VD: 256GB)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" name="var_price[]" class="form-control form-control-sm" placeholder="Giá cộng thêm (₫)">
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.variation-row').remove()"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- END VARIATIONS -->
+
                 <div class="mb-4">
                     <label class="form-label fw-bold text-dark">Thông số kỹ thuật (Tóm tắt)</label>
                     <textarea name="description" id="editor_specs" class="form-control">{{ product.description|default:'' }}</textarea>
@@ -113,6 +165,27 @@
                 imgContainer.style.display = 'none';
             }, 300);
         }
+    }
+
+    function addVariationRow() {
+        const container = document.getElementById('variation-container');
+        const rowHTML = `
+        <div class="row mb-2 variation-row align-items-center p-2 border rounded bg-white shadow-sm">
+            <input type="hidden" name="var_id[]" value="">
+            <div class="col-md-3">
+                <input type="text" name="var_color[]" class="form-control form-control-sm" placeholder="Màu sắc (VD: Titan)">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="var_storage[]" class="form-control form-control-sm" placeholder="Bộ nhớ (VD: 256GB)">
+            </div>
+            <div class="col-md-4">
+                <input type="number" name="var_price[]" class="form-control form-control-sm" placeholder="Giá cộng thêm (₫)">
+            </div>
+            <div class="col-md-2 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.variation-row').remove()"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', rowHTML);
     }
 </script>
 {% endblock %}

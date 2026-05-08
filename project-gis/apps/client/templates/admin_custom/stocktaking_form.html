@@ -1,0 +1,129 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% block title %}Tạo Phiếu Kiểm Kê Kho{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4">
+    <a href="{% url 'client:admin_stocktaking_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Quay lại
+    </a>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-primary"><i class="fas fa-clipboard-check me-2"></i>Tạo Phiếu Kiểm Kê Mới</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="stocktakingForm">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Cửa hàng kiểm kê <span class="text-danger">*</span></label>
+                    <select name="store_id" id="storeSelect" class="form-select" required onchange="this.form.submit()">
+                        {% for store in stores %}
+                            <option value="{{ store.id }}" {% if current_inventory and current_inventory.0.store.id == store.id %}selected{% endif %}>
+                                {{ store.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Chọn cửa hàng để tải danh sách tồn kho hiện tại (hệ thống sẽ tự động tải lại).</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Ghi chú</label>
+                    <input type="text" name="note" class="form-control" placeholder="Ví dụ: Kiểm kê cuối tháng...">
+                </div>
+            </div>
+
+            <hr>
+            <h6 class="fw-bold mb-3"><i class="fas fa-boxes me-2"></i>Danh sách Hàng Hóa Cần Kiểm Đếm</h6>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light text-center">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th style="width: 150px;">Tồn PM (Hệ thống)</th>
+                            <th style="width: 150px;">Tồn Thực Tế (Đếm tay)</th>
+                            <th style="width: 150px;">Chênh lệch</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryList">
+                        {% for item in current_inventory %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.product.name }}</strong>
+                                {% if item.variation %}
+                                    <span class="badge bg-secondary ms-2">{{ item.variation.color|default:"" }} {{ item.variation.storage|default:"" }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark fs-6 system-qty" id="sys_{{ item.product.id }}_{{ item.variation.id|default:'' }}">
+                                    {{ item.quantity }}
+                                </span>
+                            </td>
+                            <td>
+                                <input type="number" min="0" required
+                                    name="actual_quantity_{{ item.product.id }}_{{ item.variation.id|default:'' }}" 
+                                    class="form-control text-center fw-bold text-primary actual-qty-input"
+                                    value="{{ item.quantity }}" 
+                                    oninput="calculateDiscrepancy(this, '{{ item.product.id }}', '{{ item.variation.id|default:'' }}')">
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary fs-6 discrepancy-badge" id="diff_{{ item.product.id }}_{{ item.variation.id|default:'' }}">0</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Cửa hàng này hiện chưa có dữ liệu tồn kho.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if current_inventory %}
+            <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-primary px-4" onclick="return confirmSubmit()">
+                    <i class="fas fa-save me-1"></i> Lưu Phiếu Kiểm Kê
+                </button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<script>
+    // Logic để tự động reload khi chọn store không áp dụng đúng nếu dùng chung 1 form submit POST.
+    // Thay vào đó ta sửa select thành lấy GET hoặc dùng reload:
+    document.getElementById('storeSelect').addEventListener('change', function() {
+        // Lưu giá trị form hiện tại và chuyển qua URL
+        window.location.href = "?store_id=" + this.value;
+    });
+
+    // Bỏ submit() trong onchange form tag ở HTML.
+    document.getElementById('storeSelect').removeAttribute('onchange');
+
+    function calculateDiscrepancy(input, productId, variationId) {
+        let sysQtyText = document.getElementById(`sys_${productId}_${variationId}`).innerText;
+        let sysQty = parseInt(sysQtyText) || 0;
+        let actualQty = parseInt(input.value) || 0;
+        
+        let diff = actualQty - sysQty;
+        let badge = document.getElementById(`diff_${productId}_${variationId}`);
+        
+        badge.innerText = diff > 0 ? "+" + diff : diff;
+        
+        if (diff > 0) {
+            badge.className = "badge bg-success fs-6 discrepancy-badge";
+        } else if (diff < 0) {
+            badge.className = "badge bg-danger fs-6 discrepancy-badge";
+        } else {
+            badge.className = "badge bg-secondary fs-6 discrepancy-badge";
+        }
+    }
+    
+    function confirmSubmit() {
+        return confirm("Bạn có chắc chắn muốn chốt số liệu kiểm đếm này? Phiếu sẽ được lưu dưới dạng Bản nháp chờ Duyệt.");
+    }
+</script>
+{% endblock %}

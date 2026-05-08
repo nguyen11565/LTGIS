@@ -1,0 +1,117 @@
+{% extends 'admin_custom/base_admin.html' %}
+
+{% block title %}{% if article %}Sửa Bài Viết{% else %}Đăng Bài Mới{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-primary fw-bold mb-0">
+        <i class="fas {% if article %}fa-edit{% else %}fa-plus-circle{% endif %} me-2"></i>
+        {% if article %}Sửa Bài Viết: {{ article.title }}{% else %}Đăng Bài Mới{% endif %}
+    </h3>
+    <a href="{% url 'client:admin_news_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Quay lại
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data" id="newsForm">
+            {% csrf_token %}
+            
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Tiêu đề bài viết <span class="text-danger">*</span></label>
+                    <input type="text" name="title" class="form-control form-control-lg" required 
+                           value="{{ article.title|default:'' }}" placeholder="Nhập tiêu đề...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Danh mục</label>
+                    <select name="category" class="form-select form-select-lg">
+                        <option value="">-- Chọn danh mục --</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if article and article.category_id == cat.id %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Mô tả ngắn <span class="text-danger">*</span></label>
+                    <textarea name="short_description" class="form-control" rows="3" required placeholder="Tóm tắt nội dung bài viết...">{{ article.short_description|default:'' }}</textarea>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Ảnh đại diện (Thumbnail)</label>
+                    <input type="file" name="thumbnail" class="form-control mb-2" accept="image/*" {% if not article %}required{% endif %}>
+                    {% if article and article.thumbnail %}
+                    <div class="mt-2">
+                        <p class="small text-muted mb-1">Ảnh hiện tại:</p>
+                        <img src="{{ article.thumbnail.url }}" alt="thumb" class="img-thumbnail" style="max-height: 100px;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
+                <!-- Editor container -->
+                <textarea name="content" id="editor" class="form-control">{{ article.content|default:'' }}</textarea>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="isPublished" name="is_published" 
+                               {% if not article or article.is_published %}checked{% endif %}>
+                        <label class="form-check-label fw-bold ms-2" for="isPublished">Xuất bản bài viết</label>
+                        <div class="form-text">Nếu tắt, bài viết sẽ lưu dạng Bản nháp và không hiển thị trên web.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="isPinned" name="is_pinned" 
+                               {% if article and article.is_pinned %}checked{% endif %}>
+                        <label class="form-check-label fw-bold ms-2" for="isPinned">
+                            <i class="fas fa-thumbtack text-warning me-1"></i>Ghim bài viết
+                        </label>
+                        <div class="form-text">Bài ghim sẽ luôn hiển thị đầu danh sách tin tức.</div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+            
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{% url 'client:admin_news_list' %}" class="btn btn-light px-4">Hủy bỏ</a>
+                <button type="submit" class="btn btn-primary px-5 fw-bold">
+                    <i class="fas fa-save me-2"></i>Lưu bài viết
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Tích hợp CKEditor 5 -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        ClassicEditor
+            .create(document.querySelector('#editor'), {
+                toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'insertTable', 'mediaEmbed', 'undo', 'redo' ]
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    });
+</script>
+<style>
+    /* Chỉnh chiều cao CKEditor */
+    .ck-editor__editable {
+        min-height: 400px;
+    }
+</style>
+{% endblock %}
