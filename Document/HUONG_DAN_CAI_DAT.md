@@ -14,7 +14,7 @@
 5. [Chạy Project](#5-chạy-project)
 6. [Các URL Chính](#6-các-url-chính)
 7. [Xử Lý Lỗi Thường Gặp](#7-xử-lý-lỗi-thường-gặp)
-
+8. [Video Hướng Dẫn & Báo Cáo](#8-video-hướng-dẫn--báo-cáo)
 ---
 
 ## 1. Yêu Cầu Hệ Thống
@@ -420,3 +420,8 @@ python manage.py runserver
 > ```
 > Sau đó truy cập `/admin/` để quản lý qua Django Admin gốc,
 > hoặc đăng nhập tại `/login/` và truy cập `/my-admin/` để dùng admin panel custom.
+
+## 8. Video Hướng Dẫn & Báo Cáo
+
+👉 Xem video tại đây:  
+https://drive.google.com/drive/u/0/folders/10SwC2eFRHNPuQuD7DaJJ0puZpOvL_jFe
