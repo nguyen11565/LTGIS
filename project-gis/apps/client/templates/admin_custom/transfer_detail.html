@@ -1,0 +1,144 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% block title %}Chi tiết Phiếu {{ transfer.code }}{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{% url 'client:admin_transfer_list' %}" class="btn btn-sm btn-outline-secondary mb-2">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+        <h3 class="fw-bold mb-0">Chi Tiết Phiếu Điều Chuyển: <span class="text-primary">{{ transfer.code }}</span></h3>
+    </div>
+    
+    <div>
+        {% if transfer.status == 'pending' %}
+            <span class="badge bg-warning text-dark fs-6"><i class="fas fa-clock"></i> Chờ duyệt xuất kho</span>
+        {% elif transfer.status == 'shipping' %}
+            <span class="badge bg-info fs-6"><i class="fas fa-truck"></i> Đang vận chuyển</span>
+        {% elif transfer.status == 'completed' %}
+            <span class="badge bg-success fs-6"><i class="fas fa-check-circle"></i> Đã hoàn thành</span>
+        {% elif transfer.status == 'cancelled' %}
+            <span class="badge bg-danger fs-6"><i class="fas fa-times-circle"></i> Đã hủy</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">Thông tin phiếu</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">Từ kho:</span>
+                        <span class="fw-bold">{{ transfer.from_store.name }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">Đến kho:</span>
+                        <span class="fw-bold">{{ transfer.to_store.name }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">Người tạo:</span>
+                        <span>{{ transfer.created_by.username }}</span>
+                    </li>
+                    <li class="list-group-item px-0 d-flex justify-content-between">
+                        <span class="text-muted">Ngày tạo:</span>
+                        <span>{{ transfer.created_at|date:"d/m/Y H:i" }}</span>
+                    </li>
+                    {% if transfer.note %}
+                    <li class="list-group-item px-0">
+                        <span class="text-muted d-block mb-1">Ghi chú:</span>
+                        <span>{{ transfer.note }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <!-- ACTIONS -->
+                <div class="mt-4">
+                    {% if request.user.profile.role == 'sales_staff' %}
+                        <div class="alert alert-info py-2 small">Bạn đang ở chế độ Chỉ xem. Bạn không có quyền thao tác duyệt phiếu này.</div>
+                    {% else %}
+                        {% if transfer.status == 'pending' %}
+                        {% if request.user.profile.role == 'super_admin' or request.user.profile.store.id == transfer.from_store.id %}
+                        <form method="POST" action="{% url 'client:admin_transfer_action' transfer.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="approve">
+                            <button type="submit" class="btn btn-primary w-100 mb-2" onclick="return confirm('Xác nhận xuất kho phiếu này? Số lượng tồn kho sẽ bị trừ.')">
+                                <i class="fas fa-truck-loading me-1"></i> Duyệt Xuất Kho
+                            </button>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-warning py-2 small">Chỉ kho xuất ({{ transfer.from_store.name }}) mới có quyền duyệt xuất phiếu này.</div>
+                        {% endif %}
+                        
+                    {% elif transfer.status == 'shipping' %}
+                        {% if request.user.profile.role == 'super_admin' or request.user.profile.store.id == transfer.to_store.id %}
+                        <form method="POST" action="{% url 'client:admin_transfer_action' transfer.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="receive">
+                            <button type="submit" class="btn btn-success w-100" onclick="return confirm('Xác nhận đã nhận đủ hàng? Số lượng sẽ được cộng vào kho của bạn.')">
+                                <i class="fas fa-check-circle me-1"></i> Xác Nhận Đã Nhận Hàng
+                            </button>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-warning py-2 small">Chỉ kho nhận ({{ transfer.to_store.name }}) mới có quyền xác nhận nhận hàng.</div>
+                        {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 pt-4 pb-0">
+                <h5 class="fw-bold mb-0">Danh sách Sản phẩm</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Sản phẩm / Biến thể</th>
+                                <th class="text-center">Số lượng</th>
+                                {% if transfer.status == 'pending' %}
+                                <th class="text-center">Tồn kho hiện tại (Từ kho)</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in transfer.items.all %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" width="40" height="40" class="rounded me-3 object-fit-cover">
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold">{{ item.product.name }}</div>
+                                            {% if item.variation %}
+                                            <div class="small text-muted">{{ item.variation.color|default:"" }} - {{ item.variation.storage|default:"" }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-center fw-bold fs-5 text-primary">{{ item.quantity }}</td>
+                                {% if transfer.status == 'pending' %}
+                                <td class="text-center">
+                                    <!-- Hiển thị tồn kho để đối chiếu trước khi duyệt (Cần thêm logic truy vấn trong View nếu cần thiết) -->
+                                    <span class="text-muted"><i class="fas fa-box-open"></i> Đang chờ duyệt</span>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

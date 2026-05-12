@@ -1,53 +1,541 @@
 {% extends 'client/base.html' %}
-{% load humanize %} {% block title %}Kết quả tìm kiếm cho "{{ query }}" - Phone Store{% endblock %}
+{% load humanize %}
+
+{% block title %}
+    {% if query %}Tìm kiếm "{{ query }}" - {% endif %}Phone Store
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ======================================
+       SEARCH RESULTS PAGE - PREMIUM DESIGN
+       ====================================== */
+    .search-page-wrapper {
+        background: #f4f6f9;
+        min-height: 80vh;
+    }
+
+    /* === HERO SEARCH BAR === */
+    .search-hero {
+        background: linear-gradient(135deg, #d70018 0%, #a8000f 100%);
+        padding: 30px 0 50px;
+        margin-bottom: -30px;
+    }
+    .search-hero h1 {
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+    .search-hero .hero-searchbar {
+        background: white;
+        border-radius: 50px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        display: flex;
+    }
+    .search-hero .hero-searchbar input {
+        border: none;
+        flex: 1;
+        padding: 14px 22px;
+        font-size: 15px;
+        outline: none;
+        background: transparent;
+    }
+    .search-hero .hero-searchbar button {
+        background: #d70018;
+        color: white;
+        border: none;
+        padding: 0 28px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 0 50px 50px 0;
+        transition: background 0.2s;
+    }
+    .search-hero .hero-searchbar button:hover { background: #a8000f; }
+    .search-result-count {
+        color: rgba(255,255,255,0.85);
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+    .search-result-count strong { color: white; }
+
+    /* === LAYOUT === */
+    .search-content {
+        padding-top: 45px;
+        padding-bottom: 60px;
+    }
+
+    /* === SIDEBAR FILTER === */
+    .filter-sidebar {
+        background: white;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+        position: sticky;
+        top: 80px;
+    }
+    .filter-sidebar h5 {
+        font-size: 15px;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 0;
+    }
+    .filter-divider { border-color: #f0f0f0; margin: 14px 0; }
+    .filter-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #888;
+        margin-bottom: 10px;
+    }
+    .filter-radio, .filter-check {
+        display: flex; align-items: center; gap: 8px;
+        padding: 7px 10px; border-radius: 8px;
+        cursor: pointer; transition: background 0.15s;
+        margin-bottom: 2px;
+        font-size: 13.5px;
+    }
+    .filter-radio:hover, .filter-check:hover { background: #f8f9fa; }
+    .filter-radio input, .filter-check input { accent-color: #d70018; }
+    .filter-radio.active { background: #fff5f5; color: #d70018; font-weight: 600; }
+    .price-presets {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+        margin-bottom: 12px;
+    }
+    .price-preset-btn {
+        border: 1.5px solid #eee; background: white; border-radius: 8px;
+        padding: 6px 4px; font-size: 12px; cursor: pointer;
+        transition: all 0.15s; text-align: center; color: #555;
+        font-weight: 500;
+    }
+    .price-preset-btn:hover, .price-preset-btn.active {
+        border-color: #d70018; background: #fff5f5; color: #d70018;
+    }
+    .price-custom-row { display: flex; gap: 8px; align-items: center; }
+    .price-custom-input {
+        border: 1.5px solid #eee; border-radius: 8px;
+        padding: 7px 10px; font-size: 12px; width: 100%;
+        outline: none; transition: border-color 0.15s;
+    }
+    .price-custom-input:focus { border-color: #d70018; }
+    .filter-apply-btn {
+        background: #d70018; color: white; border: none;
+        border-radius: 10px; padding: 10px; width: 100%;
+        font-size: 14px; font-weight: 600; cursor: pointer;
+        margin-top: 10px; transition: background 0.2s;
+    }
+    .filter-apply-btn:hover { background: #a8000f; }
+    .filter-reset-btn {
+        background: transparent; color: #888; border: 1.5px solid #ddd;
+        border-radius: 10px; padding: 9px; width: 100%;
+        font-size: 13px; cursor: pointer; margin-top: 6px; transition: all 0.2s;
+    }
+    .filter-reset-btn:hover { border-color: #d70018; color: #d70018; background: #fff5f5; }
+
+    /* === RESULT HEADER === */
+    .result-header {
+        background: white; border-radius: 12px; padding: 14px 18px;
+        display: flex; align-items: center; justify-content: space-between;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 18px;
+        flex-wrap: wrap; gap: 10px;
+    }
+    .result-header .result-label { font-size: 13.5px; color: #555; }
+    .result-header .result-label strong { color: #222; }
+    .sort-select {
+        border: 1.5px solid #eee; border-radius: 8px; padding: 7px 12px;
+        font-size: 13px; background: white; outline: none; cursor: pointer;
+        transition: border-color 0.15s;
+    }
+    .sort-select:focus { border-color: #d70018; }
+
+    /* === PRODUCT CARD === */
+    .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    @media (max-width: 992px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 576px) { .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+    .product-card-link { text-decoration: none; color: inherit; }
+    .product-card {
+        background: white; border-radius: 14px; overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        transition: transform 0.25s, box-shadow 0.25s;
+        height: 100%;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    }
+    .product-card-img {
+        background: #f8f9fa; text-align: center; padding: 16px;
+        height: 170px; display: flex; align-items: center; justify-content: center;
+        overflow: hidden; position: relative;
+    }
+    .product-card-img img { max-height: 140px; object-fit: contain; transition: transform 0.3s; }
+    .product-card:hover .product-card-img img { transform: scale(1.08); }
+    .product-card-body { padding: 12px 14px 14px; }
+    .product-card-name {
+        font-size: 13.5px; font-weight: 600; color: #222;
+        margin-bottom: 6px; line-height: 1.4;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .product-card-name mark {
+        background: #fff3cd; color: #d70018; border-radius: 3px;
+        padding: 0 2px; font-weight: 700;
+    }
+    .product-card-category { font-size: 11px; color: #999; margin-bottom: 6px; }
+    .product-card-price { font-size: 15px; font-weight: 700; color: #d70018; }
+    .product-card-original { font-size: 11px; color: #aaa; text-decoration: line-through; }
+    .stock-badge {
+        display: inline-block; font-size: 10px; padding: 2px 7px;
+        border-radius: 20px; font-weight: 600; margin-top: 5px;
+    }
+    .stock-badge.in-stock { background: #e8faf6; color: #009981; }
+    .stock-badge.out-stock { background: #fde8e8; color: #dc3545; }
+
+    /* === NO RESULTS === */
+    .no-results {
+        background: white; border-radius: 16px; padding: 60px 30px;
+        text-align: center; box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+    }
+    .no-results-icon { font-size: 60px; color: #ddd; margin-bottom: 20px; }
+    .no-results h4 { color: #333; font-weight: 700; margin-bottom: 8px; }
+    .no-results p { color: #999; font-size: 14px; }
+    .suggest-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 24px; }
+
+    /* === ACTIVE FILTER TAGS === */
+    .active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .filter-tag {
+        background: #fff5f5; color: #d70018; border: 1.5px solid #fcc;
+        border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600;
+        display: flex; align-items: center; gap: 5px;
+    }
+    .filter-tag .remove-tag {
+        cursor: pointer; color: #d70018; opacity: 0.7; font-size: 14px;
+        line-height: 1; text-decoration: none;
+    }
+    .filter-tag .remove-tag:hover { opacity: 1; }
+
+    /* === PAGINATION === */
+    .pagination-wrapper { margin-top: 30px; display: flex; justify-content: center; }
+    .pagination .page-link {
+        border-radius: 8px !important; margin: 0 3px; border: none;
+        padding: 8px 14px; color: #555; background: white;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.06); transition: all 0.15s;
+    }
+    .pagination .page-item.active .page-link { background: #d70018; color: white; }
+    .pagination .page-link:hover { background: #fff5f5; color: #d70018; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="mb-4">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'client:home' %}" class="text-decoration-none">Trang chủ</a></li>
-                <li class="breadcrumb-item active">Tìm kiếm</li>
-            </ol>
-        </nav>
-        <h2 class="fw-bold">Kết quả tìm kiếm cho: <span class="text-danger">"{{ query }}"</span></h2>
-        <p class="text-muted">Tìm thấy {{ results|length }} sản phẩm phù hợp.</p>
+<div class="search-page-wrapper">
+
+    <!-- HERO SECTION -->
+    <div class="search-hero">
+        <div class="container">
+            <h1>
+                {% if query %}
+                    🔍 Kết quả tìm kiếm cho <em>&ldquo;{{ query }}&rdquo;</em>
+                {% else %}
+                    🔍 Tìm kiếm sản phẩm
+                {% endif %}
+            </h1>
+            <form action="{% url 'client:search' %}" method="GET" id="heroSearchForm">
+                <div class="hero-searchbar">
+                    <input type="text" name="q" value="{{ query|default:'' }}"
+                           placeholder="Nhập tên sản phẩm, thương hiệu..." autocomplete="off" autofocus>
+                    <!-- Giữ các filter params -->
+                    {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                    {% if sort and sort != 'relevance' %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
+            {% if query %}
+            <div class="search-result-count">
+                Tìm thấy <strong>{{ total_count }}</strong> sản phẩm phù hợp
+            </div>
+            {% endif %}
+        </div>
     </div>
 
-    {% if results %}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-            {% for product in results %}
-                <div class="col">
-                    <div class="card h-100 border-0 shadow-sm product-card" style="border-radius: 15px;">
-                        <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none">
-                            <div class="p-3 text-center">
-                                {% if product.image %}
-                                    <img src="{{ product.image.url }}" class="img-fluid" style="height: 180px; object-fit: contain;" alt="{{ product.name }}">
-                                {% endif %}
-                            </div>
-                            <div class="card-body">
-                                <h6 class="card-title text-dark fw-bold mb-2">{{ product.name }}</h6>
-                                <p class="text-danger fw-bold mb-0">{{ product.price|floatformat:0|intcomma }}₫</p>
+    <!-- MAIN CONTENT -->
+    <div class="container search-content">
+        <div class="row g-4">
+
+            <!-- SIDEBAR FILTER -->
+            <div class="col-lg-3">
+                <div class="filter-sidebar">
+                    <h5><i class="fas fa-sliders-h me-2 text-danger"></i>Bộ lọc</h5>
+                    <hr class="filter-divider">
+
+                    <form method="GET" action="{% url 'client:search' %}" id="filterForm">
+                        <input type="hidden" name="q" value="{{ query|default:'' }}">
+
+                        <!-- DANH MỤC -->
+                        <div class="filter-section-title">Danh mục</div>
+                        <label class="filter-radio {% if not current_category %}active{% endif %}">
+                            <input type="radio" name="category" value=""
+                                   {% if not current_category %}checked{% endif %}
+                                   onchange="this.form.submit()"> Tất cả
+                        </label>
+                        {% for cat in categories %}
+                        <label class="filter-radio {% if current_category == cat.id|stringformat:'s' %}active{% endif %}">
+                            <input type="radio" name="category" value="{{ cat.id }}"
+                                   {% if current_category == cat.id|stringformat:'s' %}checked{% endif %}
+                                   onchange="this.form.submit()"> {{ cat.name }}
+                        </label>
+                        {% endfor %}
+
+                        <hr class="filter-divider">
+
+                        <!-- KHOẢNG GIÁ -->
+                        <div class="filter-section-title">Khoảng giá</div>
+                        <div class="price-presets">
+                            <button type="button" class="price-preset-btn" data-min="" data-max="3000000">Dưới 3tr</button>
+                            <button type="button" class="price-preset-btn" data-min="3000000" data-max="5000000">3 - 5tr</button>
+                            <button type="button" class="price-preset-btn" data-min="5000000" data-max="10000000">5 - 10tr</button>
+                            <button type="button" class="price-preset-btn" data-min="10000000" data-max="20000000">10 - 20tr</button>
+                            <button type="button" class="price-preset-btn" data-min="20000000" data-max="">Trên 20tr</button>
+                            <button type="button" class="price-preset-btn" data-min="" data-max="" data-reset="1">Tất cả</button>
+                        </div>
+                        <div class="price-custom-row mb-2">
+                            <input type="number" name="min_price" id="min_price" class="price-custom-input"
+                                   placeholder="Từ (đ)" value="{{ min_price }}">
+                            <span style="color:#ccc;font-size:12px;">—</span>
+                            <input type="number" name="max_price" id="max_price" class="price-custom-input"
+                                   placeholder="Đến (đ)" value="{{ max_price }}">
+                        </div>
+
+                        <hr class="filter-divider">
+
+                        <!-- TÌNH TRẠNG KHO -->
+                        <div class="filter-section-title">Tình trạng</div>
+                        <label class="filter-check">
+                            <input type="checkbox" name="stock" value="in_stock"
+                                   {% if stock_filter == 'in_stock' %}checked{% endif %}
+                                   onchange="this.form.submit()">
+                            Chỉ hiện còn hàng
+                        </label>
+
+                        <hr class="filter-divider">
+
+                        <!-- SẮP XẾP -->
+                        <div class="filter-section-title">Sắp xếp</div>
+                        <select name="sort" class="sort-select w-100" onchange="this.form.submit()">
+                            <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Liên quan nhất</option>
+                            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+                            <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá: Thấp → Cao</option>
+                            <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá: Cao → Thấp</option>
+                        </select>
+
+                        <button type="submit" class="filter-apply-btn mt-3">
+                            <i class="fas fa-check me-1"></i> Áp dụng
+                        </button>
+                        <a href="{% url 'client:search' %}?q={{ query|default:'' }}" class="filter-reset-btn d-block text-center mt-2">
+                            <i class="fas fa-undo me-1"></i> Xóa bộ lọc
+                        </a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- KẾT QUẢ -->
+            <div class="col-lg-9">
+
+                <!-- ACTIVE FILTER TAGS -->
+                {% if current_category or min_price or max_price or stock_filter or sort != 'relevance' %}
+                <div class="active-filters mb-2">
+                    {% if current_category %}
+                        {% for cat in categories %}{% if cat.id|stringformat:'s' == current_category %}
+                        <span class="filter-tag">
+                            📂 {{ cat.name }}
+                            <a href="?q={{ query }}&sort={{ sort }}&min_price={{ min_price }}&max_price={{ max_price }}&stock={{ stock_filter }}" class="remove-tag">×</a>
+                        </span>
+                        {% endif %}{% endfor %}
+                    {% endif %}
+                    {% if min_price or max_price %}
+                    <span class="filter-tag">
+                        💰 Giá:
+                        {% if min_price %}{{ min_price|floatformat:0|intcomma }}đ{% else %}0{% endif %}
+                        —
+                        {% if max_price %}{{ max_price|floatformat:0|intcomma }}đ{% else %}∞{% endif %}
+                        <a href="?q={{ query }}&category={{ current_category }}&sort={{ sort }}&stock={{ stock_filter }}" class="remove-tag">×</a>
+                    </span>
+                    {% endif %}
+                    {% if stock_filter == 'in_stock' %}
+                    <span class="filter-tag">
+                        ✅ Còn hàng
+                        <a href="?q={{ query }}&category={{ current_category }}&sort={{ sort }}&min_price={{ min_price }}&max_price={{ max_price }}" class="remove-tag">×</a>
+                    </span>
+                    {% endif %}
+                    {% if sort != 'relevance' %}
+                    <span class="filter-tag">
+                        🔃 {% if sort == 'price_asc' %}Giá thấp nhất{% elif sort == 'price_desc' %}Giá cao nhất{% elif sort == 'newest' %}Mới nhất{% endif %}
+                        <a href="?q={{ query }}&category={{ current_category }}&min_price={{ min_price }}&max_price={{ max_price }}&stock={{ stock_filter }}" class="remove-tag">×</a>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if results %}
+                    <!-- Result Header -->
+                    <div class="result-header">
+                        <div class="result-label">
+                            Hiển thị <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                            / <strong>{{ total_count }}</strong> sản phẩm
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-size:12px;color:#999;">Sắp xếp:</span>
+                            <select class="sort-select" onchange="changeSortQuick(this.value)">
+                                <option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Liên quan</option>
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+                                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá ↑</option>
+                                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá ↓</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Product Grid -->
+                    <div class="product-grid">
+                        {% for product in results %}
+                        <a href="{% url 'client:product_detail' product.id %}" class="product-card-link">
+                            <div class="product-card">
+                                <div class="product-card-img">
+                                    {% if product.image %}
+                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                                    {% else %}
+                                        <i class="fas fa-mobile-alt" style="font-size:60px;color:#ddd;"></i>
+                                    {% endif %}
+                                    {% if product.flash_sale and product.flash_sale.is_valid %}
+                                    <span style="position:absolute;top:8px;left:8px;background:#d70018;color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">
+                                        SALE
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="product-card-body">
+                                    <div class="product-card-category">{{ product.category.name }}</div>
+                                    <div class="product-card-name" data-highlight="{{ query }}">{{ product.name }}</div>
+                                    {% if product.flash_sale and product.flash_sale.is_valid %}
+                                        <div class="product-card-price">{{ product.flash_sale.flash_price|floatformat:0|intcomma }}₫</div>
+                                        <div class="product-card-original">{{ product.price|floatformat:0|intcomma }}₫</div>
+                                    {% else %}
+                                        <div class="product-card-price">{{ product.price|floatformat:0|intcomma }}₫</div>
+                                    {% endif %}
+                                    <span class="stock-badge {% if product.stock > 0 %}in-stock{% else %}out-stock{% endif %}">
+                                        {% if product.stock > 0 %}✓ Còn hàng{% else %}Hết hàng{% endif %}
+                                    </span>
+                                </div>
                             </div>
                         </a>
+                        {% endfor %}
                     </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="text-center py-5">
-            <div class="mb-4">
-                <i class="fas fa-search-minus fa-5x text-light-emphasis"></i>
-            </div>
-            <h4>Rất tiếc, chúng tôi không tìm thấy sản phẩm nào!</h4>
-            <p class="text-muted">Hãy thử lại với từ khóa khác như "iPhone", "Samsung" hoặc "Xiaomi".</p>
-            <a href="{% url 'client:home' %}" class="btn btn-danger rounded-pill px-4 mt-3">QUAY LẠI TRANG CHỦ</a>
-        </div>
-    {% endif %}
-</div>
 
-<style>
-    .product-card { transition: 0.3s; }
-    .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-</style>
+                    <!-- PAGINATION -->
+                    {% if paginator.num_pages > 1 %}
+                    <div class="pagination-wrapper">
+                        <nav>
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{{ query_string }}&page={{ num }}">{{ num }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{{ query_string }}&page={{ page_obj.next_page_number }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+
+                {% else %}
+                    <!-- NO RESULTS -->
+                    <div class="no-results">
+                        <div class="no-results-icon">
+                            <i class="fas fa-search-minus"></i>
+                        </div>
+                        <h4>Không tìm thấy sản phẩm nào!</h4>
+                        {% if query %}
+                        <p>Không có kết quả cho <strong>&ldquo;{{ query }}&rdquo;</strong>.<br>
+                        Thử tìm với từ khóa khác hoặc bỏ bớt bộ lọc.</p>
+                        {% else %}
+                        <p>Hãy nhập từ khóa vào ô tìm kiếm để bắt đầu.</p>
+                        {% endif %}
+                        <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                            <a href="{% url 'client:home' %}" class="btn btn-danger rounded-pill px-4">
+                                <i class="fas fa-home me-1"></i> Trang chủ
+                            </a>
+                            <a href="{% url 'client:search' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                                <i class="fas fa-redo me-1"></i> Tìm lại
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div><!-- /col result -->
+        </div><!-- /row -->
+    </div><!-- /container -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// === Highlight từ khóa tìm kiếm trong tên sản phẩm ===
+document.addEventListener('DOMContentLoaded', function () {
+    const query = "{{ query|escapejs }}";
+    if (!query) return;
+
+    document.querySelectorAll('[data-highlight]').forEach(el => {
+        const text = el.textContent;
+        const regex = new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+        el.innerHTML = text.replace(regex, '<mark>$1</mark>');
+    });
+
+    // === Quick sort (dùng URLSearchParams để giữ các filter hiện tại) ===
+    window.changeSortQuick = function (val) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', val);
+        url.searchParams.delete('page');
+        window.location.href = url.toString();
+    };
+
+    // === Price preset buttons ===
+    document.querySelectorAll('.price-preset-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const min = this.dataset.min;
+            const max = this.dataset.max;
+            document.getElementById('min_price').value = min;
+            document.getElementById('max_price').value = max;
+            // Mark active
+            document.querySelectorAll('.price-preset-btn').forEach(b => b.classList.remove('active'));
+            if (!this.dataset.reset) this.classList.add('active');
+            // Submit
+            document.getElementById('filterForm').submit();
+        });
+
+        // Mark active on load
+        const curMin = "{{ min_price }}";
+        const curMax = "{{ max_price }}";
+        if (btn.dataset.min === curMin && btn.dataset.max === curMax && !btn.dataset.reset) {
+            btn.classList.add('active');
+        }
+    });
+});
+</script>
 {% endblock %}

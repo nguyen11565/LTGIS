@@ -1,0 +1,115 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+{% block title %}Chi tiết Phiếu Kiểm Kê - {{ stocktaking.code }}{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <a href="{% url 'client:admin_stocktaking_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Quay lại
+    </a>
+    
+    {% if stocktaking.status == 'draft' and request.user.profile.role != 'sales_staff' %}
+        {% if request.user.profile.role == 'super_admin' or stocktaking.store == request.user.profile.store %}
+        <form method="POST" action="{% url 'client:admin_stocktaking_action' stocktaking.id %}" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn duyệt Phiếu này? Tồn kho thực tế sẽ được cập nhật lại theo Phiếu này.')">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="approve">
+            <button type="submit" class="btn btn-success shadow-sm">
+                <i class="fas fa-check-circle me-1"></i> Chốt & Cân bằng kho
+            </button>
+        </form>
+        {% endif %}
+    {% elif stocktaking.status == 'draft' and request.user.profile.role == 'sales_staff' %}
+        <span class="badge bg-secondary p-2">Chế độ Chỉ Xem</span>
+    {% endif %}
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-body">
+                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Thông tin chung</h6>
+                <p class="mb-2"><strong>Mã Phiếu:</strong> <span class="text-danger fw-bold">{{ stocktaking.code }}</span></p>
+                <p class="mb-2"><strong>Cửa hàng:</strong> {{ stocktaking.store.name }}</p>
+                <p class="mb-2"><strong>Người đếm:</strong> {{ stocktaking.created_by.username }}</p>
+                <p class="mb-2"><strong>Ngày tạo:</strong> {{ stocktaking.created_at|date:"d/m/Y H:i" }}</p>
+                <p class="mb-2"><strong>Ghi chú:</strong> {{ stocktaking.note|default:"Không có" }}</p>
+                
+                <hr>
+                <p class="mb-2"><strong>Trạng thái:</strong> 
+                    {% if stocktaking.status == 'draft' %}
+                        <span class="badge bg-warning text-dark">Chờ duyệt / Đang đếm</span>
+                    {% elif stocktaking.status == 'approved' %}
+                        <span class="badge bg-success">Đã cân bằng</span>
+                    {% elif stocktaking.status == 'cancelled' %}
+                        <span class="badge bg-danger">Đã hủy</span>
+                    {% endif %}
+                </p>
+                {% if stocktaking.approved_by %}
+                <p class="mb-0"><strong>Người duyệt:</strong> {{ stocktaking.approved_by.username }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-boxes me-2"></i>Danh sách Hàng Hóa Kiểm Kê</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Sản phẩm</th>
+                                <th class="text-center">Hệ thống</th>
+                                <th class="text-center">Thực tế</th>
+                                <th class="text-center">Chênh lệch</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stocktaking.items.all %}
+                            <tr>
+                                <td class="ps-4">
+                                    <span class="fw-bold">{{ item.product.name }}</span>
+                                    {% if item.variation %}
+                                        <span class="badge bg-secondary ms-1">{{ item.variation.color|default:"" }} {{ item.variation.storage|default:"" }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark fs-6">{{ item.system_quantity }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge {% if item.discrepancy != 0 %}bg-primary{% else %}bg-light text-dark{% endif %} fs-6">
+                                        {{ item.actual_quantity }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {% if item.discrepancy > 0 %}
+                                        <span class="badge bg-success fs-6"><i class="fas fa-arrow-up me-1"></i>{{ item.discrepancy }} (Dư)</span>
+                                    {% elif item.discrepancy < 0 %}
+                                        <span class="badge bg-danger fs-6"><i class="fas fa-arrow-down me-1"></i>{{ item.discrepancy|cut:"-" }} (Thiếu)</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary fs-6">Khớp</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Không có sản phẩm nào được kiểm kê.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% if stocktaking.status == 'approved' %}
+        <div class="alert alert-success mt-3 shadow-sm rounded-4 border-0">
+            <i class="fas fa-check-circle me-2"></i> Hệ thống đã tự động tạo các phiếu "Nhập/Xuất cân bằng kho" cho các sản phẩm có chênh lệch. Tồn kho hệ thống hiện tại đã khớp với Tồn kho thực tế báo cáo trong phiếu này.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

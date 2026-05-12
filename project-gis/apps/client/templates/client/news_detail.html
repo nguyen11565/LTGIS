@@ -1,0 +1,155 @@
+{% extends 'client/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ article.title }} - Tin Tức{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Main Article Content -->
+        <div class="col-lg-8">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'client:home' %}" class="text-decoration-none text-muted">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'client:news_list' %}" class="text-decoration-none text-muted">Tin tức</a></li>
+                    {% if article.category %}
+                    <li class="breadcrumb-item"><a href="{% url 'client:news_list' %}?category={{ article.category.slug }}" class="text-decoration-none text-muted">{{ article.category.name }}</a></li>
+                    {% endif %}
+                </ol>
+            </nav>
+
+            <h1 class="fw-bold mb-3" style="line-height: 1.4;">{{ article.title }}</h1>
+            
+            <div class="d-flex align-items-center text-muted mb-4 pb-3 border-bottom">
+                <div class="d-flex align-items-center me-4">
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+                        <i class="fas fa-user text-secondary"></i>
+                    </div>
+                    <span class="fw-semibold text-dark">{{ article.author.username|default:"Admin" }}</span>
+                </div>
+                <div class="me-4"><i class="fas fa-clock me-1"></i>{{ article.created_at|date:"d/m/Y H:i" }}</div>
+                <div><i class="fas fa-eye me-1"></i>{{ article.views }} lượt xem</div>
+            </div>
+
+            <div class="article-content fs-5" style="line-height: 1.8;">
+                <p class="fw-bold mb-4">{{ article.short_description }}</p>
+                
+                {{ article.content|safe }}
+            </div>
+
+            <!-- Tags / Share (Tuỳ chọn) -->
+            <div class="d-flex align-items-center mt-5 pt-3 border-top">
+                <span class="fw-bold me-3">Chia sẻ:</span>
+                <button class="btn btn-outline-primary btn-sm rounded-circle me-2" style="width: 36px; height: 36px;"><i class="fab fa-facebook-f"></i></button>
+                <button class="btn btn-outline-info btn-sm rounded-circle me-2" style="width: 36px; height: 36px;"><i class="fab fa-twitter"></i></button>
+                <button class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 36px; height: 36px;" onclick="navigator.clipboard.writeText(window.location.href); alert('Đã copy link!');"><i class="fas fa-link"></i></button>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="mt-5 pt-4">
+                <h4 class="fw-bold mb-4">{{ comments.count }} Bình luận</h4>
+                
+                {% if request.user.is_authenticated %}
+                <form method="POST" class="mb-5">
+                    {% csrf_token %}
+                    <div class="d-flex gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 45px; height: 45px;">
+                                {{ request.user.username|make_list|first|upper }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <textarea name="content" class="form-control mb-2" rows="3" placeholder="Mời bạn thảo luận, vui lòng bình luận văn minh..." required></textarea>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill">Gửi bình luận</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                <div class="alert alert-light border text-center mb-5 rounded-4 py-4">
+                    <p class="mb-2">Vui lòng đăng nhập để tham gia bình luận.</p>
+                    <a href="{% url 'client:login' %}?next={{ request.path }}" class="btn btn-outline-primary rounded-pill px-4">Đăng nhập ngay</a>
+                </div>
+                {% endif %}
+
+                <!-- Comment List -->
+                <div class="d-flex flex-column gap-4">
+                    {% for comment in comments %}
+                    <div class="d-flex gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 45px; height: 45px;">
+                                {{ comment.user.username|make_list|first|upper }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 bg-light rounded-4 p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-bold mb-0">{{ comment.user.username }}</h6>
+                                <small class="text-muted">{{ comment.created_at|timesince }} trước</small>
+                            </div>
+                            <p class="mb-0 text-dark">{{ comment.content|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="far fa-comments fa-3x opacity-25 mb-3 d-block"></i>
+                        Chưa có bình luận nào. Hãy là người đầu tiên bình luận!
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 mt-5 mt-lg-0 pl-lg-5">
+            <!-- Bài viết liên quan -->
+            <h5 class="fw-bold mb-4 border-bottom pb-2">Bài viết cùng chuyên mục</h5>
+            <div class="d-flex flex-column gap-3">
+                {% for r_article in related_articles %}
+                <a href="{% url 'client:news_detail' r_article.slug %}" class="d-flex text-decoration-none text-dark related-item group">
+                    <div class="flex-shrink-0 me-3" style="width: 100px; height: 75px;">
+                        {% if r_article.thumbnail %}
+                        <img src="{{ r_article.thumbnail.url }}" class="w-100 h-100 rounded object-fit-cover" alt="thumb">
+                        {% else %}
+                        <div class="w-100 h-100 bg-light rounded d-flex align-items-center justify-content-center"><i class="fas fa-image text-muted"></i></div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h6 class="mb-1 text-truncate-2 fw-bold" style="font-size: 14px;">{{ r_article.title }}</h6>
+                        <small class="text-muted">{{ r_article.created_at|date:"d/m/Y" }}</small>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="text-muted small">Không có bài viết liên quan.</p>
+                {% endfor %}
+            </div>
+            
+            <!-- Banner quảng cáo (Giả lập) -->
+            <div class="mt-5 rounded-4 overflow-hidden position-relative">
+                <img src="https://cdn.tgdd.vn/2024/05/banner/Phu-kien-Desk-380x215-1.png" class="w-100" alt="Ads">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .article-content img {
+        max-width: 100%;
+        height: auto !important;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    .related-item:hover h6 {
+        color: #d70018 !important;
+    }
+</style>
+{% endblock %}

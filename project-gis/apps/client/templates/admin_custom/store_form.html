@@ -16,6 +16,29 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="small fw-bold text-secondary">Mô tả cửa hàng</label>
+                        <textarea name="description" id="store-desc-editor" class="form-control">{{ store.description|default_if_none:"" }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="small fw-bold text-secondary">Khu vực (Region)</label>
+                            <select name="region" class="form-select">
+                                <option value="">--- Chọn Khu vực ---</option>
+                                {% for r in regions %}
+                                    <option value="{{ r.id }}" {% if store.region.id == r.id %}selected{% endif %}>{{ r.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
+                            <div class="form-check form-switch fs-5 mb-1">
+                                <input class="form-check-input" type="checkbox" role="switch" id="is_warehouse" name="is_warehouse" {% if store.is_warehouse %}checked{% endif %}>
+                                <label class="form-check-label fs-6 mt-1" for="is_warehouse">Là Kho Tổng</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="small fw-bold text-secondary">Địa chỉ</label>
                         <div class="input-group shadow-sm">
                             <input type="text" name="address" id="id_address" class="form-control" value="{{ store.address }}" placeholder="Nhập địa chỉ hoặc click bản đồ..." required>
@@ -30,7 +53,7 @@
                         <label class="small fw-bold text-secondary">Hotline chi nhánh</label>
                         <div class="input-group shadow-sm">
                             <span class="input-group-text bg-light"><i class="fas fa-phone-alt"></i></span>
-                            <input type="text" name="phone" class="form-control" value="{{ store.hotline }}" placeholder="Ví dụ: 0901 234 567">
+                            <input type="text" name="phone" class="form-control" value="{{ store.phone|default_if_none:"" }}" placeholder="Ví dụ: 0901 234 567">
                         </div>
                     </div>
 
@@ -61,7 +84,7 @@
             </div>
 
             <div class="col-md-7">
-                <div id="admin-map" style="height: 570px;" class="rounded-4 shadow-sm border"></div>
+                <div id="admin-map" style="height: 650px;" class="rounded-4 shadow-sm border"></div>
                 <div class="text-center mt-2">
                     <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 rounded-pill small">
                         <i class="fas fa-mouse-pointer me-1"></i> Click vào bản đồ để lấy tọa độ và địa chỉ tự động
@@ -74,16 +97,26 @@
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 
 <script>
+    ClassicEditor
+        .create(document.querySelector('#store-desc-editor'))
+        .catch(error => {
+            console.error(error);
+        });
+
     // 1. Khởi tạo bản đồ
     var defaultLat = {{ store.latitude|default:10.7725 }};
     var defaultLon = {{ store.longitude|default:106.6980 }};
     
     var map = L.map('admin-map').setView([defaultLat, defaultLon], 15);
     
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+    // Sử dụng CartoDB Voyager Tile vì OpenStreetMap default bị chặn 403 Blocked by Policy
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
     }).addTo(map);
 
     var marker = L.marker([defaultLat, defaultLon]).addTo(map);

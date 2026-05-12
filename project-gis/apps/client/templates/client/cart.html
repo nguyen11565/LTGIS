@@ -1,6 +1,7 @@
 {% extends 'client/base.html' %}
 {% load static %}
-{% load humanize %} {% block title %}Giỏ hàng của bạn - Phone Store{% endblock %}
+{% load humanize %} 
+{% block title %}Giỏ hàng của bạn - Phone Store{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -10,13 +11,70 @@
         width: 70px; height: 70px; object-fit: contain; 
         background: white; border: 1px solid #eee; padding: 5px; border-radius: 10px;
     }
-    .qty-input {
-        max-width: 60px; border-radius: 8px; font-weight: bold;
+    /* Style mới cho bộ tăng giảm số lượng */
+    .qty-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 2px;
+        width: fit-content;
+        margin: 0 auto;
     }
+    .qty-btn {
+        border: none;
+        background: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+        transition: 0.2s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .qty-btn:hover { background: #d70018; color: white; }
+    
+    .qty-input {
+        width: 45px;
+        border: none;
+        background: transparent;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        outline: none;
+    }
+    /* Ẩn mũi tên mặc định của input number */
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
     .summary-box {
         background-color: #fff; border-radius: 15px; padding: 25px;
     }
     .hover-danger:hover { color: #dc3545 !important; }
+    
+    .coupon-section {
+        background: #fdfdfd;
+        border: 1px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 15px;
+    }
+    .bg-success-soft {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    .fs-mini-badge {
+        font-size: 10px;
+        background: #d70018;
+        color: white;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-weight: bold;
+        display: inline-block;
+        margin-top: 4px;
+    }
 </style>
 {% endblock %}
 
@@ -54,18 +112,47 @@
                                             {% endif %}
                                             <div>
                                                 <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
-                                                <small class="text-muted">Chính hãng VN/A</small>
+                                                {% if item.variation %}
+                                                    <div class="small text-danger fw-bold"><i class="fas fa-cog me-1"></i>{{ item.variation.color }} - {{ item.variation.storage }}</div>
+                                                {% endif %}
+                                                {% if item.product.flash_sale and item.product.flash_sale.is_valid %}
+                                                    <span class="fs-mini-badge"><i class="fas fa-bolt"></i> FLASH SALE</span>
+                                                {% else %}
+                                                    <small class="text-muted">Chính hãng VN/A</small>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </td>
+                                    
                                     <td class="text-center">
-                                        <input type="number" class="form-control form-control-sm qty-input text-center mx-auto" 
-                                               value="{{ item.quantity }}" readonly>
+                                        <div class="qty-wrapper">
+                                            <button class="qty-btn btn-update" data-id="{{ item.product.id }}" data-vid="{{ item.variation.id|default:'0' }}" data-qty="{{ item.quantity|add:-1 }}">
+                                                <i class="fas fa-minus small"></i>
+                                            </button>
+                                            
+                                            <input type="number" class="qty-input input-update" 
+                                                   value="{{ item.quantity }}" 
+                                                   data-id="{{ item.product.id }}"
+                                                   data-vid="{{ item.variation.id|default:'0' }}"
+                                                   min="1" max="100">
+                                            
+                                            <button class="qty-btn btn-update" data-id="{{ item.product.id }}" data-vid="{{ item.variation.id|default:'0' }}" data-qty="{{ item.quantity|add:1 }}">
+                                                <i class="fas fa-plus small"></i>
+                                            </button>
+                                        </div>
                                     </td>
-                                    <td class="text-end">{{ item.price|floatformat:0|intcomma }}₫</td>
+
+                                    <td class="text-end">
+                                        {% if item.product.flash_sale and item.product.flash_sale.is_valid %}
+                                            <div class="fw-bold text-danger">{{ item.price|floatformat:0|intcomma }}₫</div>
+                                            <div class="text-muted small" style="text-decoration: line-through;">{{ item.product.price|floatformat:0|intcomma }}₫</div>
+                                        {% else %}
+                                            {{ item.price|floatformat:0|intcomma }}₫
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end fw-bold text-danger">{{ item.total_price|floatformat:0|intcomma }}₫</td>
                                     <td class="pe-4 text-end">
-                                        <a href="{% url 'client:cart_remove' item.product.id %}" class="text-muted hover-danger" title="Xóa">
+                                        <a href="{% url 'client:cart_remove' item.product.id %}?variation_id={{ item.variation.id|default:'0' }}" class="text-muted hover-danger" title="Xóa">
                                             <i class="fas fa-trash-alt"></i>
                                         </a>
                                     </td>
@@ -86,25 +173,59 @@
             <div class="col-lg-4">
                 <div class="summary-box shadow-sm border">
                     <h5 class="fw-bold mb-4">Chi tiết thanh toán</h5>
+
+                    <div class="coupon-section mb-4">
+                        <label class="form-label small fw-bold text-muted">Mã giảm giá / Quà tặng</label>
+                        {% if not request.session.coupon_id %}
+                            <form method="POST" action="{% url 'client:apply_coupon' %}" class="d-flex gap-2">
+                                {% csrf_token %}
+                                <input type="text" name="coupon_code" class="form-control text-uppercase" placeholder="Nhập mã..." required>
+                                <button type="submit" class="btn btn-dark fw-bold">ÁP DỤNG</button>
+                            </form>
+                        {% else %}
+                            <div class="alert bg-success-soft py-2 px-3 mb-0 d-flex justify-content-between align-items-center border-0">
+                                <div class="small">
+                                    <i class="fas fa-check-circle me-1"></i> Đã áp dụng mã <b>{{ coupon.code }}</b>
+                                </div>
+                                <a href="{% url 'client:remove_coupon' %}" class="text-danger small fw-bold text-decoration-none">Gỡ bỏ</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Tạm tính:</span>
-                        <span class="fw-bold">{{ cart.get_total_price|floatformat:0|intcomma }}₫</span>
+                        <span class="fw-bold">{% if cart_total %}{{ cart_total|floatformat:0|intcomma }}{% else %}{{ cart.get_total_price|floatformat:0|intcomma }}{% endif %}₫</span>
                     </div>
+
+                    {% if discount_amount > 0 %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Giảm giá:</span>
+                        <span class="text-danger fw-bold">-{{ discount_amount|floatformat:0|intcomma }}₫</span>
+                    </div>
+                    {% endif %}
+
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">Phí vận chuyển:</span>
                         <span class="text-success fw-bold">Miễn phí</span>
                     </div>
                     <hr>
+                    
                     <div class="d-flex justify-content-between align-items-end mb-4">
-                        <span class="fw-bold">Tổng tiền:</span>
+                        <span class="fw-bold">Tổng thanh toán:</span>
                         <div class="text-end">
-                            <div class="fs-3 fw-bold text-danger">{{ cart.get_total_price|floatformat:0|intcomma }}₫</div>
+                            <div class="fs-3 fw-bold text-danger">
+                                {% if final_total %}
+                                    {{ final_total|floatformat:0|intcomma }}
+                                {% else %}
+                                    {{ cart.get_total_price|floatformat:0|intcomma }}
+                                {% endif %}₫
+                            </div>
                             <small class="text-muted">(Đã bao gồm VAT)</small>
                         </div>
                     </div>
                     
                     {% if user.is_authenticated %}
-                        <a href="{% url 'client:checkout' %}" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill py-3">
+                        <a href="{% url 'client:checkout' %}" class="btn btn-danger btn-lg w-100 fw-bold rounded-pill py-3 shadow-sm">
                             TIẾN HÀNH THANH TOÁN
                         </a>
                     {% else %}
@@ -112,9 +233,10 @@
                             <i class="fas fa-sign-in-alt me-2"></i> ĐĂNG NHẬP ĐỂ THANH TOÁN
                         </a>
                     {% endif %}
+
                     <div class="mt-4 p-3 bg-light rounded-3 small">
                         <p class="mb-1 text-muted"><i class="fas fa-check-circle text-success me-2"></i>Sản phẩm chính hãng 100%</p>
-                        <p class="mb-0 text-muted"><i class="fas fa-check-circle text-success me-2"></i>Bảo mật thanh toán tuyệt đối</p>
+                        <p class="mb-0 text-muted"><i class="fas fa-shield-alt text-success me-2"></i>Bảo mật thanh toán tuyệt đối</p>
                     </div>
                 </div>
             </div>
@@ -123,14 +245,56 @@
     {% else %}
         <div class="card border-0 shadow-sm rounded-4 text-center py-5">
             <div class="card-body py-5">
-                <div class="mb-4">
-                    <i class="fas fa-shopping-basket fa-5x text-light-emphasis"></i>
+                <div class="mb-4 text-muted opacity-25">
+                    <i class="fas fa-shopping-basket fa-7x"></i>
                 </div>
                 <h4 class="fw-bold text-dark">Giỏ hàng của bạn đang trống</h4>
                 <p class="text-muted mb-4">Hãy chọn cho mình một chiếc điện thoại ưng ý nhất nhé!</p>
-                <a href="{% url 'client:home' %}" class="btn btn-danger btn-lg px-5 rounded-pill fw-bold">QUAY LẠI CỬA HÀNG</a>
+                <a href="{% url 'client:home' %}" class="btn btn-danger btn-lg px-5 rounded-pill fw-bold shadow-sm">QUAY LẠI CỬA HÀNG</a>
             </div>
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Xử lý khi bấm nút +/-
+                                        document.querySelectorAll('.btn-update').forEach(button => {
+                                            button.addEventListener('click', function() {
+                                                const productId = this.dataset.id;
+                                                const variationId = this.dataset.vid;
+                                                const newQty = this.dataset.qty;
+                                                if (newQty >= 0) {
+                                                    window.location.href = `/cart/update/${productId}/${newQty}/?variation_id=${variationId}`;
+                                                }
+                                            });
+                                        });
+                                
+                                        // Xử lý khi tự gõ số vào ô input rồi nhấn Enter
+                                        document.querySelectorAll('.input-update').forEach(input => {
+                                            input.addEventListener('keypress', function(e) {
+                                                if (e.key === 'Enter') {
+                                                    const productId = this.dataset.id;
+                                                    const variationId = this.dataset.vid;
+                                                    const newQty = this.value;
+                                                    if (newQty >= 1) {
+                                                        window.location.href = `/cart/update/${productId}/${newQty}/?variation_id=${variationId}`;
+                                                    }
+                                                }
+                                            });
+                                            
+                                            // Xử lý khi gõ xong rồi bấm chuột ra ngoài (Blur)
+                                            input.addEventListener('blur', function() {
+                                                const productId = this.dataset.id;
+                                                const variationId = this.dataset.vid;
+                                                const newQty = this.value;
+                                                if (newQty >= 1) {
+                                                    window.location.href = `/cart/update/${productId}/${newQty}/?variation_id=${variationId}`;
+                                                }
+                                            });
+                                        });
+    });
+</script>
 {% endblock %}

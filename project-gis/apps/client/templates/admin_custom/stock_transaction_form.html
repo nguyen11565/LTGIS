@@ -1,0 +1,276 @@
+{% extends 'admin_custom/base_admin.html' %}
+{% load humanize %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block admin_content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <a href="{% url 'client:admin_stock_management' %}" class="btn btn-sm btn-outline-secondary mb-2">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+        <h3 class="fw-bold mb-0">
+            {% if transaction_type == 'in' %}
+                <i class="fas fa-plus-circle text-success me-2"></i>Tạo Phiếu Nhập Kho
+            {% else %}
+                <i class="fas fa-minus-circle text-danger me-2"></i>Tạo Phiếu Xuất Kho
+            {% endif %}
+        </h3>
+    </div>
+    <span class="badge {% if transaction_type == 'in' %}bg-success{% else %}bg-danger{% endif %} fs-6 px-4 py-2">
+        {% if transaction_type == 'in' %}NHẬP KHO{% else %}XUẤT KHO{% endif %}
+    </span>
+</div>
+
+<form method="POST" id="stockForm">
+    {% csrf_token %}
+    <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
+
+    <!-- THÔNG TIN CHUNG -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white border-0 pt-4 pb-2 px-4">
+            <h5 class="fw-bold mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Thông tin chung</h5>
+        </div>
+        <div class="card-body px-4 pb-4">
+            <div class="row g-3">
+                {% if request.user.profile.role == 'super_admin' or request.user.profile.role == 'regional_manager' %}
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-secondary">
+                        <i class="fas fa-store me-1"></i>Cửa hàng / Kho thực hiện <span class="text-danger">*</span>
+                    </label>
+                    <select name="store_id" id="storeSelect" class="form-select" required>
+                        <option value="">-- Chọn cửa hàng / kho --</option>
+                        {% for s in stores %}
+                            <option value="{{ s.id }}">
+                                {% if s.is_warehouse %}🏭{% else %}🏪{% endif %} {{ s.name }}
+                                {% if s.region %} ({{ s.region.name }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-secondary">
+                        <i class="fas fa-store me-1"></i>Cửa hàng / Kho
+                    </label>
+                    <input type="text" class="form-control" value="{{ request.user.profile.store.name }}" disabled>
+                    <input type="hidden" name="store_id" value="{{ request.user.profile.store.id }}">
+                </div>
+                {% endif %}
+
+                <div class="col-md-6">
+                    <label class="form-label fw-bold small text-secondary">
+                        <i class="fas fa-sticky-note me-1"></i>Ghi chú chung
+                    </label>
+                    <input type="text" name="note" class="form-control" placeholder="VD: Nhập lô hàng mới từ nhà cung cấp...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG SẢN PHẨM -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white border-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0"><i class="fas fa-boxes me-2 text-primary"></i>Danh sách Sản phẩm</h5>
+            <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm" onclick="addProductRow()">
+                <i class="fas fa-plus me-1"></i> Thêm dòng
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="productTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4" style="width: 5%;">#</th>
+                            <th style="width: 30%;">Sản phẩm <span class="text-danger">*</span></th>
+                            <th style="width: 20%;">Biến thể</th>
+                            <th class="text-center" style="width: 12%;">Số lượng <span class="text-danger">*</span></th>
+                            {% if transaction_type == 'in' %}
+                            <th class="text-center" style="width: 15%;">Giá nhập (₫)</th>
+                            <th class="text-end" style="width: 13%;">Thành tiền</th>
+                            {% endif %}
+                            <th class="text-center" style="width: 5%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTableBody">
+                        <!-- Dòng đầu tiên sẽ được thêm bởi JS -->
+                    </tbody>
+                    {% if transaction_type == 'in' %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="5" class="text-end fw-bold pe-3">TỔNG CỘNG:</td>
+                            <td class="text-end fw-bold text-danger fs-5 pe-3" id="grandTotal">0₫</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- NÚT GỬI -->
+    <div class="d-flex justify-content-end gap-3 mb-5">
+        <a href="{% url 'client:admin_stock_management' %}" class="btn btn-light px-4 shadow-sm">Hủy</a>
+        <button type="submit" class="btn {% if transaction_type == 'in' %}btn-success{% else %}btn-danger{% endif %} px-5 fw-bold shadow-sm" id="submitBtn">
+            <i class="fas {% if transaction_type == 'in' %}fa-check-circle{% else %}fa-minus-circle{% endif %} me-2"></i>
+            {% if transaction_type == 'in' %}Xác nhận Nhập Kho{% else %}Xác nhận Xuất Kho{% endif %}
+        </button>
+    </div>
+</form>
+
+<script>
+// Dữ liệu sản phẩm từ server
+const allProducts = [
+    {% for p in products %}
+    {
+        id: {{ p.id }},
+        name: "{{ p.name|escapejs }}",
+        image: "{{ p.image.url|default:''|escapejs }}",
+        category: "{{ p.category.name|default:''|escapejs }}",
+        variations: [
+            {% for v in p.variations.all %}
+            { id: {{ v.id }}, label: "{{ v.color|default:''|escapejs }} {{ v.storage|default:''|escapejs }}".trim() },
+            {% endfor %}
+        ]
+    },
+    {% endfor %}
+];
+
+let rowIndex = 0;
+const transactionType = "{{ transaction_type }}";
+
+function addProductRow() {
+    rowIndex++;
+    const tbody = document.getElementById('productTableBody');
+    
+    let productOptions = '<option value="">-- Chọn sản phẩm --</option>';
+    allProducts.forEach(p => {
+        productOptions += `<option value="${p.id}">${p.name} (${p.category})</option>`;
+    });
+
+    let priceColumns = '';
+    if (transactionType === 'in') {
+        priceColumns = `
+            <td class="text-center">
+                <input type="number" name="price_${rowIndex}" class="form-control form-control-sm text-center price-input" 
+                       placeholder="0" min="0" data-row="${rowIndex}" oninput="calcRow(${rowIndex})">
+            </td>
+            <td class="text-end pe-3">
+                <span class="fw-bold text-danger" id="rowTotal_${rowIndex}">0₫</span>
+            </td>
+        `;
+    }
+
+    const row = `
+    <tr id="row_${rowIndex}">
+        <td class="ps-4 text-muted fw-bold">${rowIndex}</td>
+        <td>
+            <select name="product_id_${rowIndex}" class="form-select form-select-sm product-select" 
+                    data-row="${rowIndex}" onchange="onProductChange(${rowIndex})" required>
+                ${productOptions}
+            </select>
+        </td>
+        <td>
+            <select name="variation_id_${rowIndex}" id="variation_${rowIndex}" class="form-select form-select-sm">
+                <option value="">Không có biến thể</option>
+            </select>
+        </td>
+        <td class="text-center">
+            <input type="number" name="quantity_${rowIndex}" class="form-control form-control-sm text-center qty-input" 
+                   min="1" value="1" required data-row="${rowIndex}" oninput="calcRow(${rowIndex})">
+        </td>
+        ${priceColumns}
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="removeRow(${rowIndex})" title="Xóa dòng">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    </tr>`;
+    
+    tbody.insertAdjacentHTML('beforeend', row);
+    updateRowNumbers();
+}
+
+function onProductChange(row) {
+    const select = document.querySelector(`select[name="product_id_${row}"]`);
+    const productId = parseInt(select.value);
+    const variationSelect = document.getElementById(`variation_${row}`);
+    
+    variationSelect.innerHTML = '<option value="">Không có biến thể</option>';
+    
+    const product = allProducts.find(p => p.id === productId);
+    if (product && product.variations.length > 0) {
+        product.variations.forEach(v => {
+            variationSelect.innerHTML += `<option value="${v.id}">${v.label}</option>`;
+        });
+    }
+}
+
+function calcRow(row) {
+    if (transactionType !== 'in') return;
+    const qty = parseInt(document.querySelector(`input[name="quantity_${row}"]`)?.value) || 0;
+    const price = parseInt(document.querySelector(`input[name="price_${row}"]`)?.value) || 0;
+    const total = qty * price;
+    const el = document.getElementById(`rowTotal_${row}`);
+    if (el) el.innerText = total.toLocaleString('vi-VN') + '₫';
+    calcGrandTotal();
+}
+
+function calcGrandTotal() {
+    if (transactionType !== 'in') return;
+    let grand = 0;
+    document.querySelectorAll('.qty-input').forEach(input => {
+        const row = input.dataset.row;
+        const qty = parseInt(input.value) || 0;
+        const price = parseInt(document.querySelector(`input[name="price_${row}"]`)?.value) || 0;
+        grand += qty * price;
+    });
+    document.getElementById('grandTotal').innerText = grand.toLocaleString('vi-VN') + '₫';
+}
+
+function removeRow(row) {
+    const el = document.getElementById(`row_${row}`);
+    if (el) el.remove();
+    updateRowNumbers();
+    if (transactionType === 'in') calcGrandTotal();
+}
+
+function updateRowNumbers() {
+    const rows = document.querySelectorAll('#productTableBody tr');
+    rows.forEach((row, i) => {
+        row.querySelector('td:first-child').innerText = i + 1;
+    });
+}
+
+// Validation
+document.getElementById('stockForm').addEventListener('submit', function(e) {
+    const rows = document.querySelectorAll('#productTableBody tr');
+    if (rows.length === 0) {
+        e.preventDefault();
+        alert('Vui lòng thêm ít nhất 1 sản phẩm!');
+        return;
+    }
+    
+    // Collect row indices
+    const indices = [];
+    rows.forEach(row => {
+        const id = row.id.replace('row_', '');
+        indices.push(id);
+    });
+    
+    // Add hidden field with indices
+    let input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'row_indices';
+    input.value = indices.join(',');
+    this.appendChild(input);
+});
+
+// Thêm dòng đầu tiên khi tải trang
+document.addEventListener('DOMContentLoaded', function() {
+    addProductRow();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Kiểm tra email của bạn - Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pending-container {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #f4f6f8 0%, #fff1f2 100%);
+    }
+    .pending-card {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+    }
+    .pending-header {
+        background: linear-gradient(135deg, #d70018 0%, #ff4d4d 100%);
+        padding: 40px;
+        text-align: center;
+    }
+    .icon-pulse {
+        width: 80px; height: 80px; border-radius: 50%;
+        background: rgba(255,255,255,0.2); display: inline-flex;
+        align-items: center; justify-content: center; font-size: 40px;
+        animation: pulse 2s ease-in-out infinite;
+        margin-bottom: 16px;
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+        50% { transform: scale(1.05); box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+    }
+    .step-item {
+        display: flex; align-items: flex-start; gap: 14px;
+        padding: 14px 0; border-bottom: 1px dashed #f0f0f0;
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-num {
+        min-width: 32px; height: 32px; border-radius: 50%;
+        background: #d70018; color: #fff; font-weight: 700;
+        font-size: 13px; display: flex; align-items: center;
+        justify-content: center; margin-top: 2px;
+    }
+    .btn-resend {
+        background: transparent; color: #d70018; border: 2px solid #d70018;
+        border-radius: 10px; padding: 10px 24px; font-weight: 700;
+        font-size: 14px; transition: 0.3s; text-decoration: none;
+        display: inline-block;
+    }
+    .btn-resend:hover {
+        background: #d70018; color: #fff;
+        box-shadow: 0 4px 12px rgba(215,0,24,0.25);
+    }
+    .email-chip {
+        background: #fff1f2; border: 1px solid #ffd0d0;
+        border-radius: 20px; padding: 4px 14px;
+        font-size: 14px; font-weight: 600; color: #d70018;
+        display: inline-block; margin: 0 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container pending-container py-5">
+    <div class="row justify-content-center w-100">
+        <div class="col-md-6 col-lg-5">
+
+            <div class="card shadow-lg pending-card">
+                <!-- Header -->
+                <div class="pending-header">
+                    <div class="icon-pulse">✉️</div>
+                    <h3 style="color:#fff;font-weight:800;margin:0 0 6px;">Kiểm tra email!</h3>
+                    <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:0;">
+                        Chúng tôi đã gửi link xác thực đến<br>
+                        <strong>{{ email }}</strong>
+                    </p>
+                </div>
+
+                <!-- Body -->
+                <div class="card-body p-4 p-md-5">
+                    <p class="text-muted small text-center mb-4">
+                        Tài khoản của bạn <strong>chưa được kích hoạt</strong>. Hãy làm theo các bước sau:
+                    </p>
+
+                    <div class="mb-4">
+                        <div class="step-item">
+                            <div class="step-num">1</div>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size:14px;">Mở hộp thư đến</div>
+                                <div class="text-muted" style="font-size:13px;">Kiểm tra email <span class="email-chip">{{ email }}</span></div>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">2</div>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size:14px;">Mở email từ Phone Store</div>
+                                <div class="text-muted" style="font-size:13px;">Tiêu đề: "✉️ Xác thực email - Phone Store"</div>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">3</div>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size:14px;">Click nút "XÁC THỰC EMAIL NGAY"</div>
+                                <div class="text-muted" style="font-size:13px;">Tài khoản sẽ được kích hoạt ngay lập tức</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-light rounded-3 p-3 mb-4 text-center" style="border:1px dashed #dee2e6;">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1 text-warning"></i>
+                            Link xác thực có hiệu lực <strong>24 giờ</strong>. Kiểm tra cả thư mục <strong>Spam/Junk</strong>.
+                        </small>
+                    </div>
+
+                    <div class="text-center">
+                        <p class="text-muted small mb-2">Không nhận được email?</p>
+                        <a href="{% url 'client:resend_verification' %}?email={{ email }}" class="btn-resend">
+                            <i class="fas fa-redo me-2"></i>Gửi lại email xác thực
+                        </a>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="text-center">
+                        <a href="{% url 'client:login' %}" class="text-muted small text-decoration-none">
+                            <i class="fas fa-arrow-left me-1"></i>Quay lại đăng nhập
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

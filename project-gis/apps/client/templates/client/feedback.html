@@ -1,0 +1,268 @@
+{% extends 'client/base.html' %}
+{% load humanize %}
+
+{% block title %}Gửi Ý Kiến - Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background: #f4f6f8; }
+    .feedback-hero {
+        background: linear-gradient(135deg, #d70018 0%, #ff4444 60%, #ff8c00 100%);
+        padding: 60px 0 80px;
+        position: relative;
+        overflow: hidden;
+    }
+    .feedback-hero::before {
+        content: '💬';
+        position: absolute;
+        font-size: 220px;
+        opacity: 0.08;
+        right: 5%;
+        top: -20px;
+        line-height: 1;
+    }
+    .feedback-card {
+        border-radius: 20px;
+        border: none;
+        margin-top: -50px;
+        position: relative;
+        z-index: 2;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+    }
+    .info-card {
+        border-radius: 16px;
+        border: none;
+        margin-top: -50px;
+        position: relative;
+        z-index: 2;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        background: linear-gradient(160deg, #1a1a2e, #16213e);
+        color: white;
+    }
+    .contact-item {
+        display: flex; align-items: flex-start; gap: 14px;
+        padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .contact-item:last-child { border-bottom: none; }
+    .contact-icon {
+        width: 42px; height: 42px; border-radius: 12px;
+        background: rgba(215,0,24,0.2); display: flex;
+        align-items: center; justify-content: center;
+        font-size: 18px; flex-shrink: 0;
+    }
+    .form-control, .form-select {
+        border-radius: 10px; padding: 12px 16px;
+        background: #f8f9fa; border: 1.5px solid #eee;
+        font-size: 14px; transition: 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        background: #fff; border-color: #d70018;
+        box-shadow: 0 0 0 0.2rem rgba(215,0,24,0.1);
+    }
+    .form-label { font-weight: 600; font-size: 13px; color: #555; margin-bottom: 6px; }
+    .btn-submit {
+        background: #d70018; border: none; border-radius: 12px;
+        padding: 14px 40px; font-weight: 800; font-size: 15px;
+        letter-spacing: 0.5px; transition: 0.3s;
+        box-shadow: 0 4px 14px rgba(215,0,24,0.35);
+    }
+    .btn-submit:hover {
+        background: #b50014; transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(215,0,24,0.4);
+    }
+    .topic-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 20px;
+        border: 1.5px solid #eee; background: #fff;
+        color: #555; font-size: 13px; cursor: pointer;
+        transition: 0.2s; user-select: none;
+    }
+    .topic-pill:hover, .topic-pill.active {
+        border-color: #d70018; background: #fff1f2; color: #d70018;
+    }
+    .char-count { font-size: 11px; color: #aaa; text-align: right; margin-top: 4px; }
+    .char-count.warn { color: #d70018; }
+    .required-star { color: #d70018; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="feedback-hero text-white text-center">
+    <h1 class="fw-900 mb-2" style="font-size: 2.2rem; font-weight: 800;">Góp ý & Liên hệ</h1>
+    <p class="mb-0 opacity-75" style="font-size: 15px;">Chúng tôi lắng nghe mọi ý kiến của bạn để cải thiện dịch vụ</p>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4 align-items-start">
+
+        <!-- FORM CARD -->
+        <div class="col-lg-8">
+            <div class="card feedback-card p-4 p-md-5">
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} border-0 rounded-3 mb-4">
+                            {{ message|safe }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <h4 class="fw-bold mb-1">Gửi ý kiến của bạn</h4>
+                <p class="text-muted small mb-4">Các trường đánh dấu <span class="required-star">*</span> là bắt buộc</p>
+
+                <form method="POST" id="feedbackForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Tên + Email -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label">Họ và tên <span class="required-star">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white rounded-start-3 text-muted border-end-0"><i class="fas fa-user"></i></span>
+                                <input type="text" name="name" class="form-control border-start-0 rounded-end-3"
+                                       placeholder="Nguyen Van A" required
+                                       value="{{ form_data.name|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Email <span class="required-star">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white rounded-start-3 text-muted border-end-0"><i class="fas fa-envelope"></i></span>
+                                <input type="email" name="email" class="form-control border-start-0 rounded-end-3"
+                                       placeholder="email@example.com" required
+                                       value="{{ form_data.email|default:'' }}{% if not form_data and request.user.is_authenticated %}{{ request.user.email }}{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Điện thoại -->
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại <span class="text-muted fw-normal">(không bắt buộc)</span></label>
+                        <div class="input-group" style="max-width: 300px;">
+                            <span class="input-group-text bg-white rounded-start-3 text-muted border-end-0"><i class="fas fa-phone"></i></span>
+                            <input type="tel" name="phone" class="form-control border-start-0 rounded-end-3"
+                                   placeholder="09x xxxx xxxx"
+                                   value="{{ form_data.phone|default:'' }}">
+                        </div>
+                    </div>
+
+                    <!-- Chủ đề -->
+                    <div class="mb-3">
+                        <label class="form-label">Chủ đề <span class="required-star">*</span></label>
+                        <select name="topic" class="form-select" id="topicSelect">
+                            {% for code, label in topics %}
+                                <option value="{{ code }}"
+                                    {% if form_data.topic == code %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Nội dung -->
+                    <div class="mb-4">
+                        <label class="form-label">Nội dung ý kiến <span class="required-star">*</span></label>
+                        <textarea name="message" id="messageArea" class="form-control" rows="6"
+                                  placeholder="Mô tả chi tiết vấn đề hoặc góp ý của bạn..."
+                                  maxlength="2000" required>{{ form_data.message|default:'' }}</textarea>
+                        <div class="char-count"><span id="charCount">0</span>/2000 ký tự</div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-danger btn-submit text-white">
+                            <i class="fas fa-paper-plane me-2"></i>GỬI Ý KIẾN
+                        </button>
+                        <small class="text-muted">
+                            <i class="fas fa-shield-alt me-1 text-success"></i>
+                            Thông tin của bạn được bảo mật tuyệt đối
+                        </small>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- INFO CARD -->
+        <div class="col-lg-4">
+            <div class="card info-card p-4">
+                <h5 class="fw-bold text-white mb-4">
+                    <i class="fas fa-headset me-2 text-danger"></i>Thông tin liên hệ
+                </h5>
+
+                <div class="contact-item">
+                    <div class="contact-icon">📞</div>
+                    <div>
+                        <div class="fw-bold text-white" style="font-size:14px;">Hotline hỗ trợ</div>
+                        <div class="text-white-50 small">1800 1234 (Miễn phí)</div>
+                        <div class="text-white-50 small">7:30 - 22:00, T2 - CN</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">✉️</div>
+                    <div>
+                        <div class="fw-bold text-white" style="font-size:14px;">Email hỗ trợ</div>
+                        <div class="text-white-50 small">support@phonestore.vn</div>
+                        <div class="text-white-50 small">Phản hồi trong 24 giờ</div>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">📍</div>
+                    <div>
+                        <div class="fw-bold text-white" style="font-size:14px;">Hệ thống cửa hàng</div>
+                        <div class="text-white-50 small">Hơn 10 chi nhánh toàn TP.HCM</div>
+                        <a href="{% url 'client:store_locator' %}" class="text-danger small fw-bold text-decoration-none">
+                            Xem bản đồ cửa hàng →
+                        </a>
+                    </div>
+                </div>
+
+                <div class="contact-item">
+                    <div class="contact-icon">⏰</div>
+                    <div>
+                        <div class="fw-bold text-white" style="font-size:14px;">Thời gian phản hồi</div>
+                        <div class="text-white-50 small">Ý kiến thông thường: 24h</div>
+                        <div class="text-white-50 small">Khiếu nại khẩn: 4 giờ</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 rounded-3" style="background: rgba(215,0,24,0.15); border: 1px solid rgba(215,0,24,0.3);">
+                    <small class="text-white-50">
+                        <i class="fas fa-clock me-1 text-warning"></i>
+                        Sau khi gửi, bạn sẽ nhận được email xác nhận. Chúng tôi cam kết phản hồi <strong class="text-white">trong vòng 24 giờ</strong>.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Đếm ký tự nội dung
+const textarea = document.getElementById('messageArea');
+const counter = document.getElementById('charCount');
+if (textarea && counter) {
+    counter.textContent = textarea.value.length;
+    textarea.addEventListener('input', () => {
+        const len = textarea.value.length;
+        counter.textContent = len;
+        counter.parentElement.className = 'char-count' + (len > 1800 ? ' warn' : '');
+    });
+}
+
+// Pre-fill tên từ tài khoản (nếu đăng nhập)
+{% if request.user.is_authenticated and not form_data %}
+    const nameInput = document.querySelector('input[name="name"]');
+    if (nameInput && !nameInput.value) {
+        const fullName = "{{ request.user.get_full_name }}".trim();
+        nameInput.value = fullName || "{{ request.user.username }}";
+    }
+{% endif %}
+</script>
+{% endblock %}

@@ -23,15 +23,17 @@
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <h5 class="fw-bold text-danger mb-0">{{ store.name }}</h5>
-                    {% if is_main_warehouse %}
+                    {% if store.is_warehouse %}
                         <span class="badge bg-primary ms-2">KHO TỔNG</span>
                     {% endif %}
                 </div>
                 <hr>
-                <p class="mb-2 text-muted small uppercase fw-bold">Thông tin liên hệ</p>
+                <p class="mb-2 text-muted small text-uppercase fw-bold">Thông tin liên hệ</p>
                 <p class="mb-1"><i class="fas fa-phone-alt me-2 text-success"></i>{{ store.phone|default:"Chưa cập nhật" }}</p>
                 <p class="mb-1"><i class="fas fa-map-marker-alt me-2 text-danger"></i>{{ store.address }}</p>
+                {% if store.latitude and store.longitude %}
                 <p class="mb-0"><i class="fas fa-location-arrow me-2 text-primary"></i>Tọa độ: {{ store.latitude }}, {{ store.longitude }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -41,15 +43,15 @@
             <div class="card-header bg-white py-3">
                 <h6 class="mb-0 fw-bold">
                     <i class="fas fa-boxes me-2 text-warning"></i>
-                    {% if is_main_warehouse %}
+                    {% if store.is_warehouse %}
                         Tồn kho thực tế tại Kho Tổng
                     {% else %}
-                        Sản phẩm đã điều chuyển đến chi nhánh
+                        Sản phẩm có sẵn tại chi nhánh
                     {% endif %}
                 </h6>
                 <small class="text-muted">
-                    {% if is_main_warehouse %}
-                        Dữ liệu trực tiếp từ Quản lý kho hàng
+                    {% if store.is_warehouse %}
+                        Dữ liệu trực tiếp từ Quản lý kho hàng trung tâm
                     {% else %}
                         Dựa trên dữ liệu điều chuyển từ kho tổng
                     {% endif %}
@@ -62,33 +64,46 @@
                             <tr>
                                 <th class="ps-4" style="width: 80px;">Ảnh</th>
                                 <th>Tên sản phẩm</th>
-                                <th class="text-center">Số lượng tồn</th>
+                                <th class="text-center">Vật lý (Tổng)</th>
+                                <th class="text-center text-warning">Tạm giữ</th>
+                                <th class="text-center text-success">Khả dụng</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in inventory %}
                             <tr>
                                 <td class="ps-4">
-                                    {% if is_main_warehouse %}
-                                        {% if item.image %}
-                                            <img src="/media/{{ item.image }}" width="45" height="45" class="rounded shadow-sm" style="object-fit: cover;">
-                                        {% endif %}
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" width="45" height="45" class="rounded shadow-sm" style="object-fit: cover;">
                                     {% else %}
-                                        {% if item.product__image %}
-                                            <img src="/media/{{ item.product__image }}" width="45" height="45" class="rounded shadow-sm" style="object-fit: cover;">
-                                        {% endif %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <span class="fw-bold text-dark">
-                                        {% if is_main_warehouse %}{{ item.name }}{% else %}{{ item.product__name }}{% endif %}
+                                        {{ item.product.name }}
+                                        {% if item.variation %}
+                                            <span class="badge bg-secondary ms-1">{{ item.variation.color|default:"" }} {{ item.variation.storage|default:"" }}</span>
+                                        {% endif %}
                                     </span>
                                     <br>
-                                    <small class="text-muted">Mã: #{% if is_main_warehouse %}{{ item.id }}{% else %}{{ item.product__id }}{% endif %}</small>
+                                    <small class="text-muted">Mã: #{{ item.product.id }}</small>
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge {% if is_main_warehouse %}bg-primary{% else %}bg-danger{% endif %} rounded-pill px-3 fs-6">
-                                        {{ item.total_quantity|default:0|intcomma }}
+                                    <span class="badge {% if store.is_warehouse %}bg-primary{% else %}bg-danger{% endif %} rounded-pill px-3 fs-6">
+                                        {{ item.quantity|default:0|intcomma }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-warning text-dark rounded-pill px-3 fs-6">
+                                        {{ item.reserved_quantity|default:0|intcomma }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success rounded-pill px-3 fs-6">
+                                        {{ item.available_quantity|default:0|intcomma }}
                                     </span>
                                 </td>
                             </tr>
@@ -96,7 +111,7 @@
                             <tr>
                                 <td colspan="3" class="text-center py-5 text-muted">
                                     <i class="fas fa-box-open fa-3x mb-3 d-block opacity-25"></i>
-                                    Hiện chưa có hàng hóa nào tại đây.
+                                    Hiện chưa có hàng hóa nào được lưu trữ tại đây.
                                 </td>
                             </tr>
                             {% endfor %}

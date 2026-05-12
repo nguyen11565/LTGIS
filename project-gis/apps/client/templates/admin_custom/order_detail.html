@@ -1,5 +1,7 @@
 {% extends 'admin_custom/base_admin.html' %}
-{% load humanize %} {% block title %}Chi tiết đơn hàng #{{ order.id }}{% endblock %}
+{% load humanize %} 
+
+{% block title %}Chi tiết đơn hàng #{{ order.id }}{% endblock %}
 
 {% block admin_content %}
 <div class="mb-4">
@@ -17,6 +19,13 @@
                 <p><strong>Số điện thoại:</strong> {{ order.phone }}</p>
                 <p><strong>Địa chỉ:</strong> {{ order.address }}</p>
                 <p><strong>Ngày đặt:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</p>
+                <p><strong>Cửa hàng phụ trách xuất đơn:</strong>
+                    {% if order.fulfillment_store %}
+                        <span class="badge bg-secondary fw-normal fs-6 shadow-sm"><i class="fas fa-store me-1"></i>{{ order.fulfillment_store.name }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Chưa xác định</span>
+                    {% endif %}
+                </p>
                 <hr>
                 <p><strong>Trạng thái hiện tại:</strong> 
                     {% if order.status == 'completed' %}
@@ -34,20 +43,103 @@
 
                 <form method="POST" class="mt-4 p-3 bg-light rounded border shadow-sm">
                     {% csrf_token %}
-                    <label class="form-label fw-bold small text-muted text-uppercase">Thay đổi trạng thái đơn</label>
+                    <label class="form-label fw-bold small text-muted text-uppercase mb-2">Thay đổi trạng thái đơn</label>
+
+                    {% if not is_stock_sufficient and order.status != 'completed' and order.status != 'cancelled' %}
+                    <div class="alert alert-danger py-2 px-3 small border-0 mb-3 shadow-sm rounded">
+                        <strong><i class="fas fa-exclamation-triangle me-1"></i> Kho phụ trách đã hết phần hàng này:</strong>
+                        <ul class="mb-0 mt-1 ps-3">
+                            {% for item in insufficient_items %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    {% if eligible_alternative_stores %}
+                    <div class="mb-3 px-3 py-2 border border-danger border-2 rounded bg-white">
+                        <label class="form-label fw-bold small text-danger"><i class="fas fa-random me-1"></i>Chỉ định Kho nhánh dự phòng để vượt qua kiểm duyệt:</label>
+                        <select name="alternative_store_id" class="form-select form-select-sm">
+                            <option value="">-- Không chọn (Xin hãy Hủy đơn) --</option>
+                            {% for store in eligible_alternative_stores %}
+                                <option value="{{ store.id }}">{{ store.name }} (Có đủ kho cho đơn này)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning py-2 mb-3 small shadow-sm rounded">
+                        <i class="fas fa-frown me-1"></i> Rất tiếc, không có "Bất kỳ" chi nhánh dự phòng nào trên toàn hệ thống có đủ toàn bộ hàng cho đơn này. Xin bạn kiểm kê thêm kho hoặc <b>Hủy Đơn Hàng</b>!
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
                     <div class="input-group">
-                        <select name="status" class="form-select form-select-sm">
+                        <select id="statusSelect" name="status" class="form-select form-select-sm shadow-sm" {% if order.status == 'completed' or order.status == 'cancelled' or request.user.profile.role == 'warehouse_keeper' %}disabled{% endif %}>
                             {% for code, label in status_choices %}
                                 <option value="{{ code }}" {% if order.status == code %}selected{% endif %}>
                                     {{ label }}
                                 </option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn btn-primary btn-sm px-3">Cập nhật</button>
+                        {% if request.user.profile.role != 'warehouse_keeper' %}
+                        <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm fw-bold" {% if order.status == 'completed' or order.status == 'cancelled' %}disabled{% endif %}>Cập nhật</button>
+                        {% endif %}
                     </div>
+                    {% if order.status == 'completed' or order.status == 'cancelled' %}
+                    <input type="hidden" name="status" value="{{ order.status }}">
+                    <p class="text-muted small mt-2 mb-0 fst-italic">* Đơn hàng đã chốt hạ, không thể thay đổi thêm.</p>
+                    {% endif %}
                 </form>
             </div>
         </div>
+
+        <!-- NEW PAYMENT PANEL -->
+        <div class="card shadow border-0 mb-4">
+            <div class="card-header bg-success text-white fw-bold">Thông tin thanh toán</div>
+            <div class="card-body">
+                <p><strong>Hình thức:</strong> {{ order.get_payment_method_display }}</p>
+                <p><strong>Trạng thái:</strong> 
+                    {% if order.payment_status == 'paid' %}
+                        <span class="badge bg-success">Đã thanh toán</span>
+                    {% elif order.payment_status == 'refunded' %}
+                        <span class="badge bg-secondary">Đã hoàn tiền</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Chưa thanh toán</span>
+                    {% endif %}
+                </p>
+
+                {% if order.payment_method == 'bank_transfer' %}
+                    <hr>
+                    <p class="fw-bold mb-2">Ảnh biên lai (Khách tải lên):</p>
+                    {% if order.payment_receipt %}
+                        <a href="{{ order.payment_receipt.url }}" target="_blank">
+                            <img src="{{ order.payment_receipt.url }}" class="img-fluid rounded shadow-sm border mb-3" style="max-height: 200px; object-fit: cover;">
+                        </a>
+                    {% else %}
+                        <p class="text-muted small fst-italic">Khách hàng chưa tải lên biên lai</p>
+                    {% endif %}
+                {% endif %}
+
+                <div class="d-grid gap-2 mt-2">
+                    {% if order.payment_status != 'paid' and request.user.profile.role != 'warehouse_keeper' %}
+                    <form method="POST" action="{% url 'client:admin_order_detail' order.id %}" class="w-100">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm_payment">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm" onclick="return confirm('Xác nhận đã nhận tiền và cập nhật Đã thanh toán?');">
+                            <i class="fas fa-check-circle me-1"></i> Xác nhận Đã Thanh Toán
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if order.payment_status == 'paid' %}
+                    <a href="{% url 'client:print_invoice' order.id %}" target="_blank" class="btn btn-outline-dark fw-bold shadow-sm">
+                        <i class="fas fa-print me-1"></i> In hóa đơn bán lẻ
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- END PAYMENT PANEL -->
+
     </div>
 
     <div class="col-md-8">
@@ -76,19 +168,42 @@
                                                 <i class="fas fa-image text-muted"></i>
                                             </div>
                                         {% endif %}
-                                        <div class="fw-bold">{{ item.product.name }}</div>
+                                        <div>
+                                            <div class="fw-bold">{{ item.product.name }}</div>
+                                            {% if item.variation %}
+                                                <div class="small text-danger fw-bold"><i class="fas fa-cog me-1"></i>{{ item.variation.color }} - {{ item.variation.storage }}</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </td>
+                                
                                 <td class="text-center">x{{ item.quantity }}</td>
-                                <td class="text-end">{{ item.price|floatformat:0|intcomma }}₫</td>
-                                <td class="text-end fw-bold text-danger pe-3">{{ item.get_total_item_price|floatformat:0|intcomma }}₫</td>
+                                
+                                <td class="text-end">
+                                    {% if item.product.flash_sale and item.product.flash_sale.is_valid and item.product.flash_sale.flash_price %}
+                                        <div class="d-flex flex-column align-items-end">
+                                            <span class="text-muted text-decoration-line-through small">{{ item.product.price|floatformat:0|intcomma }}₫</span>
+                                            <span class="text-danger fw-bold">{{ item.product.flash_sale.flash_price|floatformat:0|intcomma }}₫</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="fw-bold">{{ item.price|floatformat:0|intcomma }}₫</span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td class="text-end fw-bold text-danger pe-3">
+                                    {{ item.get_total_item_price|floatformat:0|intcomma }}₫
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="border-top-0">
-                                <td colspan="3" class="text-end fw-bold pt-3 pb-3">TỔNG CỘNG:</td>
-                                <td class="text-end fw-bold text-danger fs-5 pt-3 pb-3 pe-3">{{ order.total_price|floatformat:0|intcomma }}₫</td>
+                                <td colspan="3" class="text-end pb-2 pt-3 text-muted small">Phí giao hàng:</td>
+                                <td class="text-end pb-2 pt-3 pe-3 text-muted small">+{{ order.shipping_fee|default:0|floatformat:0|intcomma }}₫</td>
+                            </tr>
+                            <tr class="border-top-0">
+                                <td colspan="3" class="text-end fw-bold pt-1 pb-3">TỔNG CỘNG:</td>
+                                <td class="text-end fw-bold text-danger fs-5 pt-1 pb-3 pe-3">{{ order.total_price|floatformat:0|intcomma }}₫</td>
                             </tr>
                         </tfoot>
                     </table>

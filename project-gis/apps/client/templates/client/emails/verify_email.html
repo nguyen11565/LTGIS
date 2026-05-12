@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác thực email của bạn - Phone Store</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:'Segoe UI',Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:40px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- HEADER -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg,#d70018 0%,#ff4d4d 100%);padding:40px 40px 30px;text-align:center;">
+                            <div style="font-size:30px;font-weight:900;color:#ffffff;letter-spacing:2px;">
+                                📱 PHONE STORE
+                            </div>
+                            <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:6px;">
+                                Điện thoại chính hãng – Giá tốt nhất
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- ICON -->
+                    <tr>
+                        <td style="text-align:center;padding:36px 40px 0;">
+                            <div style="width:80px;height:80px;background:#fff1f2;border-radius:50%;display:inline-block;line-height:80px;font-size:40px;border:3px solid #ffd0d0;">
+                                ✉️
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- BODY -->
+                    <tr>
+                        <td style="padding:20px 40px 40px;">
+                            <h2 style="color:#1a1a2e;font-size:22px;text-align:center;margin:16px 0 8px;">Xác thực địa chỉ email</h2>
+                            <p style="color:#666;font-size:13px;text-align:center;margin:0 0 24px;">Chỉ còn một bước nữa để hoàn tất đăng ký!</p>
+                            
+                            <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 16px;">
+                                Xin chào <strong>{{ username }}</strong>,
+                            </p>
+                            <p style="color:#444;font-size:15px;line-height:1.7;margin:0 0 24px;">
+                                Cảm ơn bạn đã đăng ký tại <strong>Phone Store</strong>! 
+                                Để hoàn tất đăng ký và kích hoạt tài khoản, vui lòng xác thực địa chỉ email bằng cách nhấn nút bên dưới.
+                            </p>
+
+                            <!-- CTA BUTTON -->
+                            <div style="text-align:center;margin:30px 0;">
+                                <a href="{{ verify_link }}" 
+                                   style="background:#d70018;color:#ffffff;text-decoration:none;padding:16px 40px;border-radius:10px;font-weight:700;font-size:16px;display:inline-block;box-shadow:0 4px 14px rgba(215,0,24,0.35);letter-spacing:0.5px;">
+                                    ✅ XÁC THỰC EMAIL NGAY
+                                </a>
+                            </div>
+
+                            <!-- DIVIDER -->
+                            <div style="border-top:1px solid #f0f0f0;margin:24px 0;"></div>
+
+                            <!-- FALLBACK LINK -->
+                            <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 8px;">
+                                Nếu nút không hoạt động, copy đường link sau vào trình duyệt:
+                            </p>
+                            <p style="background:#f8f9fa;border:1px solid #e9ecef;border-radius:6px;padding:10px 14px;word-break:break-all;font-size:12px;color:#d70018;margin:0 0 20px;">
+                                {{ verify_link }}
+                            </p>
+
+                            <!-- WARNING -->
+                            <div style="background:#fffbf0;border:1px solid #ffeeba;border-radius:8px;padding:14px 16px;">
+                                <p style="color:#856404;font-size:13px;margin:0;line-height:1.6;">
+                                    ⚠️ <strong>Lưu ý:</strong> Link xác thực này chỉ có hiệu lực trong <strong>24 giờ</strong>. 
+                                    Nếu bạn không đăng ký tài khoản, hãy bỏ qua email này.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td style="background:#f8f9fa;padding:24px 40px;text-align:center;border-top:1px solid #eee;">
+                            <p style="color:#999;font-size:12px;margin:0 0 6px;">
+                                Email này được gửi tự động – Vui lòng không trả lời.
+                            </p>
+                            <p style="color:#bbb;font-size:11px;margin:0;">
+                                © 2026 Phone Store – Tất cả quyền được bảo lưu.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -8,9 +8,10 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <style>
     /* Slider chính */
-    .product-main-slider { height: 450px; width: 100%; border-radius: 16px; background: #fff; }
-    .product-main-slider .swiper-slide { display: flex; justify-content: center; align-items: center; }
-    .product-main-slider .swiper-slide img { max-height: 100%; max-width: 100%; object-fit: contain; }
+    .product-main-slider { height: 450px; width: 100%; border-radius: 16px; background: #fff; overflow: hidden;}
+    .product-main-slider .swiper-slide { display: flex; justify-content: center; align-items: center; overflow: hidden; }
+    .product-main-slider .swiper-slide:hover img { transform: scale(2); cursor: zoom-in; }
+    .product-main-slider .swiper-slide img { max-height: 100%; max-width: 100%; object-fit: contain; transition: transform 0.1s ease; transform-origin: center center; }
 
     /* Slider ảnh nhỏ (Thumbnails) */
     .product-thumbs-slider { margin-top: 15px; height: 80px; box-sizing: border-box; }
@@ -19,30 +20,47 @@
     .product-thumbs-slider .swiper-slide img { width: 100%; height: 100%; object-fit: cover; }
 
     .swiper-button-next, .swiper-button-prev { color: #d70018; transform: scale(0.7); }
-    .price-tag { font-size: 2rem; color: #d70018; font-weight: 800; }
     
-    /* -------------------------------------------
-       CSS CHO BẢNG THÔNG SỐ KỸ THUẬT & MODAL
-    ---------------------------------------------*/
+    /* STYLE CHO GIÁ VÀ FLASH SALE */
+    .price-tag { font-size: 2.2rem; color: #d70018; font-weight: 800; }
+    .old-price { font-size: 1.1rem; color: #999; text-decoration: line-through; }
+    
+    .detail-flash-sale {
+        background: linear-gradient(90deg, #d70018 0%, #ff4d4d 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(215, 0, 24, 0.2);
+    }
+    .countdown-box {
+        background: rgba(0,0,0,0.15);
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-weight: bold;
+        display: inline-block;
+    }
+    .countdown-timer-detail {
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 1px;
+    }
+
+    /* CSS CHO BẢNG THÔNG SỐ KỸ THUẬT & MODAL */
     .specs-box { background: #fff; border-radius: 12px; padding: 25px; color: #333; }
     .specs-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; }
     .specs-table tr:nth-child(odd) { background-color: #f8f9fa; }
     .specs-table td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 14px; }
     .specs-table td:first-child { width: 40%; font-weight: bold; color: #444; }
     
-    /* -------------------------------------------
-       CSS CHO BÀI VIẾT GIỚI THIỆU (THU GỌN)
-    ---------------------------------------------*/
+    /* CSS CHO BÀI VIẾT GIỚI THIỆU (THU GỌN) */
     .content-box { background: #fff; border-radius: 12px; padding: 25px; color: #333; line-height: 1.6; position: relative; }
     .content-wrapper { position: relative; max-height: 500px; overflow: hidden; transition: max-height 0.5s ease; }
-    
     .content-wrapper.collapsed::after {
         content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 100px;
         background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
     }
     .content-wrapper.expanded { max-height: none; }
     
-    /* Nút Xem thêm chung */
     .btn-view-more {
         display: block; width: fit-content; margin: 20px auto 0; padding: 10px 25px;
         border: 1px solid #d70018; color: #d70018; background: #fff; border-radius: 50px;
@@ -50,7 +68,6 @@
     }
     .btn-view-more:hover { background: #d70018; color: #fff; }
 
-    /* Định dạng chung nội dung CKEditor */
     .content-box ul, .content-box ol { padding-left: 20px; margin-bottom: 15px; }
     .content-box p { margin-bottom: 15px; }
     .content-box img { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 15px auto; }
@@ -102,24 +119,88 @@
         <div class="col-md-6">
             <h1 class="fw-bold mb-2">{{ product.name }}</h1>
             <div class="d-flex align-items-center mb-3">
-                <div class="text-warning me-2"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star text-secondary"></i></div>
-                <span class="text-muted small">(4.0 đánh giá)</span>
+                <div class="text-warning me-2">
+                    {% for i in "12345"|make_list %}
+                        <i class="fas fa-star {% if forloop.counter > avg_rating %}text-secondary{% endif %}"></i>
+                    {% endfor %}
+                </div>
+                <span class="text-muted small">({{ avg_rating|floatformat:1 }} sao / {{ reviews.count }} đánh giá)</span>
+                <span class="ms-3 badge bg-success-subtle text-success border border-success">Mới 100%</span>
             </div>
-            
-            <div class="price-tag mb-4">{{ product.price|floatformat:0|intcomma }}₫</div>
+
+            {% if product.flash_sale and product.flash_sale.is_valid %}
+            <div class="detail-flash-sale d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small text-uppercase fw-bold"><i class="fas fa-bolt me-1 text-warning"></i> ĐANG GIẢM GIÁ SỐC</div>
+                    <div class="price-tag text-white mb-0">{{ product.flash_sale.flash_price|floatformat:0|intcomma }}₫</div>
+                    <div class="text-white-50 small">Giá gốc: <del>{{ product.price|floatformat:0|intcomma }}₫</del></div>
+                </div>
+                <div class="text-end">
+                    <div class="small mb-1">Kết thúc sau:</div>
+                    <div class="countdown-box">
+                        <span class="countdown-timer-detail" data-endtime="{{ product.flash_sale.end_time|date:'c' }}">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="price-tag mb-4" id="main-price" data-base="{{ product.price }}">{{ product.price|floatformat:0|intcomma }}₫</div>
+            {% endif %}
+
+            <!-- CHỌN BIẾN THỂ -->
+            {% if product.variations.exists %}
+            <div class="mb-4">
+                <p class="fw-bold mb-2">Chọn phiên bản màu sắc & bộ nhớ:</p>
+                <div class="d-flex flex-wrap gap-2" id="variation-options">
+                    {% for v in product.variations.all %}
+                    <button type="button" class="btn btn-outline-dark variation-btn flex-fill text-start position-relative p-2" 
+                            data-id="{{ v.id }}" 
+                            data-price="{{ v.additional_price|floatformat:0 }}"
+                            onclick="selectVariation(this, {{ product.price|floatformat:0 }}, {% if product.flash_sale and product.flash_sale.is_valid %}{{ product.flash_sale.flash_price|floatformat:0 }}{% else %}{{ product.price|floatformat:0 }}{% endif %})">
+                        <div class="fw-bold">{{ v.color }} - {{ v.storage }}</div>
+                        <small class="text-danger fw-bold">+{{ v.additional_price|floatformat:0|intcomma }}₫</small>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="mb-4 mt-2 d-flex align-items-center flex-wrap gap-2" id="stock-badge-container">
+                {% if product.stock > 0 %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6">
+                        <i class="fas fa-check-circle me-1"></i> Còn hàng: <strong>{{ product.stock }}</strong> sản phẩm
+                    </span>
+                {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fs-6">
+                        <i class="fas fa-times-circle me-1"></i> Hết hàng
+                    </span>
+                {% endif %}
+                <a href="#" data-bs-toggle="modal" data-bs-target="#storeStockModal" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-2 fw-bold">
+                    <i class="fas fa-store-alt me-1"></i> Xem cửa hàng có sẵn
+                </a>
+            </div>
 
             <div class="alert alert-light border d-flex align-items-center mb-4 shadow-sm">
                 <i class="fas fa-truck text-danger me-3 fs-4"></i>
                 <div>
                     <div class="fw-bold">Miễn phí vận chuyển</div>
-                    <div class="small text-muted">Cho đơn hàng từ 500.000₫ trên toàn quốc</div>
+                    <div class="small text-muted">Cho đơn hàng từ 500.000₫ áp dụng cho khu vực TP.HCM</div>
                 </div>
             </div>
 
             <div class="d-grid gap-2">
-                <a href="{% url 'client:cart_add' product.id %}" class="btn btn-danger btn-lg py-3 fw-bold rounded-3">
-                    <i class="fas fa-cart-plus me-2"></i>THÊM VÀO GIỎ HÀNG
-                </a>
+                <form method="POST" action="{% url 'client:cart_add' product.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="variation_id" id="selected_variation_id" value="">
+                    {% if product.stock > 0 %}
+                        <button type="submit" id="btn-add-cart" class="btn btn-danger btn-lg py-3 fw-bold rounded-3 w-100" {% if product.variations.exists %}disabled{% endif %}>
+                            <i class="fas fa-cart-plus me-2"></i>{% if product.variations.exists %}VUI LÒNG CHỌN PHIÊN BẢN{% else %}THÊM VÀO GIỎ HÀNG{% endif %}
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-secondary btn-lg py-3 fw-bold rounded-3 w-100" disabled>
+                            <i class="fas fa-box-open me-2"></i> SẢN PHẨM TẠM HẾT HÀNG
+                        </button>
+                    {% endif %}
+                </form>
                 <button class="btn btn-outline-dark btn-lg py-3 fw-bold rounded-3">MUA TRẢ GÓP 0%</button>
             </div>
 
@@ -135,7 +216,6 @@
 
     <div class="row mt-5">
         <div class="col-lg-8">
-            
             {% if product.content %}
             <h4 class="fw-bold mb-4 border-start border-4 border-danger ps-3">Đặc điểm nổi bật</h4>
             <div class="content-box shadow-sm border mb-5">
@@ -147,7 +227,6 @@
                 </button>
             </div>
             {% endif %}
-
         </div>
         
         <div class="col-lg-4">
@@ -159,7 +238,8 @@
                     </table>
                     <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));"></div>
                 </div>
-                
+
+
                 <button class="btn-view-more w-100 mt-3" data-bs-toggle="modal" data-bs-target="#specsModal">
                     Xem cấu hình chi tiết <i class="fas fa-cogs ms-1"></i>
                 </button>
@@ -183,6 +263,160 @@
             {% endfor %}
         </div>
     </div>
+
+    <!-- BẮT ĐẦU PHẦN ĐÁNH GIÁ SẢN PHẨM -->
+    <div class="row mt-5 border-top pt-5">
+        <div class="col-12">
+            <h4 class="fw-bold mb-4 border-start border-4 border-warning ps-3">Đánh giá Sản phẩm ({{ avg_rating }}/5 <i class="fas fa-star text-warning"></i>)</h4>
+            
+            <!-- RATING SUMMARY PROGRESS BAR -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center border-end">
+                            <h1 class="display-4 fw-bold text-dark mb-0">{{ avg_rating }}</h1>
+                            <div class="text-warning mb-2 fs-4">
+                                {% for i in "12345"|make_list %}
+                                    <i class="fas fa-star {% if forloop.counter > avg_rating %}text-secondary{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="text-muted mb-0">{{ reviews.count }} nhận xét</p>
+                        </div>
+                        <div class="col-md-8 ps-md-5">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="small fw-bold me-3" style="width: 50px;">5 sao</span>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 85%;"></div>
+                                </div>
+                                <span class="small text-muted ms-3">85%</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="small fw-bold me-3" style="width: 50px;">4 sao</span>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 10%;"></div>
+                                </div>
+                                <span class="small text-muted ms-3">10%</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="small fw-bold me-3" style="width: 50px;">3 sao</span>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 5%;"></div>
+                                </div>
+                                <span class="small text-muted ms-3">5%</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="small fw-bold me-3" style="width: 50px;">2 sao</span>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 0%;"></div>
+                                </div>
+                                <span class="small text-muted ms-3">0%</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-0">
+                                <span class="small fw-bold me-3" style="width: 50px;">1 sao</span>
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 0%;"></div>
+                                </div>
+                                <span class="small text-muted ms-3">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Form nhập đánh giá -->
+                <div class="col-md-5 mb-4">
+                    <div class="card shadow-sm border-0 bg-light p-4">
+                        <h5 class="fw-bold mb-3">Gửi đánh giá của bạn</h5>
+                        {% if user.is_authenticated %}
+                        <form method="POST" action="{% url 'client:product_detail' product.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Số sao:</label>
+                                <div class="rating-stars mb-2" id="star-selector" style="font-size: 1.5rem; cursor: pointer;">
+                                    <i class="fas fa-star text-warning" data-value="1"></i>
+                                    <i class="fas fa-star text-warning" data-value="2"></i>
+                                    <i class="fas fa-star text-warning" data-value="3"></i>
+                                    <i class="fas fa-star text-warning" data-value="4"></i>
+                                    <i class="fas fa-star text-warning" data-value="5"></i>
+                                </div>
+                                <input type="hidden" name="rating" id="ratingInput" value="5" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Nội dung đánh giá:</label>
+                                <textarea name="comment" class="form-control" rows="4" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm này..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-warning fw-bold text-dark w-100 shadow-sm">Gửi Đánh Giá</button>
+                        </form>
+                        {% else %}
+                        <div class="alert alert-secondary text-center">
+                            Vui lòng <a href="{% url 'client:login' %}?next={{ request.path }}" class="text-danger fw-bold">đăng nhập</a> để viết đánh giá.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Box List Review -->
+                <div class="col-md-7">
+                    {% if reviews %}
+                        <div class="review-list pe-2" style="max-height: 500px; overflow-y: auto;">
+                            {% for review in reviews %}
+                            <div class="card mb-3 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="fw-bold text-dark"><i class="fas fa-user-circle me-2 text-secondary fs-4 align-middle"></i>{{ review.user.username }}</div>
+                                        <div class="small text-muted">{{ review.created_at|date:"d/m/Y H:i" }}</div>
+                                    </div>
+                                    <div class="text-warning mb-2 small">
+                                        {% for i in "12345"|make_list %}
+                                            <i class="fas fa-star {% if forloop.counter > review.rating %}text-secondary{% endif %}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <p class="mb-0 text-dark" style="line-height: 1.5;">{{ review.comment }}</p>
+                                    
+                                    {% if review.admin_reply %}
+                                    <div class="mt-3 p-3 bg-light border-start border-4 border-danger rounded-end">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold text-danger"><i class="fas fa-headset me-2"></i>Cửa Hàng Phản Hồi:</span>
+                                            <span class="small text-muted">{{ review.reply_created_at|date:"d/m/Y H:i" }}</span>
+                                        </div>
+                                        <p class="mb-0 mt-1 small">{{ review.admin_reply }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if user.is_staff or user.profile.role == 'super_admin' or user.profile.role == 'store_admin' or user.profile.role == 'staff' %}
+                                        {% if not review.admin_reply %}
+                                        <div class="mt-2 text-end">
+                                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#reply-form-{{ review.id }}">
+                                                <i class="fas fa-reply me-1"></i>Trả lời (Dành cho Admin)
+                                            </button>
+                                            <div class="collapse mt-2 text-start" id="reply-form-{{ review.id }}">
+                                                <form method="POST" action="{% url 'client:product_detail' product.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="review_id" value="{{ review.id }}">
+                                                    <textarea name="admin_reply" class="form-control form-control-sm mb-2" rows="2" placeholder="Nhập câu trả lời của cửa hàng..." required></textarea>
+                                                    <button type="submit" class="btn btn-sm btn-danger fw-bold w-100">Gửi phản hồi</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted p-5 bg-light rounded shadow-sm h-100 d-flex flex-column justify-content-center">
+                            <i class="fas fa-comment-slash fs-1 mb-3 text-secondary"></i>
+                            <p class="mb-0">Chưa có đánh giá nào cho sản phẩm này.<br>Hãy là người đầu tiên nhận xét!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- KẾT THÚC PHẦN ĐÁNH GIÁ SẢN PHẨM -->
+
 </div>
 
 <div class="modal fade" id="specsModal" tabindex="-1" aria-labelledby="specsModalLabel" aria-hidden="true">
@@ -206,6 +440,66 @@
     </div>
 </div>
 
+<!-- Modal Kiểm tra tồn kho tại cửa hàng -->
+<div class="modal fade" id="storeStockModal" tabindex="-1" aria-labelledby="storeStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom bg-light">
+                <h5 class="modal-title fw-bold text-danger" id="storeStockModalLabel">
+                    <i class="fas fa-box-open me-2"></i>TÌNH TRẠNG KHO HÀNG CÁC CHI NHÁNH
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for info in stores_stock_info %}
+                    <div class="list-group-item p-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1"><i class="fas fa-map-marker-alt text-danger me-2"></i>{{ info.store_name }}</h6>
+                                <p class="text-muted small mb-0 ms-4">{{ info.address }}</p>
+                            </div>
+                            <div>
+                                {% if info.in_stock %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-6">
+                                        <i class="fas fa-check me-1"></i> Còn {{ info.quantity }} máy
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fs-6">
+                                        <i class="fas fa-times me-1"></i> Hết hàng
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="fas fa-store-slash fs-1 mb-3 text-secondary"></i>
+                        <p class="mb-0">Chưa có thông tin kho hàng cho sản phẩm này.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="modal-footer border-top bg-light">
+                <button type="button" class="btn btn-outline-dark px-4 fw-bold" data-bs-dismiss="modal">ĐÓNG</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STICKY BOTTOM BAR -->
+<div class="sticky-bottom-bar bg-white border-top shadow py-2 px-3 position-fixed bottom-0 w-100" style="z-index: 1050; display: none; left: 0;" id="stickyBuyBar">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div class="d-none d-md-flex align-items-center gap-3">
+            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/50{% endif %}" width="40" height="40" style="object-fit: cover;" class="rounded border shadow-sm">
+            <div>
+                <h6 class="mb-0 fw-bold">{{ product.name }}</h6>
+                <div class="text-danger fw-bold small" id="sticky-price">{% if product.flash_sale and product.flash_sale.is_valid %}{{ product.flash_sale.flash_price|floatformat:0|intcomma }}{% else %}{{ product.price|floatformat:0|intcomma }}{% endif %}₫</div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-danger fw-bold rounded-pill px-4 ms-auto shadow-sm" onclick="window.scrollTo({top: 100, behavior: 'smooth'})">CHỌN MUA <i class="fas fa-chevron-up ms-1"></i></button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -217,10 +511,7 @@
         slidesPerView: 4,
         freeMode: true,
         watchSlidesProgress: true,
-        breakpoints: {
-            320: { slidesPerView: 3 },
-            480: { slidesPerView: 4 }
-        }
+        breakpoints: { 320: { slidesPerView: 3 }, 480: { slidesPerView: 4 } }
     });
 
     var swiperMain = new Swiper(".product-main-slider", {
@@ -229,7 +520,7 @@
         thumbs: { swiper: swiperThumbs },
     });
 
-    // Thu gọn / Mở rộng cho BÀI VIẾT GIỚI THIỆU
+    // Thu gọn / Mở rộng bài viết
     const toggleArticleBtn = document.getElementById('toggleArticle');
     if (toggleArticleBtn) {
         toggleArticleBtn.addEventListener('click', function() {
@@ -242,12 +533,153 @@
                 content.classList.remove('expanded');
                 content.classList.add('collapsed');
                 this.innerHTML = 'Xem toàn bộ bài viết <i class="fas fa-chevron-down ms-1"></i>';
-                window.scrollTo({
-                    top: content.parentElement.offsetTop - 50,
-                    behavior: 'smooth'
-                });
+                window.scrollTo({ top: content.parentElement.offsetTop - 50, behavior: 'smooth' });
             }
         });
     }
+
+    // LOGIC ĐẾM NGƯỢC FLASH SALE TẠI CHI TIẾT SẢN PHẨM
+    function updateDetailCountdown() {
+        const timer = document.querySelector('.countdown-timer-detail');
+        if (!timer) return;
+
+        const endTime = new Date(timer.getAttribute('data-endtime')).getTime();
+        
+        const interval = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = endTime - now;
+
+            if (distance < 0) {
+                timer.innerHTML = "ĐÃ HẾT HẠN";
+                clearInterval(interval);
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            let timeStr = "";
+            if (days > 0) timeStr += days + "N ";
+            
+            const h = hours < 10 ? "0" + hours : hours;
+            const m = minutes < 10 ? "0" + minutes : minutes;
+            const s = seconds < 10 ? "0" + seconds : seconds;
+
+            timer.innerHTML = timeStr + h + ":" + m + ":" + s;
+        }, 1000);
+    }
+    updateDetailCountdown();
+
+    // UI CHỌN RATING SAO
+    const starContainer = document.getElementById('star-selector');
+    if(starContainer) {
+        const stars = starContainer.querySelectorAll('i');
+        const ratingInput = document.getElementById('ratingInput');
+
+        stars.forEach(star => {
+            star.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                ratingInput.value = value;
+                
+                // Đổi màu các sao
+                stars.forEach(s => {
+                    if(s.getAttribute('data-value') <= value) {
+                        s.classList.remove('text-secondary');
+                        s.classList.add('text-warning');
+                    } else {
+                        s.classList.remove('text-warning');
+                        s.classList.add('text-secondary');
+                    }
+                });
+            });
+            
+            // Tùy chọn hover effect để thân thiện hơn
+            star.addEventListener('mouseover', function() {
+                const value = this.getAttribute('data-value');
+                stars.forEach(s => {
+                    if(s.getAttribute('data-value') <= value) {
+                         s.style.opacity = "0.7";
+                    }
+                });
+            });
+            star.addEventListener('mouseout', function() {
+                stars.forEach(s => s.style.opacity = "1");
+            });
+        });
+    }
+
+    // IMAGE ZOOM LENS
+    const mainSlides = document.querySelectorAll('.product-main-slider .swiper-slide img');
+    mainSlides.forEach(img => {
+        img.addEventListener('mousemove', function(e) {
+            const {left, top, width, height} = this.getBoundingClientRect();
+            const x = (e.clientX - left) / width * 100;
+            const y = (e.clientY - top) / height * 100;
+            this.style.transformOrigin = `${x}% ${y}%`;
+            this.style.transform = 'scale(2)';
+        });
+        img.addEventListener('mouseleave', function() {
+            this.style.transformOrigin = 'center center';
+            this.style.transform = 'scale(1)';
+        });
+    });
+
+    // CHỌN BIẾN THỂ
+    function selectVariation(btn, basePrice, flashPrice) {
+        // Chuyển đổi sang số để tránh lỗi định dạng
+        const bPrice = parseFloat(basePrice) || 0;
+        const fPrice = parseFloat(flashPrice) || 0;
+        const aPrice = parseFloat(btn.getAttribute('data-price')) || 0;
+        
+        // Bỏ active
+        document.querySelectorAll('.variation-btn').forEach(el => {
+            el.classList.remove('active', 'bg-dark', 'text-white');
+            el.classList.add('btn-outline-dark');
+        });
+        
+        // Active nút hiện tại
+        btn.classList.add('active', 'bg-dark', 'text-white');
+        btn.classList.remove('btn-outline-dark');
+        
+        // Tính giá mới (Giá flash sale + giá cộng thêm của biến thể)
+        const newPrice = fPrice + aPrice;
+        
+        // Cập nhật UI giá tiền
+        const priceEl = document.getElementById('main-price') || document.querySelector('.detail-flash-sale .price-tag');
+        if(priceEl) {
+            priceEl.innerHTML = newPrice.toLocaleString('vi-VN') + "₫";
+        }
+        
+        // Cập nhật giá trên Sticky Bar
+        const stickyPrice = document.getElementById('sticky-price');
+        if(stickyPrice) stickyPrice.innerHTML = newPrice.toLocaleString('vi-VN') + "₫";
+        
+        // Cập nhật ID biến thể vào hidden input
+        const varId = btn.getAttribute('data-id');
+        const hiddenInput = document.getElementById('selected_variation_id');
+        if(hiddenInput) hiddenInput.value = varId;
+        
+        // Mở khoá nút Add to Cart và đổi text
+        const addCartBtn = document.getElementById('btn-add-cart');
+        if(addCartBtn) {
+            addCartBtn.disabled = false;
+            addCartBtn.classList.remove('btn-danger');
+            addCartBtn.classList.add('btn-warning'); // Đổi sang màu vàng cho nổi bật sau khi chọn
+            addCartBtn.innerHTML = '<i class="fas fa-cart-plus me-2"></i>THÊM VÀO GIỎ HÀNG';
+        }
+    }
+
+    // STICKY BOTTOM BAR LOGIC
+    window.addEventListener('scroll', function() {
+        const stickyBar = document.getElementById('stickyBuyBar');
+        if(!stickyBar) return;
+        if(window.scrollY > 600) {
+            stickyBar.style.display = 'block';
+        } else {
+            stickyBar.style.display = 'none';
+        }
+    });
 </script>
 {% endblock %}

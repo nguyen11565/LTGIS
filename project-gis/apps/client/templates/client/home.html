@@ -4,113 +4,138 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 <style>
-    /* DANH MỤC */
-    .cat-item { border: none; padding: 12px 15px; font-size: 14px; font-weight: 500; transition: 0.2s; border-left: 4px solid transparent; }
-    .cat-item:hover { background-color: #fff1f2 !important; color: #d70018 !important; padding-left: 20px; }
+    /* GLOBAL */
+    body { background-color: #f7f9fc; }
     
-    /* Hiệu ứng khi danh mục đang được chọn */
-    .cat-item.active { 
-        background-color: #fff1f2 !important; 
-        color: #d70018 !important; 
-        border-left: 4px solid #d70018; 
-        font-weight: bold;
+    /* GLASSMORPHISM FILTER CARDS */
+    .filter-card { 
+        border-radius: 16px; 
+        margin-bottom: 24px; 
+        background: rgba(255, 255, 255, 0.7); 
+        backdrop-filter: blur(16px); 
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.9); 
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+        overflow: hidden; 
     }
+    .filter-header { font-weight: 700; padding: 18px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 16px; color: #2d3436; }
+    .filter-body { padding: 20px; }
 
-    /* -------------------------------------
-       CSS BỐ CỤC CHUNG & SIDEBAR (CẬP NHẬT THEO YÊU CẦU)
-       ------------------------------------- */
-    body { background-color: #f4f6f8; }
-    
-    .sidebar-menu .list-group-item {
-        border: none; padding: 12px 15px; font-weight: 500; font-size: 15px;
-        color: #444; border-left: 4px solid transparent; transition: 0.3s;
+    /* SIDEBAR MENU */
+    .sidebar-menu .list-group-item { 
+        border: none; padding: 14px 18px; font-weight: 500; font-size: 15px; color: #4b6584; 
+        background: transparent; border-left: 4px solid transparent; transition: all 0.3s ease; 
     }
-    .sidebar-menu .list-group-item:hover,
-    .sidebar-menu .list-group-item.active {
-        background-color: #fff1f2 !important; color: #d70018 !important;
-        border-left: 4px solid #d70018; font-weight: bold;
+    .sidebar-menu .list-group-item:hover, .sidebar-menu .list-group-item.active { 
+        background: linear-gradient(90deg, rgba(215,0,24,0.08) 0%, rgba(255,255,255,0) 100%) !important; 
+        color: #d70018 !important; border-left: 4px solid #d70018; font-weight: 700; 
     }
     
-    .filter-card { border-radius: 12px; margin-bottom: 20px; overflow: hidden; background: #fff; }
-    .filter-header { font-weight: bold; padding: 15px 20px; border-bottom: 1px solid #f0f0f0; font-size: 16px; color: #333; }
-    .filter-body { padding: 15px 20px; }
-    
-    /* RANGE SLIDER MỚI (KIỂU 2 NÚM KÉO MÀU XANH) */
-    .price-range-wrapper { position: relative; padding-top: 15px; margin-bottom: 20px; }
-    .range-track {
-        height: 6px; background-color: #e0e0e0; border-radius: 4px; position: absolute; width: 100%; top: 22px; z-index: 1;
+    /* MODIFIED RADIO & CHECKBOX (PILL STYLE) */
+    .form-check { margin-bottom: 8px; padding-left: 0; }
+    .form-check-input { display: none; }
+    .form-check-label {
+        display: block; width: 100%; padding: 10px 16px; background: rgba(255,255,255,0.6); 
+        border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer;
+        font-size: 14px; font-weight: 500; color: #555; transition: all 0.25s ease;
     }
-    .range-fill {
-        height: 6px; background-color: #009981; border-radius: 4px; position: absolute; top: 22px; z-index: 2;
+    .form-check-label:hover { background: #fff; border-color: rgba(215,0,24,0.3); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+    .form-check-input:checked + .form-check-label { 
+        background: #fff1f2; border-color: #d70018; color: #d70018; font-weight: 700;
+        box-shadow: 0 4px 15px rgba(215,0,24,0.1);
     }
-    input[type=range] {
-        -webkit-appearance: none; width: 100%; position: absolute; top: 15px; z-index: 3; background: transparent; pointer-events: none;
-    }
-    input[type=range]::-webkit-slider-thumb {
-        -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #009981; 
-        cursor: pointer; pointer-events: auto; position: relative; z-index: 4; box-shadow: 0 0 0 4px rgba(0,153,129,0.2);
-    }
-    
-    /* Box nhập giá giống hình */
+    .text-success.form-check-label { color: #10ac84; }
+    .text-danger.form-check-label { color: #ee5253; }
+    .form-check-input[value="in_stock"]:checked + .form-check-label { background: #e8f8f5; border-color: #10ac84; color: #10ac84; }
+    .form-check-input[value="out_of_stock"]:checked + .form-check-label { background: #ffefef; border-color: #ee5253; color: #ee5253; }
+
+    /* RANGE SLIDER MỚI */
+    .price-range-wrapper { position: relative; padding-top: 15px; margin-bottom: 24px; }
+    .range-track { height: 6px; background-color: #eee; border-radius: 4px; position: absolute; width: 100%; top: 22px; z-index: 1; }
+    .range-fill { height: 6px; background: linear-gradient(90deg, #d70018, #ff5252); border-radius: 4px; position: absolute; top: 22px; z-index: 2; }
+    input[type=range] { -webkit-appearance: none; width: 100%; position: absolute; top: 15px; z-index: 3; background: transparent; pointer-events: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%; background: #d70018; border: 3px solid #fff; cursor: pointer; pointer-events: auto; position: relative; z-index: 4; box-shadow: 0 2px 8px rgba(215,0,24,0.4); transition: transform 0.1s; }
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
     .price-input-box { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; }
-    .price-input-box input {
-        width: 45%; border: 1px solid #ddd; border-radius: 6px; padding: 8px; 
-        font-weight: bold; color: #000; text-align: center; font-size: 14px;
-    }
-
-    /* Radio button Custom cho các mức giá dựng sẵn */
-    .price-list .form-check-label { cursor: pointer; color: #555; transition: 0.2s; font-size: 14px;}
-    .price-list .form-check-input:checked + .form-check-label { color: #d70018; font-weight: bold; }
-
-
-    /* -------------------------------------
-       CSS CHO HERO BANNER (KIỂU HOÀNG HÀ)
-       ------------------------------------- */
-    .hero-section { margin-bottom: 30px; background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .hero-main-slider { width: 100%; height: 350px; border-radius: 12px 12px 0 0; }
-    .hero-main-slider img { width: 100%; height: 100%; object-fit: cover; }
+    .price-input-box input { width: 45%; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; padding: 10px; font-weight: 700; color: #2d3436; text-align: center; font-size: 14px; background: rgba(255,255,255,0.8); }
     
-    .hero-main-slider .swiper-button-next, .hero-main-slider .swiper-button-prev {
-        background-color: rgba(255, 255, 255, 0.9); color: #333; width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-    .hero-main-slider .swiper-button-next::after, .hero-main-slider .swiper-button-prev::after { font-size: 16px; font-weight: bold; }
+    .btn-apply-filter { width: 100%; border: none; background: linear-gradient(135deg, #d70018 0%, #ff4757 100%); border-radius: 12px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.3s ease; box-shadow: 0 6px 15px rgba(215,0,24,0.25); color: #fff; padding: 12px; margin-top: 20px;}
+    .btn-apply-filter:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(215,0,24,0.35); color: #fff; }
 
-    .hero-thumbs-slider { padding: 0 10px; background: #fff; border-top: 1px solid #eee; }
-    .custom-thumb-slide {
-        text-align: center; cursor: pointer; padding: 15px 5px; 
-        border-bottom: 3px solid transparent; transition: all 0.3s ease; opacity: 0.6; position: relative;
-    }
-    .custom-thumb-slide::after { content: ''; position: absolute; bottom: -3px; left: 10%; width: 80%; height: 3px; background-color: #e0e0e0; transition: 0.3s; }
+    /* HERO BANNER */
+    .hero-section { margin-bottom: 30px; background-color: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.03); }
+    .hero-main-slider { width: 100%; height: 380px; border-radius: 20px 20px 0 0; }
+    .hero-main-slider img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-main-slider .swiper-button-next, .hero-main-slider .swiper-button-prev { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px); color: #333; width: 44px; height: 44px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: 0.3s; }
+    .hero-main-slider .swiper-button-next:hover, .hero-main-slider .swiper-button-prev:hover { background: #fff; transform: scale(1.1); color: #d70018; }
+    .hero-main-slider .swiper-button-next::after, .hero-main-slider .swiper-button-prev::after { font-size: 18px; font-weight: 900; }
+
+    .hero-thumbs-slider { padding: 5px 10px; background: #fff; border-top: 1px solid #f0f0f0; }
+    .custom-thumb-slide { text-align: center; cursor: pointer; padding: 16px 5px; border-bottom: 3px solid transparent; transition: all 0.3s ease; opacity: 0.5; position: relative; }
+    .custom-thumb-slide::after { content: ''; position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); width: 0%; height: 3px; background-color: transparent; transition: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); border-radius: 3px; }
     .custom-thumb-slide:hover { opacity: 0.8; }
     .hero-thumbs-slider .swiper-slide-thumb-active { opacity: 1; }
-    .hero-thumbs-slider .swiper-slide-thumb-active::after { background-color: #009981; } 
-    .hero-thumbs-slider .swiper-slide-thumb-active .thumb-title { color: #009981; }
+    .hero-thumbs-slider .swiper-slide-thumb-active::after { background: linear-gradient(90deg, #d70018, #ff5252); width: 80%; } 
+    .hero-thumbs-slider .swiper-slide-thumb-active .thumb-title { color: #d70018; }
+    .thumb-title { font-weight: 700; font-size: 14px; color: #333; margin-bottom: 4px; transition: 0.3s; }
+    .thumb-subtitle { font-size: 12px; color: #7f8fa6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;}
 
-    .thumb-title { font-weight: bold; font-size: 14px; color: #333; margin-bottom: 3px; transition: 0.3s; }
-    .thumb-subtitle { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* -------------------------------------
-       CARD SẢN PHẨM 
-       ------------------------------------- */
-    .product-card {
-        background: white; border-radius: 12px; border: 1px solid #eee; transition: 0.3s;
-        height: 100%; position: relative; display: flex; flex-direction: column;
-    }
-    .product-card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.1); transform: translateY(-5px); border-color: #d70018;}
+    /* BANNER FLASH SALE LỚN */
+    .flash-sale-banner { background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); color: white; padding: 25px 35px; box-shadow: 0 15px 35px rgba(255, 8, 68, 0.25); border-radius: 20px !important; }
+    .flash-sale-title { font-size: 28px; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: 2px; text-shadow: 3px 3px 6px rgba(0,0,0,0.2); }
+    .global-countdown { display: flex; gap: 10px; align-items: center; }
+    .time-box { background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); color: #fff; padding: 10px 14px; border-radius: 10px; font-weight: 800; font-size: 22px; line-height: 1; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     
-    .product-img-box { padding: 15px; height: 180px; display: flex; align-items: center; justify-content: center; }
-    .product-img { max-height: 100%; transition: 0.3s; }
-    .product-card:hover .product-img { transform: scale(1.08); }
+    .flash-sale-slider .swiper-slide { height: auto; }
+    .flash-sale-slider .product-card { padding-bottom: 5px; }
 
-    .product-body { padding: 15px; flex-grow: 1; }
-    .product-name { font-size: 14px; font-weight: 600; color: #333; line-height: 1.4; height: 40px; overflow: hidden; }
-    .product-price { color: #d70018; font-size: 16px; font-weight: 800; }
+    /* CARD SẢN PHẨM MICRO-INTERACTIONS */
+    .product-card { 
+        background: #fff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.04); 
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        height: 100%; position: relative; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .product-card:hover { 
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08); transform: translateY(-8px); 
+        border-color: rgba(215,0,24,0.15);
+    }
+    .product-img-box { padding: 25px; height: 210px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+    .product-img-box::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.03) 100%); z-index: 1; opacity: 0; transition: 0.3s; }
+    .product-card:hover .product-img-box::before { opacity: 1; }
+    .product-img { max-height: 100%; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); position: relative; z-index: 2;}
+    .product-card:hover .product-img { transform: scale(1.12); }
+    
+    .product-body { padding: 16px 20px; flex-grow: 1; display: flex; flex-direction: column; background: #fff; position: relative; z-index: 3;}
+    .product-name { font-size: 15px; font-weight: 700; color: #2d3436; line-height: 1.4; height: 42px; overflow: hidden; transition: color 0.2s; }
+    .product-card:hover .product-name { color: #d70018; }
+    .product-price { color: #d70018; font-size: 18px; font-weight: 800; margin-top: 8px;}
+    
+    .badge-promo { position: absolute; top: 12px; left: 12px; background: linear-gradient(135deg, #d70018, #ff4757); color: white; font-size: 11px; padding: 4px 10px; border-radius: 6px; z-index: 5; font-weight:800; box-shadow: 0 4px 10px rgba(215,0,24,0.3); }
+    
+    .flash-sale-badge { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #f1c40f, #f39c12); color: #000; font-size: 11px; padding: 4px 10px; border-radius: 6px; z-index: 5; font-weight:800; box-shadow: 0 4px 10px rgba(243,156,18,0.3); animation: blink 2s infinite; }
+    .flash-sale-box { background: linear-gradient(to right, rgba(215, 0, 24, 0.05), rgba(215, 0, 24, 0.01)); border: 1px dashed rgba(215,0,24,0.4); padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; flex-grow: 1;}
+    .countdown-timer { font-family: monospace; font-size: 14px; background: #d70018; color: white; padding: 4px 8px; border-radius: 6px; letter-spacing: 1px; font-weight: bold;}
+    @keyframes blink { 0% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(241, 196, 15, 0); } 100% { box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); } }
+    
+    .btn-cart-quick { background: #f8f9fa; color: #2d3436; border: 1px solid rgba(0,0,0,0.08); border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .btn-cart-quick:hover { background: linear-gradient(135deg, #d70018, #ff4757); color: white; border-color: transparent; transform: scale(1.1) rotate(-5deg); box-shadow: 0 5px 12px rgba(215,0,24,0.3); }
+    .btn-cart-quick.disabled { pointer-events: none; opacity: 0.5; background: #f1f2f6; color: #a4b0be; border-color: transparent; }
 
-    .badge-promo { position: absolute; top: 10px; left: 10px; background: #d70018; color: white; font-size: 10px; padding: 3px 8px; border-radius: 5px; z-index: 1; font-weight:bold; }
-    .btn-cart-quick { background: #f8f9fa; color: #d70018; border: 1px solid #eee; border-radius: 8px; padding: 6px 12px; font-size: 13px; transition: 0.3s; }
-    .btn-cart-quick:hover { background: #d70018; color: white; border-color: #d70018; }
+    @media (max-width: 991px) { .hero-main-slider { height: 220px; } .thumb-title { font-size: 12px; } .thumb-subtitle { display: none; } .flash-sale-title { font-size: 22px;} }
 
-    @media (max-width: 991px) { .hero-main-slider { height: 200px; } .thumb-title { font-size: 12px; } .thumb-subtitle { font-size: 10px; } }
+    /* PHÂN TRANG GLASSMORPHISM */
+    .pagination-wrapper { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 30px 0 40px; flex-wrap: wrap; }
+    .page-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.06); background: rgba(255,255,255,0.7); backdrop-filter: blur(5px); color: #4b6584; font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+    .page-btn:hover { background: #fff; color: #d70018; border-color: rgba(215,0,24,0.2); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(215,0,24,0.1); }
+    .page-btn.active { background: linear-gradient(135deg, #d70018, #ff4757); color: #fff; border-color: transparent; box-shadow: 0 8px 20px rgba(215,0,24,0.3); pointer-events: none; transform: scale(1.05); }
+    .page-btn.disabled { opacity: 0.4; pointer-events: none; cursor: default; background: transparent; box-shadow: none; }
+    .page-btn.ellipsis { border: none; background: transparent; cursor: default; letter-spacing: 2px; box-shadow: none; color: #a4b0be; }
+    .page-info-badge { background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.05); color: #7f8fa6; border-radius: 20px; padding: 8px 18px; font-size: 13px; font-weight: 600; margin-left: 10px; }
+    
+    /* SECTION HEADER VIP */
+    .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; position: relative; }
+    .section-title { font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; background: linear-gradient(90deg, #2d3436 0%, #636e72 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hot-badge { background: linear-gradient(135deg, #10ac84, #1dd1a1); color: white; border: none; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 12px; box-shadow: 0 4px 12px rgba(16,172,132,0.3); letter-spacing: 0.5px; }
 </style>
 {% endblock %}
 
@@ -140,10 +165,36 @@
                     <div class="filter-body pt-2">
                         {% for cat in categories %}
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="category" id="cat_{{ cat.id }}" value="{{ cat.id }}" {% if current_category.id == cat.id or request.GET.category == cat.id|stringformat:"s" %}checked{% endif %}>
+                            <input class="form-check-input" type="radio" name="category" id="cat_{{ cat.id }}" value="{{ cat.id }}" 
+                                   onchange="this.form.submit()"
+                                   {% if current_category.id == cat.id or request.GET.category == cat.id|stringformat:"s" %}checked{% endif %}>
                             <label class="form-check-label fw-medium text-dark" for="cat_{{ cat.id }}">{{ cat.name }}</label>
                         </div>
                         {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card filter-card shadow-sm">
+                    <div class="filter-header d-flex justify-content-between align-items-center">
+                        <span>Tình trạng kho</span>
+                        <i class="fas fa-box-open text-muted small"></i>
+                    </div>
+                    <div class="filter-body pt-2">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="stock_status" id="stock_all" value="" 
+                                   onchange="this.form.submit()" {% if not request.GET.stock_status %}checked{% endif %}>
+                            <label class="form-check-label fw-medium text-dark" for="stock_all">Tất cả</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="stock_status" id="stock_in" value="in_stock" 
+                                   onchange="this.form.submit()" {% if request.GET.stock_status == 'in_stock' %}checked{% endif %}>
+                            <label class="form-check-label fw-medium text-success" for="stock_in">Còn hàng</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="stock_status" id="stock_out" value="out_of_stock" 
+                                   onchange="this.form.submit()" {% if request.GET.stock_status == 'out_of_stock' %}checked{% endif %}>
+                            <label class="form-check-label fw-medium text-danger" for="stock_out">Hết hàng</label>
+                        </div>
                     </div>
                 </div>
 
@@ -153,7 +204,6 @@
                         <i class="fas fa-plus text-muted small"></i>
                     </div>
                     <div class="filter-body pt-0">
-                        
                         <div class="price-range-wrapper">
                             <div class="range-track"></div>
                             <div class="range-fill" id="rangeFill"></div>
@@ -166,25 +216,25 @@
                             <span class="text-muted fw-bold">-</span>
                             <input type="text" id="maxPriceInput" name="max_price" value="{{ request.GET.max_price|default:'40800000'|intcomma }}" readonly>
                         </div>
-
                         <hr class="text-muted mt-4">
-
                         <div class="price-list">
                             {% with p_range=request.GET.price_range %}
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="1-3" id="p1" {% if p_range == '1-3' %}checked{% endif %}><label class="form-check-label" for="p1">Từ 1 - 3 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="3-5" id="p2" {% if p_range == '3-5' %}checked{% endif %}><label class="form-check-label" for="p2">Từ 3 - 5 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="5-10" id="p3" {% if p_range == '5-10' %}checked{% endif %}><label class="form-check-label" for="p3">Từ 5 - 10 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="10-15" id="p4" {% if p_range == '10-15' %}checked{% endif %}><label class="form-check-label" for="p4">Từ 10 - 15 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="15-20" id="p5" {% if p_range == '15-20' %}checked{% endif %}><label class="form-check-label" for="p5">Từ 15 - 20 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="20-25" id="p6" {% if p_range == '20-25' %}checked{% endif %}><label class="form-check-label" for="p6">Từ 20 - 25 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="25-30" id="p7" {% if p_range == '25-30' %}checked{% endif %}><label class="form-check-label" for="p7">Từ 25 - 30 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="30-50" id="p8" {% if p_range == '30-50' %}checked{% endif %}><label class="form-check-label" for="p8">Từ 30 - 50 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="50-85" id="p9" {% if p_range == '50-85' %}checked{% endif %}><label class="form-check-label" for="p9">Từ 50 - 85 triệu</label></div>
-                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="85+" id="p10" {% if p_range == '85+' %}checked{% endif %}><label class="form-check-label" for="p10">Trên 85 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="1-3" id="p1" onchange="this.form.submit()" {% if p_range == '1-3' %}checked{% endif %}><label class="form-check-label" for="p1">Từ 1 - 3 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="3-5" id="p2" onchange="this.form.submit()" {% if p_range == '3-5' %}checked{% endif %}><label class="form-check-label" for="p2">Từ 3 - 5 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="5-10" id="p3" onchange="this.form.submit()" {% if p_range == '5-10' %}checked{% endif %}><label class="form-check-label" for="p3">Từ 5 - 10 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="10-15" id="p4" onchange="this.form.submit()" {% if p_range == '10-15' %}checked{% endif %}><label class="form-check-label" for="p4">Từ 10 - 15 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="15-20" id="p5" onchange="this.form.submit()" {% if p_range == '15-20' %}checked{% endif %}><label class="form-check-label" for="p5">Từ 15 - 20 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="20-25" id="p6" onchange="this.form.submit()" {% if p_range == '20-25' %}checked{% endif %}><label class="form-check-label" for="p6">Từ 20 - 25 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="25-30" id="p7" onchange="this.form.submit()" {% if p_range == '25-30' %}checked{% endif %}><label class="form-check-label" for="p7">Từ 25 - 30 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="30-50" id="p8" onchange="this.form.submit()" {% if p_range == '30-50' %}checked{% endif %}><label class="form-check-label" for="p8">Từ 30 - 50 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="50-85" id="p9" onchange="this.form.submit()" {% if p_range == '50-85' %}checked{% endif %}><label class="form-check-label" for="p9">Từ 50 - 85 triệu</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="radio" name="price_range" value="85+" id="p10" onchange="this.form.submit()" {% if p_range == '85+' %}checked{% endif %}><label class="form-check-label" for="p10">Trên 85 triệu</label></div>
                             {% endwith %}
                         </div>
-                        
-                        <button type="submit" class="btn btn-danger w-100 mt-3 fw-bold rounded shadow-sm">ÁP DỤNG LỌC</button>
+                        <button type="submit" class="btn-apply-filter">ÁP DỤNG LỌC <i class="fas fa-check ms-1"></i></button>
+                        {% if request.GET %}
+                            <a href="{% url 'client:home' %}" class="btn btn-outline-secondary w-100 mt-2 fw-bold rounded shadow-sm border-0 bg-light">Xóa bộ lọc <i class="fas fa-times ms-1"></i></a>
+                        {% endif %}
                     </div>
                 </div>
             </form>
@@ -193,7 +243,7 @@
 
         <div class="col-lg-9">
             
-            {% if not request.GET.view and not request.GET.category and not request.GET.price_range and not request.GET.max_price %}
+            {% if not request.GET.view and not request.GET.category and not request.GET.price_range and not request.GET.max_price and not request.GET.stock_status %}
                 
                 <div class="hero-section">
                     <div class="swiper hero-main-slider">
@@ -205,7 +255,6 @@
                         </div>
                         <div class="swiper-button-next"></div><div class="swiper-button-prev"></div>
                     </div>
-
                     <div thumbsSlider="" class="swiper hero-thumbs-slider">
                         <div class="swiper-wrapper">
                             <div class="swiper-slide custom-thumb-slide"><div class="thumb-title">Xiaomi 17 Ultra</div><div class="thumb-subtitle">Tinh Hoa Nhiếp Ảnh Leica</div></div>
@@ -216,9 +265,67 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-end mb-3 mt-4">
-                    <h5 class="fw-bold mb-0 text-uppercase" style="letter-spacing: 0.5px;">Sản phẩm bán chạy</h5>
-                    <span class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill small">🔥 Đang cháy hàng</span>
+                <div class="flash-sale-banner mt-4 mb-4 rounded-3 position-relative overflow-hidden">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center position-relative mb-4" style="z-index: 2;">
+                        <div class="d-flex align-items-center mb-3 mb-md-0">
+                            <i class="fas fa-bolt fa-3x text-warning me-3" style="filter: drop-shadow(0 0 10px rgba(255,193,7,0.8));"></i>
+                            <div>
+                                <h3 class="flash-sale-title mb-0">FLASH SALE GIỜ VÀNG</h3>
+                                <p class="mb-0 text-white-50 small">Săn ngay deal sốc - Số lượng có hạn!</p>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="me-3 fw-bold text-uppercase d-none d-sm-block">Kết thúc trong:</span>
+                            <div class="global-countdown">
+                                <div class="time-box" id="fs-hours">00</div>
+                                <span class="fs-5 fw-bold text-white">:</span>
+                                <div class="time-box" id="fs-minutes">00</div>
+                                <span class="fs-5 fw-bold text-white">:</span>
+                                <div class="time-box" id="fs-seconds">00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <i class="fas fa-bolt position-absolute text-white" style="font-size: 250px; opacity: 0.1; top: -50px; right: 10%; z-index: 1;"></i>
+
+                    <div class="swiper flash-sale-slider position-relative" style="z-index: 2;">
+                        <div class="swiper-wrapper">
+                            {% for product in flash_sale_products %}
+                                <div class="swiper-slide height-auto">
+                                    <div class="product-card shadow-sm h-100 border-0 rounded-3">
+                                        <span class="flash-sale-badge"><i class="fas fa-bolt me-1"></i>GIỜ VÀNG</span>
+                                        <a href="{% url 'client:product_detail' product.id %}" class="product-img-box text-decoration-none">
+                                            <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" class="product-img" alt="{{ product.name }}">
+                                        </a>
+                                        <div class="product-body p-3 d-flex flex-column">
+                                            <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none">
+                                                <div class="product-name mb-1" style="font-size: 13px;">{{ product.name }}</div>
+                                            </a>
+                                            <div class="flash-sale-box mt-auto p-2">
+                                                <div class="fw-bold text-danger fs-6">{{ product.flash_sale.flash_price|intcomma }}₫</div>
+                                                <div class="small text-muted"><del>{{ product.price|intcomma }}₫</del></div>
+                                            </div>
+                                            <div class="text-center mt-2">
+                                                <span class="countdown-timer d-inline-block w-100" data-endtime="{{ product.flash_sale.end_time|date:'c' }}">--:--:--</span>
+                                            </div>
+                                            
+                                            <div class="mt-2 mb-1 d-flex justify-content-between align-items-center">
+                                                {% if product.stock > 0 %}
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle w-100 py-1" style="font-size: 10px;">Còn {{ product.stock }} sản phẩm</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle w-100 py-1" style="font-size: 10px;">Hết hàng</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="section-header mt-5">
+                    <h3 class="section-title">Sản phẩm bán chạy <i class="fas fa-fire text-danger ms-1"></i></h3>
+                    <span class="hot-badge">Tranh mua ngay</span>
                 </div>
                 
                 <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-5">
@@ -228,15 +335,39 @@
                             <div class="position-absolute top-0 end-0 m-2" style="z-index: 2;">
                                 <span class="badge bg-danger rounded-circle p-2" title="Bán chạy"><i class="fas fa-fire"></i></span>
                             </div>
+
+                            {% if product.flash_sale and product.flash_sale.is_valid %}
+                                <span class="flash-sale-badge"><i class="fas fa-bolt me-1"></i>GIỜ VÀNG</span>
+                            {% else %}
+                                <span class="badge-promo">Trả góp 0%</span>
+                            {% endif %}
+
                             <a href="{% url 'client:product_detail' product.id %}" class="product-img-box text-decoration-none">
                                 <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" class="product-img" alt="{{ product.name }}">
                             </a>
                             <div class="product-body">
                                 <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none"><div class="product-name mb-1">{{ product.name }}</div></a>
-                                <div class="product-price mb-2">{{ product.price|floatformat:0|intcomma }}₫</div>
-                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                
+                                {% if product.flash_sale and product.flash_sale.is_valid %}
+                                    <div class="flash-sale-box mt-2">
+                                        <div class="fw-bold text-danger fs-5">{{ product.flash_sale.flash_price|intcomma }}₫</div>
+                                        <div class="small text-muted"><del>{{ product.price|intcomma }}₫</del></div>
+                                    </div>
+                                {% else %}
+                                    <div class="product-price mb-2 mt-auto">{{ product.price|floatformat:0|intcomma }}₫</div>
+                                {% endif %}
+
+                                {% if product.stock == 0 %}
+                                    <div class="text-center mb-2"><span class="badge bg-danger-subtle text-danger border border-danger-subtle w-100">Hết hàng</span></div>
+                                {% endif %}
+
+                                <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
                                     <small class="text-muted"><i class="fas fa-check-circle text-success me-1"></i>Đã bán {{ product.total_sold }}</small>
-                                    <a href="{% url 'client:cart_add' product.id %}" class="btn-cart-quick"><i class="fas fa-cart-plus"></i></a>
+                                    {% if product.stock > 0 %}
+                                        <a href="{% url 'client:cart_add' product.id %}" class="btn-cart-quick"><i class="fas fa-cart-plus"></i></a>
+                                    {% else %}
+                                        <button class="btn-cart-quick disabled" disabled><i class="fas fa-ban"></i></button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -244,12 +375,14 @@
                     {% endfor %}
                 </div>
 
-                <h5 class="fw-bold mb-3 text-uppercase mt-5">Dành cho bạn</h5>
+                <div class="section-header mt-5">
+                    <h3 class="section-title">Dành cho bạn <i class="fas fa-heart text-danger ms-1"></i></h3>
+                </div>
             
             {% else %}
-                <div class="d-flex justify-content-between align-items-end mb-4 bg-white p-3 rounded shadow-sm border">
-                    <h5 class="fw-bold mb-0 text-danger"><i class="fas fa-filter me-2"></i> KẾT QUẢ TÌM KIẾM</h5>
-                    <span class="text-muted fw-bold">Tìm thấy {{ products|length }} sản phẩm</span>
+                <div class="section-header bg-white p-4 rounded-4 shadow-sm border mb-4" style="background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);">
+                    <h3 class="section-title text-danger" style="background: none; -webkit-text-fill-color: #d70018;"><i class="fas fa-filter me-2"></i> KẾT QUẢ TÌM KIẾM</h3>
+                    <span class="hot-badge bg-secondary" style="background: #2d3436;"><i class="fas fa-search me-1"></i> {{ paginator.count }} sản phẩm</span>
                 </div>
             {% endif %}
 
@@ -257,16 +390,38 @@
                 {% for product in products %}
                 <div class="col">
                     <div class="product-card shadow-sm">
-                        <span class="badge-promo">Trả góp 0%</span>
+                        {% if product.flash_sale and product.flash_sale.is_valid %}
+                            <span class="flash-sale-badge"><i class="fas fa-bolt me-1"></i>GIỜ VÀNG</span>
+                        {% else %}
+                            <span class="badge-promo">Trả góp 0%</span>
+                        {% endif %}
+
                         <a href="{% url 'client:product_detail' product.id %}" class="product-img-box text-decoration-none">
                             <img src="{% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/300{% endif %}" class="product-img" alt="{{ product.name }}">
                         </a>
                         <div class="product-body">
                             <a href="{% url 'client:product_detail' product.id %}" class="text-decoration-none"><div class="product-name mb-1">{{ product.name }}</div></a>
-                            <div class="product-price mb-2">{{ product.price|floatformat:0|intcomma }}₫</div>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
+                            
+                            {% if product.flash_sale and product.flash_sale.is_valid %}
+                                <div class="flash-sale-box mt-2">
+                                    <div class="fw-bold text-danger fs-5">{{ product.flash_sale.flash_price|intcomma }}₫</div>
+                                    <div class="small text-muted"><del>{{ product.price|intcomma }}₫</del></div>
+                                </div>
+                            {% else %}
+                                <div class="product-price mb-2 mt-auto">{{ product.price|floatformat:0|intcomma }}₫</div>
+                            {% endif %}
+
+                            {% if product.stock == 0 %}
+                                <div class="text-center mb-2"><span class="badge bg-danger-subtle text-danger border border-danger-subtle w-100">Hết hàng</span></div>
+                            {% endif %}
+
+                            <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
                                 <div class="text-warning small" style="font-size: 10px;"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
-                                <a href="{% url 'client:cart_add' product.id %}" class="btn-cart-quick" title="Thêm vào giỏ"><i class="fas fa-cart-plus"></i></a>
+                                {% if product.stock > 0 %}
+                                    <a href="{% url 'client:cart_add' product.id %}" class="btn-cart-quick" title="Thêm vào giỏ"><i class="fas fa-cart-plus"></i></a>
+                                {% else %}
+                                    <button class="btn-cart-quick disabled" disabled title="Tạm hết hàng"><i class="fas fa-ban"></i></button>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -281,6 +436,82 @@
                 {% endfor %}
             </div>
 
+            {% if page_obj.paginator.num_pages > 1 %}
+            <div class="pagination-wrapper">
+                {# Nút Trang trước #}
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="page-btn" title="Trang trước">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                {% else %}
+                    <span class="page-btn disabled"><i class="fas fa-chevron-left"></i></span>
+                {% endif %}
+
+                {# Số trang #}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="page-btn active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" class="page-btn">{{ num }}</a>
+                    {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                        {% if num == 1 and page_obj.number > 4 %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1" class="page-btn">1</a>
+                            {% if page_obj.number > 5 %}<span class="page-btn ellipsis">…</span>{% endif %}
+                        {% elif num == page_obj.paginator.num_pages and page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
+                            {% if page_obj.number < page_obj.paginator.num_pages|add:"-4" %}<span class="page-btn ellipsis">…</span>{% endif %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}" class="page-btn">{{ page_obj.paginator.num_pages }}</a>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+
+                {# Nút Trang sau #}
+                {% if page_obj.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="page-btn" title="Trang sau">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <span class="page-btn disabled"><i class="fas fa-chevron-right"></i></span>
+                {% endif %}
+
+                <span class="page-info-badge ms-2">Trang {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+            </div>
+            {% endif %}
+
+            <!-- TIN TỨC MỚI NHẤT (TỪ MODULE BLOG) -->
+            {% if latest_news %}
+            <div class="section-header mt-5">
+                <h3 class="section-title">Tin Tức Công Nghệ 24h <i class="fas fa-newspaper text-primary ms-1"></i></h3>
+                <a href="{% url 'client:news_list' %}" class="btn btn-sm btn-outline-primary rounded-pill fw-bold">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+            </div>
+            
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-5">
+                {% for n in latest_news %}
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden product-card">
+                        <a href="{% url 'client:news_detail' n.slug %}" class="position-relative d-block overflow-hidden" style="height: 140px;">
+                            {% if n.thumbnail %}
+                            <img src="{{ n.thumbnail.url }}" class="w-100 h-100 object-fit-cover product-img" style="object-fit:cover;" alt="{{ n.title }}">
+                            {% else %}
+                            <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
+                                <i class="fas fa-image fa-2x"></i>
+                            </div>
+                            {% endif %}
+                        </a>
+                        <div class="card-body p-3 d-flex flex-column">
+                            <h6 class="card-title fw-bold mb-2">
+                                <a href="{% url 'client:news_detail' n.slug %}" class="text-dark text-decoration-none" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ n.title }}</a>
+                            </h6>
+                            <div class="mt-auto d-flex justify-content-between align-items-center small text-muted">
+                                <span><i class="fas fa-clock me-1"></i>{{ n.created_at|timesince }}</span>
+                                <span><i class="fas fa-eye me-1"></i>{{ n.views }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
         </div>
     </div>
 </div>
@@ -289,7 +520,6 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script>
-    // 1. Script cho Slider (Chỉ chạy nếu có Banner trên trang)
     if(document.querySelector('.hero-thumbs-slider')){
         var heroThumbs = new Swiper(".hero-thumbs-slider", {
             spaceBetween: 0, slidesPerView: 4, freeMode: true, watchSlidesProgress: true,
@@ -304,7 +534,20 @@
         });
     }
 
-    // 2. Logic cho Range Slider (Hai đầu Min/Max) màu Xanh
+    // KHỞI TẠO SLIDER CHO BANNER FLASH SALE
+    if(document.querySelector('.flash-sale-slider')){
+        var flashSaleSwiper = new Swiper(".flash-sale-slider", {
+            slidesPerView: 2,
+            spaceBetween: 15,
+            autoplay: { delay: 2500, disableOnInteraction: false },
+            breakpoints: {
+                576: { slidesPerView: 3 },
+                768: { slidesPerView: 3 },
+                992: { slidesPerView: 4 }
+            }
+        });
+    }
+
     const minRange = document.getElementById('minRange');
     const maxRange = document.getElementById('maxRange');
     const minInput = document.getElementById('minPriceInput');
@@ -312,47 +555,112 @@
     const rangeFill = document.getElementById('rangeFill');
     const radios = document.querySelectorAll('input[name="price_range"]');
 
-    function formatVND(val) {
-        return new Intl.NumberFormat('vi-VN').format(val);
-    }
-
-    function removeCommas(val) {
-        return val.toString().replace(/,/g, '').replace(/\./g, '');
-    }
+    function formatVND(val) { return new Intl.NumberFormat('vi-VN').format(val); }
+    function removeCommas(val) { return val.toString().replace(/,/g, '').replace(/\./g, ''); }
 
     function updateRangeUI() {
         let minVal = parseInt(minRange.value);
         let maxVal = parseInt(maxRange.value);
-
-        // Chống kéo Min vượt Max
         if (minVal > maxVal - 500000) { minVal = maxVal - 500000; minRange.value = minVal; }
         if (maxVal < minVal + 500000) { maxVal = minVal + 500000; maxRange.value = maxVal; }
 
-        // Cập nhật giá trị ra ô nhập liệu (Đã loại bỏ số thực, dùng value thực cho submit)
         minInput.value = formatVND(minVal);
         maxInput.value = formatVND(maxVal);
 
-        // Tính % để đổ màu thanh Fill màu xanh
         let maxLimit = parseInt(maxRange.max);
         let percent1 = (minVal / maxLimit) * 100;
         let percent2 = (maxVal / maxLimit) * 100;
         rangeFill.style.left = percent1 + "%";
         rangeFill.style.width = (percent2 - percent1) + "%";
-        
-        // Hủy chọn radio nếu người dùng tự kéo
         radios.forEach(r => r.checked = false);
     }
 
     if(minRange && maxRange) {
         minRange.addEventListener('input', updateRangeUI);
         maxRange.addEventListener('input', updateRangeUI);
-        updateRangeUI(); // Chạy lần đầu khi load trang
+        updateRangeUI(); 
     }
 
-    // Khi nạp Form, xóa dấu phẩy trong input để BE nhận số nguyên
     document.getElementById('filterForm').addEventListener('submit', function() {
         minInput.value = removeCommas(minInput.value);
         maxInput.value = removeCommas(maxInput.value);
     });
+
+    // LOGIC ĐẾM NGƯỢC CHO TỪNG SẢN PHẨM TRONG BANNER
+    document.addEventListener("DOMContentLoaded", function() {
+        const timers = document.querySelectorAll('.countdown-timer');
+        setInterval(() => {
+            timers.forEach(timer => {
+                const endTime = new Date(timer.getAttribute('data-endtime')).getTime();
+                const now = new Date().getTime();
+                const distance = endTime - now;
+
+                if (distance < 0) {
+                    timer.innerHTML = "ĐÃ KẾT THÚC";
+                    timer.classList.replace("bg-danger", "bg-secondary");
+                } else {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    
+                    const h = (hours < 10) ? "0" + hours : hours;
+                    const m = (minutes < 10) ? "0" + minutes : minutes;
+                    const s = (seconds < 10) ? "0" + seconds : seconds;
+                    
+                    let timeStr = "";
+                    if (days > 0) timeStr += days + " Ngày - ";
+                    timeStr += h + ":" + m + ":" + s;
+                    timer.innerHTML = timeStr;
+                }
+            });
+        }, 1000);
+    });
+
+   // 4. LOGIC ĐẾM NGƯỢC BANNER TỔNG (Đồng bộ với thời gian thực của sản phẩm)
+    let globalEndTime = null;
+    // Tìm sản phẩm Flash Sale đầu tiên trên trang để lấy mốc thời gian
+    const firstFlashSale = document.querySelector('.countdown-timer');
+    
+    if (firstFlashSale) {
+        globalEndTime = new Date(firstFlashSale.getAttribute('data-endtime')).getTime();
+    } else {
+        // Mặc định đếm đến cuối ngày nếu lỡ không có sản phẩm nào
+        const now = new Date();
+        globalEndTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
+    }
+
+    function updateGlobalCountdown() {
+        if (!globalEndTime) return;
+        const now = new Date().getTime();
+        const distance = globalEndTime - now;
+
+        const hoursEl = document.getElementById('fs-hours');
+        const minutesEl = document.getElementById('fs-minutes');
+        const secondsEl = document.getElementById('fs-seconds');
+
+        if (distance > 0) {
+            // Lấy tổng số giờ (Cộng dồn nếu hơn 24h để hiển thị ví dụ 48:00:00)
+            const h = Math.floor(distance / (1000 * 60 * 60));
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((distance % (1000 * 60)) / 1000);
+
+            if(hoursEl && minutesEl && secondsEl) {
+                hoursEl.innerText = h < 10 ? '0' + h : h;
+                minutesEl.innerText = m < 10 ? '0' + m : m;
+                secondsEl.innerText = s < 10 ? '0' + s : s;
+            }
+        } else {
+            // Khi hết giờ thì trả về 00:00:00
+            if(hoursEl && minutesEl && secondsEl) {
+                hoursEl.innerText = "00";
+                minutesEl.innerText = "00";
+                secondsEl.innerText = "00";
+            }
+        }
+    }
+    
+    setInterval(updateGlobalCountdown, 1000);
+    updateGlobalCountdown(); // Chạy ngay lập tức để không bị giật lag giây đầu tiên
 </script>
 {% endblock %}

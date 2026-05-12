@@ -1,0 +1,257 @@
+{% extends 'client/base.html' %}
+
+{% block title %}Hướng dẫn mua hàng – Phone Store{% endblock %}
+
+{% block extra_css %}
+<style>
+    .policy-hero {
+        background: linear-gradient(135deg, #009981 0%, #00c49a 100%);
+        border-radius: 0 0 32px 32px;
+        padding: 52px 0 40px;
+        color: white;
+    }
+    .policy-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+        padding: 32px 36px;
+        margin-bottom: 24px;
+        border-left: 5px solid #009981;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .policy-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.1); }
+    .policy-card h4 { color: #009981; font-weight: 700; margin-bottom: 14px; }
+    .step-circle {
+        width: 46px; height: 46px; border-radius: 50%;
+        background: linear-gradient(135deg, #009981, #00c49a);
+        color: white; font-weight: 800; font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,153,129,0.3);
+    }
+    .step-item { display: flex; gap: 18px; margin-bottom: 28px; align-items: flex-start; }
+    .step-item:last-child { margin-bottom: 0; }
+    .payment-method {
+        background: #f8fffe; border: 1px solid #b2ede2;
+        border-radius: 12px; padding: 16px; text-align: center;
+        transition: transform 0.2s;
+    }
+    .payment-method:hover { transform: translateY(-3px); }
+    .payment-method .icon { font-size: 32px; margin-bottom: 8px; }
+    .payment-method .label { font-size: 13px; font-weight: 600; color: #333; }
+    .payment-method .desc { font-size: 11px; color: #888; }
+    .highlight-box {
+        background: linear-gradient(135deg, #e8faf6, #f5fffd);
+        border: 1px solid #b2ede2; border-radius: 12px; padding: 20px 24px;
+    }
+    .faq-item { border-bottom: 1px solid #f0f0f0; padding: 16px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-weight: 600; color: #333; cursor: pointer; }
+    .faq-a { color: #666; font-size: 14px; margin-top: 8px; line-height: 1.7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<div class="policy-hero mb-5">
+    <div class="container text-center">
+        <div style="font-size:52px; margin-bottom:12px;">🛒</div>
+        <h1 class="fw-bold fs-2 mb-2">Hướng Dẫn Mua Hàng</h1>
+        <p class="mb-0" style="opacity:.85; font-size:15px;">
+            Mua sắm nhanh chóng – Thanh toán dễ dàng – Giao hàng tận nơi
+        </p>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <!-- CÁC BƯỚC MUA HÀNG ONLINE -->
+            <div class="policy-card">
+                <h4><i class="fas fa-laptop me-2"></i>Mua Hàng Online – 5 Bước Đơn Giản</h4>
+
+                <div class="step-item">
+                    <div class="step-circle">1</div>
+                    <div>
+                        <div class="fw-semibold fs-6">Tìm sản phẩm</div>
+                        <div class="small text-muted mt-1">
+                            Duyệt danh sách sản phẩm trên trang chủ hoặc sử dụng thanh <strong>Tìm kiếm</strong> ở trên cùng.
+                            Lọc theo danh mục, khoảng giá và tình trạng hàng để nhanh tìm được món đồ ưng ý.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-circle">2</div>
+                    <div>
+                        <div class="fw-semibold fs-6">Thêm vào giỏ hàng</div>
+                        <div class="small text-muted mt-1">
+                            Nhấn nút <strong>"Thêm vào giỏ"</strong> trên trang sản phẩm. Bạn có thể tiếp tục mua sắm
+                            hoặc vào giỏ hàng để điều chỉnh số lượng, xóa sản phẩm.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-circle">3</div>
+                    <div>
+                        <div class="fw-semibold fs-6">Đăng nhập / Đăng ký tài khoản</div>
+                        <div class="small text-muted mt-1">
+                            Để tiến hành thanh toán, bạn cần <strong>đăng nhập</strong> hoặc <strong>đăng ký tài khoản</strong> mới (miễn phí).
+                            Tài khoản giúp bạn theo dõi đơn hàng và tích điểm thành viên.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-circle">4</div>
+                    <div>
+                        <div class="fw-semibold fs-6">Điền thông tin & thanh toán</div>
+                        <div class="small text-muted mt-1">
+                            Nhập địa chỉ giao hàng, chọn phương thức nhận hàng (giao tận nơi hoặc nhận tại cửa hàng).
+                            Áp dụng <strong>mã giảm giá</strong> (nếu có) và xác nhận đặt hàng.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-circle">5</div>
+                    <div>
+                        <div class="fw-semibold fs-6">Nhận hàng & đánh giá</div>
+                        <div class="small text-muted mt-1">
+                            Nhận hàng, kiểm tra sản phẩm trước khi ký nhận. Sau khi nhận hàng,
+                            hãy để lại <strong>đánh giá</strong> để nhận thêm điểm tích lũy!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PHƯƠNG THỨC THANH TOÁN -->
+            <div class="policy-card">
+                <h4><i class="fas fa-credit-card me-2"></i>Phương Thức Thanh Toán</h4>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="payment-method">
+                            <div class="icon">💵</div>
+                            <div class="label">Tiền mặt</div>
+                            <div class="desc">Thanh toán khi nhận hàng (COD)</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="payment-method">
+                            <div class="icon">🏦</div>
+                            <div class="label">Chuyển khoản</div>
+                            <div class="desc">Ngân hàng nội địa</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="payment-method">
+                            <div class="icon">💳</div>
+                            <div class="label">Thẻ tín dụng</div>
+                            <div class="desc">Visa / MasterCard</div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="payment-method">
+                            <div class="icon">📱</div>
+                            <div class="label">Ví điện tử</div>
+                            <div class="desc">MoMo / ZaloPay / VNPay</div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fas fa-lock text-success me-1"></i>
+                    Mọi giao dịch thanh toán đều được bảo mật SSL 256-bit.
+                </p>
+            </div>
+
+            <!-- GIAO HÀNG -->
+            <div class="policy-card" style="border-left-color:#0d6efd;">
+                <h4 style="color:#0d6efd;"><i class="fas fa-shipping-fast me-2"></i>Thông Tin Giao Hàng</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered" style="font-size:13px;">
+                        <thead style="background:#0d6efd; color:white;">
+                            <tr>
+                                <th>Khu vực</th>
+                                <th>Thời gian</th>
+                                <th>Phí giao hàng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>📍 Nội thành TP.HCM / Hà Nội</td>
+                                <td><strong>2–4 giờ</strong> (giao nhanh)</td>
+                                <td>Miễn phí đơn từ 500.000đ</td>
+                            </tr>
+                            <tr>
+                                <td>🏙️ Các tỉnh thành lớn</td>
+                                <td><strong>1–2 ngày</strong></td>
+                                <td>30.000đ – 50.000đ</td>
+                            </tr>
+                            <tr>
+                                <td>🌏 Vùng xa, hải đảo</td>
+                                <td><strong>3–7 ngày</strong></td>
+                                <td>Theo bảng giá đơn vị vận chuyển</td>
+                            </tr>
+                            <tr>
+                                <td>🏪 Nhận tại cửa hàng</td>
+                                <td class="text-success"><strong>Ngay lập tức</strong></td>
+                                <td class="text-success"><strong>Miễn phí</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MÃ GIẢM GIÁ -->
+            <div class="policy-card" style="border-left-color:#ffc107;">
+                <h4 style="color:#e6a817;"><i class="fas fa-ticket-alt me-2"></i>Sử Dụng Mã Giảm Giá</h4>
+                <ol style="color:#444; line-height:2;">
+                    <li>Thêm sản phẩm vào <strong>Giỏ hàng</strong></li>
+                    <li>Vào trang <strong>Giỏ hàng</strong>, tìm ô "Nhập mã giảm giá"</li>
+                    <li>Nhập mã và nhấn <strong>"Áp dụng"</strong></li>
+                    <li>Tiến hành thanh toán — giá đã được giảm tự động</li>
+                </ol>
+                <div class="alert alert-warning small mb-0 py-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Mỗi tài khoản chỉ được dùng mỗi mã <strong>1 lần</strong>. Mã có thể có điều kiện đơn hàng tối thiểu.
+                </div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="policy-card" style="border-left-color:#6f42c1;">
+                <h4 style="color:#6f42c1;"><i class="fas fa-question-circle me-2"></i>Câu Hỏi Thường Gặp</h4>
+
+                <div class="faq-item">
+                    <div class="faq-q">❓ Tôi có thể mua hàng mà không cần đăng ký tài khoản không?</div>
+                    <div class="faq-a">Không — bạn cần đăng ký tài khoản để hoàn tất thanh toán. Đăng ký chỉ mất 1 phút và hoàn toàn miễn phí!</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">❓ Đơn hàng đặt xong bao lâu thì được giao?</div>
+                    <div class="faq-a">Sau khi đặt hàng, Phone Store sẽ xác nhận trong vòng 30 phút (giờ hành chính). Thời gian giao hàng từ 2 giờ đến 7 ngày tùy khu vực.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">❓ Làm sao để theo dõi đơn hàng?</div>
+                    <div class="faq-a">Vào <strong>Tài khoản → Đơn hàng của tôi</strong> để xem trạng thái đơn. Bạn cũng nhận được thông báo qua email và hệ thống thông báo trên website.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q">❓ Có thể hủy đơn hàng sau khi đặt không?</div>
+                    <div class="faq-a">Có thể hủy nếu đơn vẫn ở trạng thái <strong>"Chờ xử lý"</strong>. Vào trang đơn hàng và nhấn nút Hủy. Sau khi đơn được xử lý, bạn cần liên hệ hotline để hỗ trợ.</div>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="highlight-box text-center">
+                <p class="mb-3 fw-semibold" style="color:#009981;">Vẫn còn thắc mắc? Chúng tôi luôn sẵn sàng hỗ trợ!</p>
+                <a href="{% url 'client:home' %}" class="btn btn-success me-2">
+                    <i class="fas fa-shopping-bag me-1"></i>Bắt đầu mua sắm
+                </a>
+                <a href="{% url 'client:feedback' %}" class="btn btn-outline-success">
+                    <i class="fas fa-comment-dots me-1"></i>Liên hệ hỗ trợ
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

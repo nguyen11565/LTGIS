@@ -1,0 +1,463 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa Đơn #{{ order.id }} - Phone Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ============================================
+           HOA DON BAN LE - PREMIUM RETAIL RECEIPT
+           ============================================ */
+        :root {
+            --red: #d70018;
+            --dark: #1a1a2e;
+            --gray: #6c757d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #f0f2f5;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 14px;
+            color: #222;
+        }
+
+        /* === TOOLBAR (NO PRINT) === */
+        .print-toolbar {
+            background: var(--dark);
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .print-toolbar .toolbar-left { display: flex; align-items: center; gap: 12px; }
+        .print-toolbar .toolbar-title { font-size: 15px; font-weight: 600; }
+        .print-toolbar .toolbar-subtitle { font-size: 12px; color: #aaa; }
+        .btn-print {
+            background: var(--red); color: white; border: none;
+            padding: 10px 24px; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-print:hover { background: #a8000f; }
+        .btn-back {
+            background: rgba(255,255,255,0.1); color: white; border: 1.5px solid rgba(255,255,255,0.2);
+            padding: 8px 18px; border-radius: 8px; font-size: 13px;
+            cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.2); color: white; }
+
+        /* === RECEIPT PAPER === */
+        .receipt-wrapper {
+            max-width: 750px;
+            margin: 30px auto;
+            padding: 0 16px 60px;
+        }
+        .receipt-paper {
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+
+        /* === HEADER === */
+        .receipt-header {
+            background: linear-gradient(135deg, #d70018 0%, #8b0010 100%);
+            color: white;
+            padding: 32px 36px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .receipt-header::before {
+            content: '';
+            position: absolute; top: -30px; right: -30px;
+            width: 140px; height: 140px; border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+        }
+        .receipt-header::after {
+            content: '';
+            position: absolute; bottom: -50px; right: 60px;
+            width: 180px; height: 180px; border-radius: 50%;
+            background: rgba(255,255,255,0.05);
+        }
+        .store-logo-area { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+        .store-logo-icon {
+            width: 52px; height: 52px; background: rgba(255,255,255,0.2);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+        .store-name { font-size: 22px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        .store-tagline { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .receipt-title-row {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-top: 1px solid rgba(255,255,255,0.2); padding-top: 18px; margin-top: 4px;
+        }
+        .receipt-title { font-size: 18px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+        .receipt-number { font-size: 13px; color: rgba(255,255,255,0.8); }
+        .receipt-number strong { font-size: 18px; color: white; }
+
+        /* === STATUS BADGE === */
+        .status-strip {
+            padding: 10px 36px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px; font-weight: 600;
+        }
+        .status-strip.paid { background: #e8faf6; color: #009981; border-bottom: 3px solid #009981; }
+        .status-strip.cod { background: #fff9e6; color: #e6a817; border-bottom: 3px solid #e6a817; }
+        .status-strip i { font-size: 16px; }
+
+        /* === BODY SECTIONS === */
+        .receipt-body { padding: 28px 36px; }
+        .receipt-section {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px dashed #e5e5e5;
+        }
+        .receipt-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .section-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 1px;
+            text-transform: uppercase; color: #bbb; margin-bottom: 12px;
+        }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .info-item label { font-size: 11px; color: #999; display: block; margin-bottom: 2px; }
+        .info-item .value { font-size: 14px; font-weight: 600; color: #222; }
+
+        /* === ORDER ITEMS TABLE === */
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table thead tr { border-bottom: 2px solid #222; }
+        .items-table thead th {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+            color: #888; padding: 0 0 10px; font-weight: 700;
+        }
+        .items-table thead th:not(:first-child) { text-align: right; }
+        .items-table tbody tr { border-bottom: 1px solid #f5f5f5; }
+        .items-table tbody tr:last-child { border-bottom: none; }
+        .items-table td { padding: 12px 0; vertical-align: top; }
+        .items-table td:not(:first-child) { text-align: right; }
+        .item-img {
+            width: 44px; height: 44px; object-fit: contain;
+            border-radius: 8px; background: #f8f8f8; border: 1px solid #eee;
+            margin-right: 12px; flex-shrink: 0;
+        }
+        .item-img-placeholder {
+            width: 44px; height: 44px; border-radius: 8px; background: #f0f0f0;
+            display: flex; align-items: center; justify-content: center;
+            color: #ccc; font-size: 18px; margin-right: 12px; flex-shrink: 0;
+        }
+        .item-cell { display: flex; align-items: flex-start; }
+        .item-name { font-size: 13.5px; font-weight: 600; color: #222; line-height: 1.3; }
+        .item-variant { font-size: 11px; color: #d70018; font-weight: 600; margin-top: 3px; }
+        .item-sku { font-size: 11px; color: #bbb; margin-top: 2px; }
+        .item-qty { font-size: 13px; font-weight: 600; color: #555; }
+        .item-price { font-size: 13px; color: #666; }
+        .item-total { font-size: 14px; font-weight: 700; color: #222; }
+
+        /* === TOTALS === */
+        .totals-area { margin-top: 20px; }
+        .total-row {
+            display: flex; justify-content: space-between;
+            padding: 6px 0; font-size: 13.5px;
+        }
+        .total-row.subtotal { color: #555; }
+        .total-row.shipping { color: #555; }
+        .total-row.discount { color: #009981; font-weight: 600; }
+        .total-row.grand-total {
+            border-top: 2px solid #222; margin-top: 10px; padding-top: 14px;
+            font-size: 17px; font-weight: 800; color: #d70018;
+        }
+        .total-row .label { }
+        .total-row .amount { font-weight: 700; }
+
+        /* === AMOUNT IN WORDS === */
+        .amount-words {
+            background: #fafafa; border: 1px dashed #e0e0e0;
+            border-radius: 8px; padding: 12px 16px; margin-top: 14px;
+        }
+        .amount-words .aw-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+        .amount-words .aw-value { font-size: 13px; font-style: italic; color: #333; font-weight: 600; }
+
+        /* === PAYMENT INFO === */
+        .payment-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .payment-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .payment-badge.paid-badge { background: #e8faf6; color: #009981; border: 1.5px solid #b2dfdb; }
+        .payment-badge.cod-badge { background: #fff9e6; color: #e6a817; border: 1.5px solid #ffe082; }
+        .payment-badge.method-badge { background: #f0f4ff; color: #4a6cf7; border: 1.5px solid #c5cefa; }
+
+        /* === FOOTER === */
+        .receipt-footer {
+            background: #f8f9fa; padding: 24px 36px;
+            border-top: 1px solid #eee; text-align: center;
+        }
+        .barcode-area { margin: 16px 0 12px; }
+        .order-barcode {
+            font-family: 'Courier New', monospace; font-size: 11px;
+            letter-spacing: 3px; color: #555; background: white;
+            border: 1px solid #e0e0e0; padding: 8px 20px; border-radius: 6px;
+            display: inline-block;
+        }
+        .receipt-footer .thanks { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
+        .receipt-footer .support-info { font-size: 12px; color: #999; line-height: 1.8; }
+        .receipt-footer .support-info strong { color: #555; }
+        .footer-wave {
+            height: 8px; margin-top: 20px;
+            background: repeating-linear-gradient(
+                90deg, #d70018 0px, #d70018 8px, transparent 8px, transparent 16px
+            );
+            border-radius: 4px;
+        }
+
+        /* ========================
+           PRINT MEDIA QUERIES
+           ======================== */
+        @media print {
+            body { background: white; font-size: 12pt; }
+            .print-toolbar { display: none !important; }
+            .receipt-wrapper { max-width: 100%; margin: 0; padding: 0; }
+            .receipt-paper { box-shadow: none; border-radius: 0; }
+            .receipt-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .status-strip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .footer-wave { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+            /* Giảm font cho in */
+            .store-name { font-size: 18pt; }
+            .receipt-title { font-size: 14pt; }
+            .grand-total { font-size: 14pt; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOOLBAR (ẩn khi in) -->
+<div class="print-toolbar no-print">
+    <div class="toolbar-left">
+        <i class="fas fa-receipt" style="font-size:20px;color:#d70018;"></i>
+        <div>
+            <div class="toolbar-title">Hóa đơn bán lẻ #{{ order.id }}</div>
+            <div class="toolbar-subtitle">Phone Store · {{ order.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <a href="{% url 'client:order_detail' order.id %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+        <button onclick="window.print()" class="btn-print">
+            <i class="fas fa-print"></i> In Hóa Đơn
+        </button>
+    </div>
+</div>
+
+<div class="receipt-wrapper">
+    <div class="receipt-paper">
+
+        <!-- HEADER -->
+        <div class="receipt-header">
+            <div class="store-logo-area">
+                <div class="store-logo-icon"><i class="fas fa-mobile-alt"></i></div>
+                <div>
+                    <div class="store-name">Phone Store</div>
+                    <div class="store-tagline">Điện thoại chính hãng · Giá tốt nhất</div>
+                </div>
+            </div>
+            <div class="receipt-title-row">
+                <div>
+                    <div class="receipt-title">Hóa Đơn Bán Lẻ</div>
+                    {% if store %}
+                    <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;">
+                        <i class="fas fa-store me-1"></i>{{ store.name }}
+                        {% if store.address %} · {{ store.address }}{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="receipt-number">
+                    Đơn hàng<br>
+                    <strong>#{{ order.id }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAYMENT STATUS STRIP -->
+        {% if order.payment_status == 'paid' %}
+        <div class="status-strip paid">
+            <i class="fas fa-check-circle"></i>
+            ĐÃ THANH TOÁN · {{ order.created_at|date:"d/m/Y H:i" }}
+        </div>
+        {% else %}
+        <div class="status-strip cod">
+            <i class="fas fa-handshake"></i>
+            THANH TOÁN KHI NHẬN HÀNG (COD) · Đơn hoàn thành {{ order.created_at|date:"d/m/Y" }}
+        </div>
+        {% endif %}
+
+        <!-- BODY -->
+        <div class="receipt-body">
+
+            <!-- THÔNG TIN ĐƠN HÀNG -->
+            <div class="receipt-section">
+                <div class="section-label"><i class="fas fa-user me-1"></i>Thông tin khách hàng</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Họ và tên</label>
+                        <div class="value">{{ order.full_name }}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Số điện thoại</label>
+                        <div class="value">{{ order.phone }}</div>
+                    </div>
+                    <div class="info-item" style="grid-column: 1 / -1;">
+                        <label>Địa chỉ giao hàng</label>
+                        <div class="value">{{ order.address }}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Ngày lập hóa đơn</label>
+                        <div class="value">{{ order.created_at|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <label>Trạng thái đơn hàng</label>
+                        <div class="value">{{ order.get_status_display }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DANH SÁCH SẢN PHẨM -->
+            <div class="receipt-section">
+                <div class="section-label"><i class="fas fa-shopping-bag me-1"></i>Chi tiết sản phẩm đã mua</div>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>SL</th>
+                            <th>Đơn giá</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>
+                                <div class="item-cell">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" class="item-img" alt="{{ item.product.name }}">
+                                    {% else %}
+                                        <div class="item-img-placeholder"><i class="fas fa-mobile-alt"></i></div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="item-name">{{ item.product.name }}</div>
+                                        {% if item.variation %}
+                                        <div class="item-variant">
+                                            <i class="fas fa-palette me-1"></i>{{ item.variation.color }} - {{ item.variation.storage }}
+                                        </div>
+                                        {% endif %}
+                                        <div class="item-sku">Mã SP: #{{ item.product.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="item-qty">×{{ item.quantity }}</span></td>
+                            <td><span class="item-price">{{ item.price|floatformat:0|intcomma }}₫</span></td>
+                            <td><span class="item-total">{{ item.get_total_item_price|floatformat:0|intcomma }}₫</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- TỔNG TIỀN -->
+                <div class="totals-area">
+                    <div class="total-row subtotal">
+                        <span class="label">Tạm tính ({{ order_items|length }} sản phẩm):</span>
+                        <span class="amount">{{ subtotal|floatformat:0|intcomma }}₫</span>
+                    </div>
+                    {% if order.shipping_fee > 0 %}
+                    <div class="total-row shipping">
+                        <span class="label"><i class="fas fa-truck me-1"></i>Phí giao hàng:</span>
+                        <span class="amount">+{{ order.shipping_fee|floatformat:0|intcomma }}₫</span>
+                    </div>
+                    {% else %}
+                    <div class="total-row shipping">
+                        <span class="label"><i class="fas fa-truck me-1"></i>Phí giao hàng:</span>
+                        <span class="amount" style="color:#009981;">Miễn phí</span>
+                    </div>
+                    {% endif %}
+                    {% if order.discount_amount > 0 %}
+                    <div class="total-row discount">
+                        <span class="label"><i class="fas fa-tag me-1"></i>Giảm giá
+                            {% if order.coupon %} ({{ order.coupon.code }}){% endif %}:
+                        </span>
+                        <span class="amount">-{{ order.discount_amount|floatformat:0|intcomma }}₫</span>
+                    </div>
+                    {% endif %}
+                    <div class="total-row grand-total">
+                        <span class="label">TỔNG THANH TOÁN:</span>
+                        <span class="amount">{{ order.total_price|floatformat:0|intcomma }}₫</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- THÔNG TIN THANH TOÁN -->
+            <div class="receipt-section">
+                <div class="section-label"><i class="fas fa-credit-card me-1"></i>Phương thức thanh toán</div>
+                <div class="payment-badges">
+                    {% if order.payment_status == 'paid' %}
+                    <span class="payment-badge paid-badge">
+                        <i class="fas fa-check-circle"></i> Đã thanh toán
+                    </span>
+                    {% else %}
+                    <span class="payment-badge cod-badge">
+                        <i class="fas fa-handshake"></i> COD — Thanh toán khi nhận
+                    </span>
+                    {% endif %}
+                    <span class="payment-badge method-badge">
+                        <i class="fas fa-wallet"></i>
+                        {% if order.payment_method == 'bank_transfer' %}
+                            Chuyển khoản ngân hàng
+                        {% else %}
+                            Tiền mặt (COD)
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+        </div><!-- /receipt-body -->
+
+        <!-- FOOTER -->
+        <div class="receipt-footer">
+            <div class="barcode-area">
+                <div style="font-size:11px;color:#bbb;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;">Mã đơn hàng</div>
+                <div class="order-barcode">PHS-{{ order.id|stringformat:"08d" }}</div>
+            </div>
+            <div class="thanks">Cảm ơn quý khách đã tin tưởng Phone Store! 🙏</div>
+            <div class="support-info">
+                Hotline: <strong>1900.2026</strong> · 
+                Website: <strong>phonestore.vn</strong><br>
+                Mọi thắc mắc vui lòng liên hệ trong vòng <strong>7 ngày</strong> kể từ ngày mua hàng.<br>
+                Bảo hành theo chính sách từng sản phẩm.
+            </div>
+            <div class="footer-wave"></div>
+        </div>
+
+    </div><!-- /receipt-paper -->
+</div><!-- /receipt-wrapper -->
+
+<script>
+    // Tự động mở hộp thoại in nếu có param ?autoprint=1
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('autoprint') === '1') {
+        window.addEventListener('load', () => {
+            setTimeout(() => window.print(), 300);
+        });
+    }
+</script>
+
+</body>
+</html>
