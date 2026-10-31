@@ -1,0 +1,20 @@
+{
+  "name": "lai-viet-car-rental",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hệ thống quản lý và đặt thuê xe du lịch trực tuyến",
+  "scripts": {
+    "install:all": "npm ci --prefix backend && npm ci --prefix frontend",
+    "dev": "node scripts/dev.js",
+    "dev:demo": "node scripts/dev.js --demo",
+    "build": "npm --prefix frontend run build",
+    "test": "npm --prefix backend test",
+    "test:browser": "node scripts/browser-smoke.js",
+    "start": "npm --prefix backend start",
+    "db:migrate": "npm --prefix backend run migrate",
+    "db:seed": "npm --prefix backend run seed"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}
