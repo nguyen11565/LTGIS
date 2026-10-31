@@ -217,7 +217,17 @@ BEGIN
     DECLARE constraint_cursor CURSOR LOCAL FAST_FORWARD FOR
     SELECT cc.name,cc.definition FROM sys.check_constraints cc
     WHERE cc.parent_object_id=OBJECT_ID(N'dbo.'+@table)
-      AND (cc.parent_column_id=COLUMNPROPERTY(cc.parent_object_id,@column,'ColumnId') OR cc.definition LIKE N'%'+@column+N'%')
+      -- So khớp đúng mã cột trong metadata, không dò theo chuỗi tên cột.
+      -- Ví dụ: ràng buộc của PaymentStatus không phải ràng buộc của Status.
+      AND (
+          cc.parent_column_id=COLUMNPROPERTY(cc.parent_object_id,@column,'ColumnId')
+          OR EXISTS (
+              SELECT 1 FROM sys.sql_expression_dependencies target_dependency
+              WHERE target_dependency.referencing_id=cc.object_id
+                AND target_dependency.referenced_id=cc.parent_object_id
+                AND target_dependency.referenced_minor_id=COLUMNPROPERTY(cc.parent_object_id,@column,'ColumnId')
+          )
+      )
       AND cc.definition NOT LIKE @marker;
     OPEN constraint_cursor;
     FETCH NEXT FROM constraint_cursor INTO @constraint,@definition;

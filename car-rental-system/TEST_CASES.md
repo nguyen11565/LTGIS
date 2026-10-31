@@ -96,3 +96,12 @@ SQL Server thật chưa được kiểm thử trong máy cloud: image registry c
 ## Thay doi file SQL gop (01/11/2026)
 
 Da gop `schema.sql` va `002_runtime.sql` vao `database/CarRentalDB.sql`, giu nguyen thu tu va dau GO. Da doi duong dan trong migration, kiem tra noi dung cac batch tuong duong hai file cu va kiem tra cu phap JavaScript cua migration. Khong tuyen bo da chay file gop tren SQL Server that; ca SQL-01 van can SQL Server kha dung de xac nhan.
+
+
+## Hồi quy ràng buộc Status / PaymentStatus (01/11/2026)
+
+Lỗi người dùng báo `51040` xuất phát từ bộ lọc tên cột theo chuỗi con: `Status` đã khớp nhầm `PaymentStatus`. Migration được sửa để đối chiếu mã cột thật qua metadata SQL Server. Không xóa hoặc vô hiệu hóa ràng buộc thanh toán để vượt lỗi.
+
+Ca **SQL-02** trong `backend/test/sql.constraint-regression.test.js` chỉ chạy với `RUN_SQL_TESTS=1` và SQL Server thật. Nó tạo database ngẫu nhiên riêng, kiểm tra migration trên database mới, thêm các CHECK tách biệt ở mức cột/bảng, xác nhận Status được mở rộng còn PaymentStatus giữ nguyên định nghĩa và trạng thái tin cậy; mã thanh toán sai vẫn bị từ chối. Một CHECK thật sự liên quan cả hai cột vẫn phải bị chặn bằng lỗi 51040; các cập nhật trước đó trong migration phải rollback, không sửa dữ liệu đã có. Test chỉ xóa database do chính nó tạo.
+
+**Trạng thái SQL-02: chưa thực thi trên SQL Server thật** vì môi trường cloud chưa có SQL Server khả dụng. Các số liệu test đạt trước đó là kết quả lịch sử, không tính ca mới này là đã đạt.

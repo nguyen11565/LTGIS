@@ -181,3 +181,10 @@ Chỉ chạy `database/CarRentalDB.sql`. File đã chứa toàn bộ schema và 
 3. Chạy `npm run db:seed` trong terminal để thêm tài khoản/xe mẫu, sau đó `npm run dev`.
 
 Hoặc giữ cách tự động: cấu hình `backend/.env`, chạy `npm run db:migrate`. Migration chạy toàn bộ file gộp trong một transaction. SQL gốc trong `database/reference/` chỉ để đối chiếu.
+
+
+## Sửa lỗi 51040 nhầm PaymentStatus với Status
+
+Bản cập nhật ngày 01/11/2026 chọn ràng buộc bằng mã cột và quan hệ phụ thuộc trong metadata SQL Server, thay cho tìm chuỗi `Status` trong định nghĩa. Nhờ đó CHECK của `PaymentStatus` không bị xem là CHECK của `Status`; các ràng buộc kiểm tra thanh toán được giữ nguyên.
+
+Nếu bản trước báo lỗi với tên dạng `CK__RentalOrd__Payme__...`, tải lại `database/CarRentalDB.sql` bản sửa, mở cửa sổ truy vấn mới trong SSMS, chọn đúng database hiện có và chạy lại toàn bộ file. Không cần xóa database hoặc bỏ CHECK. Các bảng/cột đã có được giữ lại. Nếu một CHECK thực sự phụ thuộc nhiều cột, script vẫn dừng để yêu cầu kiểm tra riêng thay vì làm mất các điều kiện của dữ liệu.
