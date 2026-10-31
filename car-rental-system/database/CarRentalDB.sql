@@ -1,19 +1,34 @@
 /*
-   CSDL DAT THUE XE DU LICH - FILE CAI DAT GOP
+   CƠ SỞ DỮ LIỆU ĐẶT THUÊ XE DU LỊCH - FILE CÀI ĐẶT GỘP
 
-   Thu tu noi dung: schema goc -> cac bo sung runtime.
-   Cach chay bang SSMS:
-     1. Tao database neu chua co (vi du CarRentalDB).
-     2. Chon DUNG database tren thanh cong cu SSMS, roi mo file nay va nhan F5.
-     3. Them tai khoan/xe mau: chay npm run db:seed tai thu muc du an.
+   Nội dung gồm: cấu trúc bảng cơ bản và các phần bổ sung cho ứng dụng.
+   Cách chạy bằng SQL Server Management Studio (SSMS):
+     1. Tạo cơ sở dữ liệu nếu chưa có, ví dụ CarRentalDB.
+     2. Chọn ĐÚNG cơ sở dữ liệu trên thanh công cụ SSMS.
+     3. Mở file này và nhấn F5 để thực thi toàn bộ nội dung.
+     4. Thêm tài khoản và xe mẫu bằng lệnh npm run db:seed tại thư mục dự án.
 
-   Cach chay tu Node.js: npm run db:migrate (dung DB_DATABASE trong backend/.env).
-   File khong co USE/CREATE DATABASE de ho tro database tuy chinh.
-   Giu nguyen cac dau GO; khong chay tren master/model/msdb/tempdb.
+   Cách chạy từ Node.js: npm run db:migrate.
+   Tên cơ sở dữ liệu lấy từ DB_DATABASE trong backend/.env.
+   File không có lệnh USE hoặc CREATE DATABASE để dùng được với tên tùy chọn.
+   Giữ nguyên các dấu GO. Không chạy trên master, model, msdb hoặc tempdb.
+
+   Lưu ý về bản tiếng Việt:
+   - Chú thích, hướng dẫn và thông báo lỗi đã được Việt hóa.
+   - Giữ nguyên tên bảng, cột, ràng buộc và các mã trạng thái tiếng Anh để
+     backend Node.js hiện có tiếp tục hoạt động đúng.
+   - Từ khóa SQL Server như CREATE TABLE, SELECT, ALTER TABLE... giữ nguyên.
+   - Các thời điểm mặc định được lưu theo giờ UTC qua SYSUTCDATETIME().
 */
 
-/* Base schema, safe for a new or existing CarRentalDB. Use the selected database.
-   Never drops or truncates data. Existing V2 installations are upgraded by 002_runtime.sql. */
+/* PHẦN 1: TẠO CÁC BẢNG CƠ BẢN
+   Chỉ tạo bảng khi chưa tồn tại trong cơ sở dữ liệu đang chọn.
+   Không xóa bảng hoặc xóa trắng dữ liệu.
+   Cơ sở dữ liệu đã có sẽ được bổ sung ở PHẦN 2 trong cùng file này. */
+-- BẢNG NGƯỜI DÙNG: tài khoản, thông tin liên hệ và vai trò.
+-- PasswordHash: mật khẩu đã băm; không lưu mật khẩu dạng văn bản.
+-- Role: customer = khách hàng, employee = nhân viên, admin = quản trị viên.
+-- IsActive: 1 = hoạt động, 0 = bị khóa.
 IF OBJECT_ID('dbo.Users','U') IS NULL
 CREATE TABLE dbo.Users (
  Id INT IDENTITY PRIMARY KEY, Username NVARCHAR(50) NOT NULL UNIQUE, PasswordHash NVARCHAR(255) NOT NULL,
@@ -22,6 +37,10 @@ CREATE TABLE dbo.Users (
  IsActive BIT NOT NULL DEFAULT 1, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG XE: thông tin xe, biển số, giá thuê mỗi ngày và tỷ lệ đặt cọc.
+-- DailyRate: giá thuê/ngày; DepositRate: tỷ lệ cọc (%).
+-- Status: available = trống, booked = đã có lịch đặt, renting = đang thuê,
+--         maintenance = bảo trì, suspended = tạm ngưng.
 IF OBJECT_ID('dbo.Cars','U') IS NULL
 CREATE TABLE dbo.Cars (
  Id INT IDENTITY PRIMARY KEY, Name NVARCHAR(100) NOT NULL, Brand NVARCHAR(50) NOT NULL, Model NVARCHAR(50) NULL,
@@ -32,6 +51,16 @@ CREATE TABLE dbo.Cars (
  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG ĐƠN THUÊ: khách thuê, xe, lịch thuê, thời điểm nhận/trả và các khoản tiền.
+-- StartDate/EndDate: thời gian dự kiến; ActualPickupDate/ActualReturnDate: thực tế.
+-- BookedDailyRate: đơn giá chốt lúc đặt; BaseAmount: tiền thuê cơ bản;
+-- DepositAmount: tiền cọc; TotalAmount: tổng tiền phải trả.
+-- LateFee/EarlyReturnFee/CancellationFee: phí trả trễ/trả sớm/hủy đơn.
+-- TotalExtraFee: tổng phí phát sinh, bao gồm phí trả trễ.
+-- Status: pending = chờ xác nhận, confirmed = đã xác nhận, rejected = từ chối,
+--         renting = đang thuê/chờ quyết toán, completed = hoàn tất, cancelled = đã hủy.
+-- PaymentStatus: unpaid = chưa trả, partial = trả một phần, paid = đủ tiền,
+--                refunded = đã hoàn tiền (mã được hỗ trợ trong cấu trúc).
 IF OBJECT_ID('dbo.RentalOrders','U') IS NULL
 CREATE TABLE dbo.RentalOrders (
  Id INT IDENTITY PRIMARY KEY, OrderCode NVARCHAR(20) NOT NULL UNIQUE, CustomerId INT NOT NULL REFERENCES dbo.Users(Id), CarId INT NOT NULL REFERENCES dbo.Cars(Id),
@@ -46,6 +75,12 @@ CREATE TABLE dbo.RentalOrders (
  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), CHECK (EndDate>StartDate)
 );
 GO
+-- BẢNG THANH TOÁN: lịch sử các khoản thu, hoàn tiền và kết quả giao dịch.
+-- PaymentType: deposit = cọc, full_payment = tiền thuê còn lại, refund = hoàn tiền;
+--              các mã *_fee dùng cho các loại phí tương ứng.
+-- Status: pending = chờ xử lý, completed = thành công, failed = thất bại.
+-- IdempotencyKey: mã chống ghi nhận lặp; RequestFingerprint: dấu kiểm tra nội dung yêu cầu.
+-- Ứng dụng hiện dùng PaymentMethod = simulation (mô phỏng, không thu tiền thật).
 IF OBJECT_ID('dbo.Payments','U') IS NULL
 CREATE TABLE dbo.Payments (
  Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL REFERENCES dbo.RentalOrders(Id), Amount DECIMAL(18,2) NOT NULL CHECK (Amount>0),
@@ -56,6 +91,9 @@ CREATE TABLE dbo.Payments (
  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG HỢP ĐỒNG: số hợp đồng, thông tin các bên, nội dung và điều khoản thuê.
+-- OrderId duy nhất: mỗi đơn có tối đa một hợp đồng.
+-- Status: draft = bản nháp, active = có hiệu lực, completed = hoàn tất, cancelled = đã hủy.
 IF OBJECT_ID('dbo.Contracts','U') IS NULL
 CREATE TABLE dbo.Contracts (
  Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL UNIQUE REFERENCES dbo.RentalOrders(Id), ContractCode NVARCHAR(50) NOT NULL UNIQUE,
@@ -64,12 +102,16 @@ CREATE TABLE dbo.Contracts (
  SignedAt DATETIME2 NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG THÔNG BÁO: nội dung gửi cho người dùng, liên kết đơn thuê và trạng thái đọc.
+-- IsRead: 0 = chưa đọc, 1 = đã đọc. Thông báo được lưu trong ứng dụng.
 IF OBJECT_ID('dbo.Notifications','U') IS NULL
 CREATE TABLE dbo.Notifications (
  Id INT IDENTITY PRIMARY KEY, UserId INT NOT NULL REFERENCES dbo.Users(Id), OrderId INT NULL REFERENCES dbo.RentalOrders(Id), Type NVARCHAR(50) NOT NULL,
  Title NVARCHAR(200) NOT NULL, Message NVARCHAR(MAX) NOT NULL, IsRead BIT NOT NULL DEFAULT 0, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG NHẬT KÝ THAY ĐỔI: ai thực hiện thao tác gì, trên đối tượng nào và lúc nào.
+-- OldValue/NewValue: dữ liệu trước/sau; IpAddress: địa chỉ IP của yêu cầu.
 IF OBJECT_ID('dbo.AuditLogs','U') IS NULL
 CREATE TABLE dbo.AuditLogs (
  Id INT IDENTITY PRIMARY KEY, UserId INT NULL REFERENCES dbo.Users(Id), Username NVARCHAR(50) NULL, Action NVARCHAR(100) NOT NULL,
@@ -77,6 +119,8 @@ CREATE TABLE dbo.AuditLogs (
  IpAddress NVARCHAR(50) NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG PHIẾU GIAO XE: nhân viên giao, thời gian, số km, nhiên liệu và tình trạng xe.
+-- OrderId duy nhất: mỗi đơn chỉ ghi nhận một phiếu giao xe.
 IF OBJECT_ID('dbo.VehicleHandovers','U') IS NULL
 CREATE TABLE dbo.VehicleHandovers (
  Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL UNIQUE REFERENCES dbo.RentalOrders(Id), EmployeeId INT NOT NULL REFERENCES dbo.Users(Id),
@@ -84,6 +128,8 @@ CREATE TABLE dbo.VehicleHandovers (
  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG PHIẾU TRẢ XE: nhân viên nhận trả, thời gian và tình trạng xe khi trả.
+-- NeedsMaintenance: 1 = cần bảo trì sau khi trả, 0 = không đánh dấu cần bảo trì.
 IF OBJECT_ID('dbo.VehicleReturns','U') IS NULL
 CREATE TABLE dbo.VehicleReturns (
  Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL UNIQUE REFERENCES dbo.RentalOrders(Id), EmployeeId INT NOT NULL REFERENCES dbo.Users(Id),
@@ -91,6 +137,10 @@ CREATE TABLE dbo.VehicleReturns (
  CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
 );
 GO
+-- BẢNG PHÍ PHÁT SINH: các khoản phí gắn với đơn thuê và phiếu trả xe.
+-- FeeType: late = trả trễ, damage = hư hại, fuel = nhiên liệu,
+--          cleaning = vệ sinh, other = khoản khác.
+-- Amount: số tiền; Reason: lý do thu; CreatedByUserId: người ghi nhận.
 IF OBJECT_ID('dbo.ExtraFees','U') IS NULL
 CREATE TABLE dbo.ExtraFees (
  Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL REFERENCES dbo.RentalOrders(Id), ReturnId INT NULL REFERENCES dbo.VehicleReturns(Id),
@@ -100,13 +150,15 @@ CREATE TABLE dbo.ExtraFees (
 );
 GO
 
-/* Additive application migration after the supplied V2 or base schema.
-   Keep DatThueXeDuLich.sql unchanged as the user's original reference. */
+/* PHẦN 2: BỔ SUNG CẤU TRÚC CHO CƠ SỞ DỮ LIỆU HIỆN CÓ
+   Chỉ thêm các cột còn thiếu sau bản cấu trúc cơ bản hoặc bản nâng cấp V2.
+   File DatThueXeDuLich.sql gốc được giữ riêng trong reference/ để đối chiếu. */
 IF COL_LENGTH('dbo.Users','Address') IS NULL ALTER TABLE dbo.Users ADD Address NVARCHAR(255) NULL;
 IF COL_LENGTH('dbo.Cars','DepositRate') IS NULL ALTER TABLE dbo.Cars ADD DepositRate DECIMAL(5,2) NOT NULL CONSTRAINT DF_Cars_DepositRate_App DEFAULT 30;
 IF COL_LENGTH('dbo.RentalOrders','BookedDailyRate') IS NULL ALTER TABLE dbo.RentalOrders ADD BookedDailyRate DECIMAL(18,2) NULL;
 GO
--- Preserve historical price from the booked total rather than current car price.
+-- Khôi phục đơn giá lịch sử từ tiền thuê đã chốt và số ngày thuê.
+-- Không dùng giá xe hiện tại để tránh làm thay đổi giá của đơn cũ.
 UPDATE dbo.RentalOrders SET BookedDailyRate=ROUND(BaseAmount / CASE WHEN CEILING(DATEDIFF_BIG(SECOND,StartDate,EndDate)/86400.0)<1 THEN 1 ELSE CEILING(DATEDIFF_BIG(SECOND,StartDate,EndDate)/86400.0) END,0) WHERE BookedDailyRate IS NULL;
 GO
 IF COL_LENGTH('dbo.RentalOrders','CancellationReason') IS NULL ALTER TABLE dbo.RentalOrders ADD CancellationReason NVARCHAR(1000) NULL;
@@ -144,9 +196,12 @@ IF COL_LENGTH('dbo.Contracts','TotalAmount') IS NULL ALTER TABLE dbo.Contracts A
 IF COL_LENGTH('dbo.Contracts','DepositAmount') IS NULL ALTER TABLE dbo.Contracts ADD DepositAmount DECIMAL(18,2) NULL;
 IF COL_LENGTH('dbo.Contracts','RentalTerms') IS NULL ALTER TABLE dbo.Contracts ADD RentalTerms NVARCHAR(MAX) NULL;
 GO
-/* Preserve legacy single-column enumerations and add only the new application's
-   explicit values. Compound predicates require a DBA review rather than silently
-   weakening checks on other columns. This migration does not disable constraints. */
+/* PHẦN 3: BỔ SUNG GIÁ TRỊ HỢP LỆ CHO CÁC RÀNG BUỘC CHECK
+   Giữ lại điều kiện cũ của ràng buộc chỉ áp dụng trên một cột, đồng thời
+   cho phép thêm các mã trạng thái và loại nghiệp vụ mà ứng dụng cần.
+   Ràng buộc liên quan nhiều cột cần người quản trị cơ sở dữ liệu xem xét
+   để không làm mất điều kiện kiểm tra của các cột khác.
+   Phần cập nhật này không vô hiệu hóa các ràng buộc. */
 DECLARE @Extensions TABLE (TableName SYSNAME, ColumnName SYSNAME, AllowedSql NVARCHAR(MAX), Marker NVARCHAR(100));
 INSERT INTO @Extensions VALUES
 ('RentalOrders','Status',N'''pending'',''confirmed'',''rejected'',''renting'',''completed'',''cancelled''',N'%rejected%'),
@@ -176,7 +231,7 @@ BEGIN
               AND d.referenced_minor_id<>COLUMNPROPERTY(OBJECT_ID(N'dbo.'+@table),@column,'ColumnId')
         )
         BEGIN
-            SET @message=N'Cannot safely extend compound constraint '+@constraint+N'. Ask the database owner to allow the documented application values for '+@table+N'.'+@column+N', preserving its other predicates, then rerun migrate.';
+            SET @message=N'Không thể tự động mở rộng ràng buộc liên quan nhiều cột: '+@constraint+N'. Vui lòng nhờ người quản trị bổ sung các giá trị mà ứng dụng cần cho '+@table+N'.'+@column+N', giữ nguyên các điều kiện kiểm tra khác, sau đó chạy lại migration.';
             THROW 51040,@message,1;
         END
         SET @sql=N'ALTER TABLE dbo.'+QUOTENAME(@table)+N' DROP CONSTRAINT '+QUOTENAME(@constraint)+N'; ALTER TABLE dbo.'+QUOTENAME(@table)+N' WITH CHECK ADD CONSTRAINT '+QUOTENAME(@constraint)+N' CHECK (('+@definition+N') OR '+QUOTENAME(@column)+N' IN ('+@allowed+N'));';
@@ -190,8 +245,9 @@ END
 CLOSE extension_cursor;
 DEALLOCATE extension_cursor;
 GO
-/* A returned vehicle is physically free even while accounting is unsettled.
-   Pending and confirmed bookings still prevent suspending the vehicle. */
+/* PHẦN 4: KIỂM SOÁT VIỆC TẠM NGƯNG XE
+   Xe đã được trả có thể giải phóng lịch dù đơn chưa quyết toán xong.
+   Không cho tạm ngưng xe khi còn đơn chờ, đã xác nhận hoặc đang giữ xe. */
 CREATE OR ALTER TRIGGER dbo.TR_Cars_BlockSuspendWhenActiveRental
 ON dbo.Cars
 AFTER UPDATE
@@ -206,7 +262,7 @@ BEGIN
           AND o.ActualReturnDate IS NULL
     )
     BEGIN
-        THROW 51010,N'Cannot suspend a car with an active rental reservation.',1;
+        THROW 51010,N'Không thể tạm ngưng xe khi xe còn đơn thuê đang có hiệu lực.',1;
     END
 END;
 GO
