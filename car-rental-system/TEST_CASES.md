@@ -70,7 +70,7 @@ Trên PowerShell: `$env:RUN_SQL_TESTS='1'; npm test`.
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | SQL-01 | Tạo CSDL kiểm thử riêng, chạy migration hai lần, seed hai lần, đặt cùng lịch từ hai pool độc lập, gửi lặp giao dịch thanh toán, bàn giao/trả trễ/quyết toán/hoàn tất và đọc dữ liệu đã lưu | Không nhân đôi dữ liệu; đúng một đơn; đúng một giao dịch lặp; tiền phí và trạng thái lưu chính xác; có hợp đồng/biên bản/audit/thông báo | **Bỏ qua — chưa có SQL Server khả dụng trong máy hiện tại** |
 
-Tài khoản SQL dùng kiểm thử cần quyền `CREATE DATABASE` và `DROP DATABASE`. Test tự sinh tên dạng `CarRentalTest_<24 ký tự hex>`, chỉ migrate/seed trên CSDL vừa tạo, đóng các pool rồi xóa đúng CSDL đó trong `finally`. Không dùng, ghi đè, truncate hoặc xóa CSDL nghiệp vụ đang có. Các bước migration chạy `schema.sql` và `002_runtime.sql` được duy trì cùng ứng dụng; không tuyên bố đã thực thi file SQL gốc người dùng gửi.
+Tài khoản SQL dùng kiểm thử cần quyền `CREATE DATABASE` và `DROP DATABASE`. Test tự sinh tên dạng `CarRentalTest_<24 ký tự hex>`, chỉ migrate/seed trên CSDL vừa tạo, đóng các pool rồi xóa đúng CSDL đó trong `finally`. Không dùng, ghi đè, truncate hoặc xóa CSDL nghiệp vụ đang có. Migration hiện chạy file gộp `CarRentalDB.sql` (giữ nguyên nội dung và thứ tự batch của `schema.sql` rồi `002_runtime.sql`) được duy trì cùng ứng dụng; không tuyên bố đã thực thi file SQL gốc người dùng gửi.
 
 Bảng trên chỉ báo cáo kiểm thử backend. Kết quả build/giao diện trình duyệt được ghi riêng trong hướng dẫn bàn giao của dự án.
 
@@ -91,3 +91,8 @@ Lệnh tại thư mục gốc: `npm run test:browser` (sau `npm ci` ở gốc v�
 `npm run build`: **PASS**, 1596 modules, production assets tạo trong `frontend/dist`. Đã kiểm tra Express trả SPA tại `/`, `/orders`, `/manage`, trả 404 cho API không tồn tại và health phân biệt memory với SQL Server.
 
 SQL Server thật chưa được kiểm thử trong máy cloud: image registry của Microsoft chuyển hướng sang domain tải không nằm trong allowlist, trả HTTP 403; tải gói server chính thức cũng bị chặn. Không bỏ TLS hoặc checksum để vượt lỗi. Cần chạy SQL-01 với SQL Server của bạn để xác nhận migration, dữ liệu cũ và khóa đồng thời ở tầng SQL. Tệp SQL bạn cung cấp được giữ nguyên byte-for-byte (đã đối chiếu SHA256).
+
+
+## Thay doi file SQL gop (01/11/2026)
+
+Da gop `schema.sql` va `002_runtime.sql` vao `database/CarRentalDB.sql`, giu nguyen thu tu va dau GO. Da doi duong dan trong migration, kiem tra noi dung cac batch tuong duong hai file cu va kiem tra cu phap JavaScript cua migration. Khong tuyen bo da chay file gop tren SQL Server that; ca SQL-01 van can SQL Server kha dung de xac nhan.

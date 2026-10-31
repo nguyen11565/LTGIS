@@ -1,3 +1,105 @@
+/*
+   CSDL DAT THUE XE DU LICH - FILE CAI DAT GOP
+
+   Thu tu noi dung: schema goc -> cac bo sung runtime.
+   Cach chay bang SSMS:
+     1. Tao database neu chua co (vi du CarRentalDB).
+     2. Chon DUNG database tren thanh cong cu SSMS, roi mo file nay va nhan F5.
+     3. Them tai khoan/xe mau: chay npm run db:seed tai thu muc du an.
+
+   Cach chay tu Node.js: npm run db:migrate (dung DB_DATABASE trong backend/.env).
+   File khong co USE/CREATE DATABASE de ho tro database tuy chinh.
+   Giu nguyen cac dau GO; khong chay tren master/model/msdb/tempdb.
+*/
+
+/* Base schema, safe for a new or existing CarRentalDB. Use the selected database.
+   Never drops or truncates data. Existing V2 installations are upgraded by 002_runtime.sql. */
+IF OBJECT_ID('dbo.Users','U') IS NULL
+CREATE TABLE dbo.Users (
+ Id INT IDENTITY PRIMARY KEY, Username NVARCHAR(50) NOT NULL UNIQUE, PasswordHash NVARCHAR(255) NOT NULL,
+ FullName NVARCHAR(100) NOT NULL, Email NVARCHAR(100) NOT NULL UNIQUE, Phone NVARCHAR(20) NULL,
+ Address NVARCHAR(255) NULL, Role NVARCHAR(20) NOT NULL DEFAULT 'customer' CHECK (Role IN ('customer','employee','admin')),
+ IsActive BIT NOT NULL DEFAULT 1, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.Cars','U') IS NULL
+CREATE TABLE dbo.Cars (
+ Id INT IDENTITY PRIMARY KEY, Name NVARCHAR(100) NOT NULL, Brand NVARCHAR(50) NOT NULL, Model NVARCHAR(50) NULL,
+ Year INT NOT NULL, Seats INT NOT NULL, Transmission NVARCHAR(20) NOT NULL, FuelType NVARCHAR(20) NOT NULL,
+ DailyRate DECIMAL(18,2) NOT NULL CHECK (DailyRate>0), DepositRate DECIMAL(5,2) NOT NULL DEFAULT 30,
+ LicensePlate NVARCHAR(20) NOT NULL UNIQUE, ImageUrl NVARCHAR(500) NULL, Description NVARCHAR(MAX) NULL,
+ Status NVARCHAR(20) NOT NULL DEFAULT 'available' CHECK (Status IN ('available','booked','renting','maintenance','suspended')),
+ CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.RentalOrders','U') IS NULL
+CREATE TABLE dbo.RentalOrders (
+ Id INT IDENTITY PRIMARY KEY, OrderCode NVARCHAR(20) NOT NULL UNIQUE, CustomerId INT NOT NULL REFERENCES dbo.Users(Id), CarId INT NOT NULL REFERENCES dbo.Cars(Id),
+ StartDate DATETIME2 NOT NULL, EndDate DATETIME2 NOT NULL, ActualPickupDate DATETIME2 NULL, ActualReturnDate DATETIME2 NULL,
+ PickupCondition NVARCHAR(MAX) NULL, ReturnCondition NVARCHAR(MAX) NULL,
+ Status NVARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (Status IN ('pending','confirmed','rejected','renting','completed','cancelled')),
+ PaymentStatus NVARCHAR(20) NOT NULL DEFAULT 'unpaid' CHECK (PaymentStatus IN ('unpaid','partial','paid','refunded')),
+ BookedDailyRate DECIMAL(18,2) NOT NULL, BaseAmount DECIMAL(18,2) NOT NULL, TotalAmount DECIMAL(18,2) NOT NULL, DepositAmount DECIMAL(18,2) NOT NULL,
+ LateFee DECIMAL(18,2) NOT NULL DEFAULT 0, EarlyReturnFee DECIMAL(18,2) NOT NULL DEFAULT 0, CancellationFee DECIMAL(18,2) NOT NULL DEFAULT 0, TotalExtraFee DECIMAL(18,2) NOT NULL DEFAULT 0,
+ Notes NVARCHAR(MAX) NULL, CancellationReason NVARCHAR(1000) NULL, ConfirmedByUserId INT NULL REFERENCES dbo.Users(Id), ConfirmedAt DATETIME2 NULL,
+ RejectedByUserId INT NULL REFERENCES dbo.Users(Id), RejectedAt DATETIME2 NULL, RejectionReason NVARCHAR(1000) NULL,
+ CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), CHECK (EndDate>StartDate)
+);
+GO
+IF OBJECT_ID('dbo.Payments','U') IS NULL
+CREATE TABLE dbo.Payments (
+ Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL REFERENCES dbo.RentalOrders(Id), Amount DECIMAL(18,2) NOT NULL CHECK (Amount>0),
+ PaymentType NVARCHAR(30) NOT NULL CHECK (PaymentType IN ('deposit','full_payment','late_fee','early_return_fee','cancellation_fee','extra_fee','refund')),
+ PaymentMethod NVARCHAR(30) NOT NULL, Status NVARCHAR(20) NOT NULL CHECK (Status IN ('pending','completed','failed')),
+ TransactionCode NVARCHAR(100) NOT NULL UNIQUE, TransactionRef NVARCHAR(100) NULL, IdempotencyKey NVARCHAR(100) NULL, RequestFingerprint NVARCHAR(64) NULL,
+ CreatedByUserId INT NULL REFERENCES dbo.Users(Id), Notes NVARCHAR(MAX) NULL,
+ CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.Contracts','U') IS NULL
+CREATE TABLE dbo.Contracts (
+ Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL UNIQUE REFERENCES dbo.RentalOrders(Id), ContractCode NVARCHAR(50) NOT NULL UNIQUE,
+ ContractNumber NVARCHAR(50) NULL, CustomerName NVARCHAR(100) NULL, CustomerPhone NVARCHAR(20) NULL, CustomerEmail NVARCHAR(100) NULL, CarInfo NVARCHAR(500) NULL, TotalAmount DECIMAL(18,2) NULL, DepositAmount DECIMAL(18,2) NULL, RentalTerms NVARCHAR(MAX) NULL,
+ Content NVARCHAR(MAX) NOT NULL, Status NVARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (Status IN ('draft','active','completed','cancelled')),
+ SignedAt DATETIME2 NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.Notifications','U') IS NULL
+CREATE TABLE dbo.Notifications (
+ Id INT IDENTITY PRIMARY KEY, UserId INT NOT NULL REFERENCES dbo.Users(Id), OrderId INT NULL REFERENCES dbo.RentalOrders(Id), Type NVARCHAR(50) NOT NULL,
+ Title NVARCHAR(200) NOT NULL, Message NVARCHAR(MAX) NOT NULL, IsRead BIT NOT NULL DEFAULT 0, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.AuditLogs','U') IS NULL
+CREATE TABLE dbo.AuditLogs (
+ Id INT IDENTITY PRIMARY KEY, UserId INT NULL REFERENCES dbo.Users(Id), Username NVARCHAR(50) NULL, Action NVARCHAR(100) NOT NULL,
+ EntityType NVARCHAR(50) NOT NULL, EntityId INT NULL, OldValue NVARCHAR(MAX) NULL, NewValue NVARCHAR(MAX) NULL,
+ IpAddress NVARCHAR(50) NULL, CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.VehicleHandovers','U') IS NULL
+CREATE TABLE dbo.VehicleHandovers (
+ Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL UNIQUE REFERENCES dbo.RentalOrders(Id), EmployeeId INT NOT NULL REFERENCES dbo.Users(Id),
+ HandoverAt DATETIME2 NOT NULL, OdometerKm DECIMAL(18,2) NULL, FuelLevel NVARCHAR(50) NULL, VehicleCondition NVARCHAR(MAX) NULL, Notes NVARCHAR(MAX) NULL,
+ CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.VehicleReturns','U') IS NULL
+CREATE TABLE dbo.VehicleReturns (
+ Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL UNIQUE REFERENCES dbo.RentalOrders(Id), EmployeeId INT NOT NULL REFERENCES dbo.Users(Id),
+ ReturnedAt DATETIME2 NOT NULL, OdometerKm DECIMAL(18,2) NULL, FuelLevel NVARCHAR(50) NULL, VehicleCondition NVARCHAR(MAX) NULL, NeedsMaintenance BIT NOT NULL DEFAULT 0, Notes NVARCHAR(MAX) NULL,
+ CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+IF OBJECT_ID('dbo.ExtraFees','U') IS NULL
+CREATE TABLE dbo.ExtraFees (
+ Id INT IDENTITY PRIMARY KEY, OrderId INT NOT NULL REFERENCES dbo.RentalOrders(Id), ReturnId INT NULL REFERENCES dbo.VehicleReturns(Id),
+ FeeType NVARCHAR(50) NOT NULL CHECK (FeeType IN ('late','damage','fuel','cleaning','other')), Amount DECIMAL(18,2) NOT NULL CHECK(Amount>=0),
+ Reason NVARCHAR(1000) NULL, CreatedByUserId INT NULL REFERENCES dbo.Users(Id),
+ CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(), UpdatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
 /* Additive application migration after the supplied V2 or base schema.
    Keep DatThueXeDuLich.sql unchanged as the user's original reference. */
 IF COL_LENGTH('dbo.Users','Address') IS NULL ALTER TABLE dbo.Users ADD Address NVARCHAR(255) NULL;

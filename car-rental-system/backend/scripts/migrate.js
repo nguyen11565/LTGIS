@@ -29,7 +29,7 @@ async function migrate() {
     pool = await new sql.ConnectionPool(options).connect();
   }
   try {
-    for (const file of ["schema.sql", "002_runtime.sql"]) {
+    for (const file of ["CarRentalDB.sql"]) {
       const content = fs.readFileSync(
         path.join(__dirname, "../../database", file),
         "utf8",

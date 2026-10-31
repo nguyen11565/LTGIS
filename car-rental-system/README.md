@@ -24,7 +24,7 @@ npm run dev
 
 Frontend: cổng **5173**. API: cổng **5000**. Vite proxy `/api` sang backend. React không kết nối trực tiếp tới SQL Server.
 
-`db:migrate` chạy `database/schema.sql` rồi `database/002_runtime.sql`, hỗ trợ cài mới hoặc bổ sung database V2 đã có. Không xóa dữ liệu. `DatThueXeDuLich.sql` giữ nguyên làm tài liệu đối chiếu; **không chạy file này thay cho migration của ứng dụng**: bản gốc thiếu schema nền và có câu `EXEC ... @Resource=CONCAT(...)` cần sửa trong một tác vụ SQL riêng. Migration mới không phụ thuộc các procedure trong file gốc.
+`db:migrate` chạy file gộp `database/CarRentalDB.sql`, hỗ trợ cài mới hoặc bổ sung database V2 đã có. Không xóa dữ liệu. `database/reference/DatThueXeDuLich.sql` giữ nguyên làm tài liệu đối chiếu; **không chạy file này thay cho migration của ứng dụng**: bản gốc thiếu schema nền và có câu `EXEC ... @Resource=CONCAT(...)` cần sửa trong một tác vụ SQL riêng. Migration mới không phụ thuộc các procedure trong file gốc.
 
 `db:seed` thêm tài khoản và xe demo khi chưa có, không đặt lại mật khẩu tài khoản cũ. Nếu dữ liệu cũ vi phạm ràng buộc, hãy kiểm tra lỗi và dữ liệu; không xóa bản ghi để vượt qua lỗi.
 
@@ -120,7 +120,7 @@ Triển khai công khai cần HTTPS, `FRONTEND_ORIGIN` đúng domain, bí mật 
 ```text
 backend/         Express, domain rules, SQL store, migration/seed, tests
 frontend/        React, màn khách hàng/nhân viên/admin, assets cục bộ
-database/        schema.sql, SQL gốc giữ nguyên, 002_runtime.sql
+database/        CarRentalDB.sql (file gộp), reference/ chứa SQL gốc
 scripts/         dev runner và kiểm thử trình duyệt
 compose.yaml     SQL Server development tùy chọn
 TEST_CASES.md    đối chiếu kiểm thử
@@ -170,3 +170,14 @@ Trên cloud đã có `/usr/bin/chromium`, không cần tải trình duyệt lầ
 - `docs/screenshots/admin-dashboard.png`: báo cáo quản trị.
 
 Xe trong dữ liệu demo dùng SVG minh họa cục bộ. Admin có thể cập nhật URL ảnh thực cho từng xe.
+
+
+## Chạy file SQL gộp trực tiếp trong SSMS
+
+Chỉ chạy `database/CarRentalDB.sql`. File đã chứa toàn bộ schema và bổ sung runtime theo đúng thứ tự; không cần dán thêm hai file cũ.
+
+1. Tạo database nếu chưa có; chọn database đúng tên trong SSMS.
+2. Mở `database/CarRentalDB.sql`, kiểm tra dropdown database trước khi bấm F5.
+3. Chạy `npm run db:seed` trong terminal để thêm tài khoản/xe mẫu, sau đó `npm run dev`.
+
+Hoặc giữ cách tự động: cấu hình `backend/.env`, chạy `npm run db:migrate`. Migration chạy toàn bộ file gộp trong một transaction. SQL gốc trong `database/reference/` chỉ để đối chiếu.
